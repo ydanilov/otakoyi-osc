@@ -57,7 +57,7 @@ export async function pairingPage(opts: {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pair a device — ${esc(opts.name)}</title>
 <style>
-:root{color-scheme:dark;--bg:#0B0B0C;--card:#151517;--border:#2C2C31;--fg:#F4F4F5;--muted:#A1A1AA;--warn:#F59E0B}
+:root{color-scheme:dark;--bg:#22252C;--card:#282C34;--border:#3A3F49;--fg:#E3E6EC;--muted:#8B919D;--warn:#FFB02E}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 Inter,system-ui,sans-serif;padding:32px 16px}
 main{max-width:900px;margin:0 auto}h1{font-size:28px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 24px}
 .pin{display:inline-block;font:700 28px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.15em;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin:8px 0 24px}

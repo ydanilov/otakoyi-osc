@@ -2,48 +2,66 @@
 
 File: **OSC** — https://www.figma.com/design/D2HHS8lt7PxZqxibv9PlOQ/OSC
 
-| Page          | What                                                                      | Code          |
-| ------------- | ------------------------------------------------------------------------- | ------------- |
-| Research      | UI/UX research board + screenshots by category                            | —             |
-| Components    | Design-system library: app chrome and all 12 controls, bound to variables | `packages/ui` |
-| Pult examples | Tablet (dark) and phone (light) pults built only from instances           | `apps/mobile` |
+| Page       | What                                                                                  | Code          |
+| ---------- | ------------------------------------------------------------------------------------- | ------------- |
+| Research   | UI/UX research board + screenshots by category                                        | —             |
+| References | Visual references (Neumorphic Dark Knobs is the lead one)                             | —             |
+| Components | Design-system library: tokens, effects, icons, chrome, controls, slot containers      | `packages/ui` |
+| Patterns   | Reusable compositions: Fader Bank, Knob Group, Camera Control, Installation Actions…  | `packages/ui` |
+| Screens    | Every app screen for phone (lobby controller) and tablet (live VJ pult) + flow, proto | `apps/mobile` |
+| Archive    | Pre-redesign pult examples — do not use                                               | —             |
+
+## Style
+
+Neumorphic dark hardware: graphite-navy surfaces, neon lime as the only lit colour, LEDs and glow
+for state. Depth is meaningful (ADR-013 addendum):
+
+- **Raised** (`Neu/Raised`, `Neu/Raised SM`) — interactive elements, top-level cards and panels.
+- **Inset** (`Neu/Inset`, `Neu/Pressed`) — active / pressed states and beds under controls
+  (tracks, toggle beds, inputs, tab bars).
+- **Flat** — information nested in a card (Chip, Stat Tile, icon wells, Label).
+- **Glow** (`Glow/*`) — lit values, LEDs, and buttons only while pressed. Never on resting buttons.
+
+Effect colours are bound to `elevation/*` variables, so shadows and highlights switch with the
+theme mode. Pult screens never scroll; the left (Settings) and right (Installation) drawers may.
+Phone dialogs are bottom sheets; tablet dialogs are centred modals. The scrim blurs the background.
 
 ## Variables
 
-| Collection  | Modes                     | Contents                                                                                  | Code                        |
-| ----------- | ------------------------- | ----------------------------------------------------------------------------------------- | --------------------------- |
-| `Base`      | Value                     | Neutrals for dark and light, status colours (hidden primitives)                           | `tokens.json → color`       |
-| `Brand`     | one mode per client brand | `brand/primary`, `on-primary`, `primary-pressed`, `primary-subtle`, `accent`, `on-accent` | installation config `theme` |
-| `Theme`     | Dark / Light              | Semantic: `color/*`, `control/*`, `status/*` — aliases to Base and Brand                  | `createTheme()` output      |
-| `Dimension` | Value                     | `space/*`, `radius/*`, `stroke/*`, `touch/*`, `control/*` sizes                           | `tokens.json`               |
+| Collection  | Modes                     | Contents                                                                   | Code                        |
+| ----------- | ------------------------- | -------------------------------------------------------------------------- | --------------------------- |
+| `Base`      | Value                     | Neutrals for dark and light, status colours (hidden primitives)            | `tokens.json → color`       |
+| `Brand`     | one mode per client brand | `brand/*` incl. `primary-signal-light` (primary darkened to ≥ 3:1)         | installation config `theme` |
+| `Theme`     | Dark / Light              | `color/*`, `control/*` (incl. `control/signal`), `status/*`, `elevation/*` | `createTheme()` output      |
+| `Dimension` | Value                     | `space/*`, `radius/*`, `stroke/*`, `touch/*`, `control/*` sizes            | `tokens.json`               |
 
-Web code syntax on Theme variables matches the CSS vars (`rgb(var(--primary))`, `--control-fill`, `--status-*`).
-**Status colours live only in Base and are never aliased to Brand** — same rule as `checkBrand()` in code.
-To preview a client: add a mode to `Brand`, set it on a frame. Derived brand values (`primary-pressed`,
-`primary-subtle`) come from `createTheme()` — copy them from code rather than inventing them.
-
-Text styles: `Display`, `Heading/XL`, `Heading/LG`, `Body/MD`, `Body/SM`, `Label/SM`, `Control/Label`
-(uppercase, +8 %), `Control/Value` and `Control/Readout LG` (JetBrains Mono), `Badge`.
+`control/fill` and `control/signal` use the brand primary in dark mode and the darkened signal
+colour in light mode — same rule as `createTheme()` (`SIGNAL_CONTRAST = 3`). Buttons keep the exact
+brand colour. **Status colours live only in Base and are never aliased to Brand.**
 
 ## Components
 
-Chrome: `Button` (Primary / Secondary / Ghost / Destructive × Default / Disabled), `Badge`, `Connection`,
-`Pult Select`, `Screen Tab`, `Pult Header` (Mode = Control / View / Studio).
+Chrome: Button (Primary / Secondary / Ghost / Destructive × Default / Pressed / Disabled), Icon
+Button, Badge, Connection, Pult Select, Screen Tab, Tab Bar, Pult Header, Input, List Row, Switch,
+Status Bar, Home Indicator, Top Bar, Brand Mark, Wordmark, Stat Tile, Note, Info Card, Chip, Loader,
+Divider, Scrim, Page Dots, Nav Item, Viewfinder. Slot containers: List Card, Section, Console Panel,
+Dialog (Modal / Sheet), Release Card, Pult Card.
 
-Controls: `Fader` (Vertical / Horizontal × Default / Fine / Disabled), `Knob`, `XY Pad`, `Meter`
-(Normal / Warning / Critical), `Toggle`, `Pad`, `Hold to Confirm` (Critical / Default × Idle / Holding / Done),
-`Segmented`, `Button Grid`, `Scene List`, `Label` (MD / LG), `Color Picker`, `Unsupported Control`.
-Each component's description carries the behaviour and the presets that use it.
+Controls: Fader (Absolute slot / Relative jog wheel × Vertical / Horizontal × Default / Fine / Off /
+Disabled), Knob (Absolute / Relative / Color-Hue × Vertical / Horizontal, 240° travel), Thumbstick,
+XY Pad, Meter, Toggle, Pad, Hold to Confirm, Segmented (single-select), Group Button and Button
+Group (multi-select with LED strip), Button Grid, Scene List, Label, Color Picker, Unsupported.
 
-Fader, XY Pad and Meter resize: the body fills the component and the shapes scale.
+Icons: Phosphor Regular as `Icon/<name>` components — use them for every glyph.
 
 ## Rules
 
+- Screens are built only from library instances and patterns; anything missing goes into the library first.
 - Component and variant names follow the code (`controlRegistry` types, ADRs).
-- Colours only through Theme variables; a new colour starts in `tokens.json`, then here.
+- Colours only through variables; a new colour starts in `tokens.json`, then here.
 - The control drawing in code (Skia) is the source of truth for geometry; Figma mirrors it.
 
 ## Gallery in code
 
-`/gallery` in the app and web pult renders every control type in Initial / Active / View-only state under
-four themes (Otakoyi dark/light, two sample client brands). Use it to compare code with this library.
+`/gallery` in the app and web pult renders every control type in Initial / Active / View-only state
+under four themes (Otakoyi dark/light, two sample client brands). Use it to compare code with this library.
