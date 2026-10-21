@@ -17,6 +17,7 @@ Short, numbered, immutable. To change a decision, add a new ADR that supersedes 
 | 011 | One program on site: Otakoyi Runtime = bridge + TD supervisor + project                          | Accepted |
 | 012 | Pairing by QR on the local network (deep link + web pult), mDNS advertise                        | Accepted |
 | 013 | Two use cases — lobby controller and live-event VJ pult; every pult ships phone + tablet layouts | Accepted |
+| 014 | Figma is the source of truth for each client pult; an exporter turns it into the config          | Proposed |
 
 ---
 
@@ -214,3 +215,45 @@ the app and for every client pult. QA checks both before a delivery.
   (tracks, toggle beds, inputs, tab bars); **raised** = interactive elements and top-level cards and
   panels; **flat** = information nested inside a card (chips, stat tiles, icon wells). Neon glow
   appears only on lit values and on press — never on resting buttons.
+
+## 014 — Figma is the source of truth for client pults
+
+**Status:** Proposed · 2026-10-21
+
+**Context.** Every client gets a fully designed pult: which controls, in what order and size, every
+label and caption, phone and tablet layouts (ADR-013). Designing that in Figma and then re-entering
+it in a builder doubles the work and drifts.
+
+**Decision.** The studio lays out each client's pult in the OSC Figma file, built only from library
+components and patterns. An exporter reads the file and produces the installation config; Figma
+owns layout and copy, the config stays the only thing the app reads (ADR-001 unchanged).
+
+Figma conventions:
+
+- One page per client: `Client / <installation-id>`. The page's `Brand` variable mode is the
+  client theme (primary, accent, mode, font, logo).
+- One top-level frame per pult page and form factor: `<pult-id> / <phone|tablet> / <page-id>`,
+  frame title = page title. Frames sit in swipe order, left to right.
+- Every control is an instance of a library component. Component set + variants give the type and
+  mode (`Fader Mode=Relative` → `fader` with `relative: true`, `Knob Mode=Color` → hue knob, …).
+- Instance text properties are the copy: `Label`, captions, option labels, scene names.
+- Behaviour that has no visual — OSC address, range, curve, step, target, preset, lock, studioOnly —
+  lives in the instance's shared plugin data (`otakoyi` namespace, JSON), edited with a small studio
+  Figma plugin ("Otakoyi Inspector"). The layer name is the control `id`.
+- Layout is read from auto-layout geometry and mapped to the 12-column grid per form factor.
+
+Exporter (`tools/figma-export`, Node + Figma REST API):
+
+1. Fetch the client page (nodes, component properties, shared plugin data, variables).
+2. Map instances to schema controls; merge phone and tablet frames by control `id`.
+3. Validate with the zod schema, run `checkBrand()`, fail on unknown components or missing addresses.
+4. Diff against the published revision, bump `revision`, write the config for review and publishing.
+
+**Consequences.**
+
+- Schema v2: a page holds controls once and a layout per form factor (`layout.phone`,
+  `layout.tablet` with grid placements). v1 configs migrate by copying `grid` into both layouts.
+- The builder becomes a validator / publisher and OSC inspector, not a layout editor.
+- Library component names and variant values are now API: renaming one is a breaking change and
+  needs an exporter mapping update in the same PR.
+- A client's unique visual (not in the library) is added to the library first, then used.

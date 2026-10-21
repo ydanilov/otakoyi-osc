@@ -51,7 +51,7 @@ Run `pnpm verify` before every commit.
    Status colours (online, warning, critical, offline, studio) are never brandable.
 3. **The pult never scrolls vertically.** (The swipe drawers may: settings from the left edge, installation actions from the right edge.) Rows fill the screen height; pages that do not fit are split
    into screens that swipe horizontally (`paginate` in `packages/ui/src/pult/layout.ts`).
-4. **Config, not code, defines a pult.** New pults ship as config revisions, never as app releases.
+4. **Config, not code, defines a pult** — and the config is exported from Figma (ADR-014, proposed). New pults ship as config revisions, never as app releases.
    A new control type = schema entry + logic + component + tests, in one PR.
 5. **Platform code behind interfaces.** UDP/TCP, discovery and keep-awake live behind TS interfaces;
    no `Platform.OS` checks in business logic. Android must keep compiling even though it is not shipped.
