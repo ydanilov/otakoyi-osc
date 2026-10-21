@@ -6,6 +6,7 @@ import {
   ColorPicker,
   LabelControl,
   SceneList,
+  UnsupportedPlaceholder,
   Segmented,
   ToggleControl,
 } from "./discrete";
@@ -33,4 +34,18 @@ export const controlRegistry: { [T in ControlType]: React.ComponentType<ControlP
   meter: Meter,
   holdToConfirm: HoldToConfirm,
   colorPicker: ColorPicker,
+  // Components for these arrive later on this branch; until then they render as "coming soon".
+  buttonGroup: Pending,
+  thumbstick: Pending,
+  image: Pending,
+  mic: Pending,
+  prompt: Pending,
 };
+
+function Pending<T extends ControlType>({ control }: ControlProps<T>) {
+  return (
+    <UnsupportedPlaceholder
+      control={{ id: control.id, type: "unsupported", originalType: control.type }}
+    />
+  );
+}

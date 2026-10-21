@@ -48,5 +48,11 @@ export function coerceValue(c: Control, v: unknown): ControlValue | undefined {
     case "meter":
       // Display-only: values come from the installation, never from a device.
       return undefined;
+    case "buttonGroup":
+    case "thumbstick":
+    case "image":
+    case "mic":
+    case "prompt":
+      return undefined; // TODO(feat/new-controls): validation lands with the control logic
   }
 }

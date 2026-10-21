@@ -1,26 +1,44 @@
 import { describe, expect, it } from "vitest";
 import demo from "../examples/demo-installation.json";
-import { CONTROL_TYPES, SCHEMA_VERSION, parseConfig, targetOf } from "./index";
+import legacy from "../examples/legacy-v1-installation.json";
+import {
+  CONTROL_TYPES,
+  Control,
+  PromptPreset,
+  SCHEMA_VERSION,
+  migrateConfig,
+  parseConfig,
+  targetOf,
+  type ControlOf,
+  type InstallationConfig,
+} from "./index";
 
 const clone = <T>(v: T): T => structuredClone(v);
+const ok = (input: unknown): InstallationConfig => {
+  const r = parseConfig(input);
+  if (!r.ok) throw new Error(JSON.stringify(r, null, 2));
+  return r.config;
+};
+const controls = (cfg: InstallationConfig) =>
+  cfg.pults.flatMap((p) => p.pages.flatMap((g) => g.controls));
+const find = <T extends ControlOf<any>["type"]>(cfg: InstallationConfig, id: string) =>
+  controls(cfg).find((c) => c.id === id) as ControlOf<T>;
+const grid = { x: 0, y: 0, w: 2, h: 2 };
 
 describe("parseConfig", () => {
-  it("accepts the demo installation and covers every V1 control type", () => {
-    const r = parseConfig(demo);
-    if (!r.ok) throw new Error(JSON.stringify(r));
-    const used = new Set(
-      r.config.pults.flatMap((p) => p.pages.flatMap((g) => g.controls.map((c) => c.type))),
-    );
+  it("accepts the demo installation and covers every control type", () => {
+    const cfg = ok(demo);
+    expect(cfg.schemaVersion).toBe(2);
+    const used = new Set(controls(cfg).map((c) => c.type));
     expect([...used].sort()).toEqual([...CONTROL_TYPES].sort());
-    expect(CONTROL_TYPES).toHaveLength(12);
+    expect(CONTROL_TYPES).toHaveLength(17);
   });
 
   it("fills defaults", () => {
-    const r = parseConfig(demo);
-    if (!r.ok) throw new Error();
-    const fader = r.config.pults[0]!.pages[0]!.controls.find((c) => c.id === "speed");
+    const fader = find<"fader">(ok(demo), "speed");
     expect(fader).toMatchObject({
       type: "fader",
+      mode: "absolute",
       throttleHz: 60,
       sendOn: "change",
       orientation: "vertical",
@@ -38,28 +56,24 @@ describe("parseConfig", () => {
 
   it("turns an unknown control type into a placeholder instead of failing the pult", () => {
     const cfg = clone(demo) as any;
-    cfg.pults[0].pages[0].controls.push({
-      id: "future",
-      type: "spectrogram",
-      grid: { x: 0, y: 9, w: 4, h: 2 },
-    });
-    const r = parseConfig(cfg);
-    if (!r.ok) throw new Error(JSON.stringify(r));
-    expect(r.config.pults[0]!.pages[0]!.controls.at(-1)).toEqual({
+    const page = cfg.pults[0].pages[0];
+    page.controls.push({ id: "future", type: "spectrogram", bins: 64 });
+    page.layout.tablet.future = { x: 0, y: 9, w: 4, h: 2 };
+    page.layout.phone.future = { x: 0, y: 20, w: 12, h: 2 };
+    expect(ok(cfg).pults[0]!.pages[0]!.controls.at(-1)).toEqual({
       id: "future",
       type: "unsupported",
       originalType: "spectrogram",
-      grid: { x: 0, y: 9, w: 4, h: 2 },
     });
   });
 
   it("rejects invalid addresses, unknown targets, duplicates and grid overflow", () => {
     const cfg = clone(demo) as any;
-    const controls = cfg.pults[0].pages[0].controls;
-    controls[0].address = "wall intensity";
-    controls[1].target = "nope";
-    controls[2].id = "intensity";
-    controls[3].grid = { x: 10, y: 0, w: 4, h: 2 };
+    const page = cfg.pults[0].pages[0];
+    page.controls[0].address = "wall intensity";
+    page.controls[1].target = "nope";
+    page.controls[2].id = "intensity";
+    page.layout.tablet.hue = { x: 10, y: 0, w: 4, h: 2 };
     const r = parseConfig(cfg);
     expect(r.ok).toBe(false);
     if (r.ok || r.reason !== "invalid") return;
@@ -67,7 +81,7 @@ describe("parseConfig", () => {
     expect(msgs).toMatch(/OSC address/);
     expect(msgs).toMatch(/Unknown target "nope"/);
     expect(msgs).toMatch(/Duplicate control id "intensity"/);
-    expect(msgs).toMatch(/overflows/);
+    expect(msgs).toMatch(/"hue" overflows the 12-column tablet grid/);
   });
 
   it("blocks a brand that fails contrast", () => {
@@ -80,9 +94,157 @@ describe("parseConfig", () => {
   });
 
   it("resolves targets", () => {
-    const r = parseConfig(demo);
-    if (!r.ok) throw new Error();
-    const pult = r.config.pults[0]!;
-    expect(targetOf(r.config, pult, pult.pages[0]!.controls[0]!)?.port).toBe(7000);
+    const cfg = ok(demo);
+    const pult = cfg.pults[0]!;
+    expect(targetOf(cfg, pult, pult.pages[0]!.controls[0]!)?.port).toBe(7000);
+  });
+});
+
+describe("schema v2 layouts (ADR-014)", () => {
+  it("every page has a phone and a tablet layout", () => {
+    for (const p of ok(demo).pults)
+      for (const page of p.pages)
+        for (const c of page.controls) {
+          expect(page.layout.phone[c.id], `${page.id}/${c.id} phone`).toBeDefined();
+          expect(page.layout.tablet[c.id], `${page.id}/${c.id} tablet`).toBeDefined();
+        }
+  });
+
+  it("requires a placement for every control and rejects placements of unknown controls", () => {
+    const cfg = clone(demo) as any;
+    const page = cfg.pults[0].pages[0];
+    delete page.layout.phone.intensity;
+    page.layout.tablet.ghost = { x: 0, y: 0, w: 1, h: 1 };
+    const r = parseConfig(cfg);
+    if (r.ok || r.reason !== "invalid") throw new Error("expected invalid");
+    const msgs = r.issues.map((i) => i.message).join("\n");
+    expect(msgs).toMatch(/"intensity" has no phone placement/);
+    expect(msgs).toMatch(/tablet layout places unknown control "ghost"/);
+  });
+
+  it("still reads v1: grid becomes the tablet layout and is re-flowed for phones", () => {
+    const cfg = ok(legacy);
+    expect(cfg.schemaVersion).toBe(2);
+    const page = cfg.pults[0]!.pages[0]!;
+    expect(page.layout.tablet.intensity).toEqual({ x: 0, y: 0, w: 2, h: 6 });
+    expect(page.layout.tablet.position).toEqual({ x: 4, y: 0, w: 5, h: 6 });
+    // Narrow controls take half a row on phones, wide ones a full row.
+    expect(page.layout.phone.intensity).toEqual({ x: 0, y: 0, w: 6, h: 6 });
+    expect(page.layout.phone.speed).toEqual({ x: 6, y: 0, w: 6, h: 6 });
+    expect(page.layout.phone.position!.w).toBe(12);
+    expect("grid" in page.controls[0]!).toBe(false);
+  });
+
+  it("migration leaves v2 and unrecognisable input untouched", () => {
+    expect(migrateConfig(demo)).toBe(demo);
+    expect(migrateConfig(null)).toBe(null);
+    expect(migrateConfig({ schemaVersion: 1 })).toEqual({ schemaVersion: 1 });
+  });
+
+  it("a v1 control without a grid is reported, not dropped", () => {
+    const cfg = clone(legacy) as any;
+    delete cfg.pults[0].pages[0].controls[0].grid;
+    const r = parseConfig(cfg);
+    if (r.ok || r.reason !== "invalid") throw new Error("expected invalid");
+    expect(r.issues.map((i) => i.message)).toContain(`Control "intensity" has no phone placement`);
+  });
+});
+
+describe("new control types (ADR-015)", () => {
+  const cfg = ok(demo);
+
+  it("fader modes: crossfade with labels and detent, relative jog", () => {
+    expect(find<"fader">(cfg, "xfade")).toMatchObject({
+      mode: "crossfade",
+      labels: { a: "Day", b: "Night" },
+      detent: 0.04,
+      default: 0.5,
+      orientation: "horizontal",
+    });
+    expect(find<"fader">(cfg, "jog").mode).toBe("relative");
+  });
+
+  it("knob modes and travel (240° by default)", () => {
+    expect(find<"knob">(cfg, "hue")).toMatchObject({ mode: "absolute", travel: 240 });
+    expect(find<"knob">(cfg, "zoom").mode).toBe("relative");
+    expect(find<"knob">(cfg, "color")).toMatchObject({ mode: "hue", travel: 360 });
+    const bad = Control.safeParse({ id: "k", type: "knob", address: "/k", travel: 400 });
+    expect(bad.success).toBe(false);
+  });
+
+  it("toggle style switch", () => {
+    expect(find<"toggle">(cfg, "strobe").style).toBe("switch");
+    expect(find<"toggle">(cfg, "logo").style).toBe("button");
+  });
+
+  it("buttonGroup: unique button ids, defaults must exist", () => {
+    expect(find<"buttonGroup">(cfg, "layers").default).toEqual(["particles"]);
+    const r = Control.safeParse({
+      id: "g",
+      type: "buttonGroup",
+      buttons: [
+        { id: "a", label: "A", address: "/a" },
+        { id: "a", label: "A2", address: "/a2" },
+      ],
+      default: ["z"],
+    });
+    expect(r.success).toBe(false);
+    const msgs = r.error!.issues.map((i) => i.message).join("\n");
+    expect(msgs).toMatch(/Duplicate button "a"/);
+    expect(msgs).toMatch(/Unknown button "z"/);
+  });
+
+  it("thumbstick defaults", () => {
+    expect(
+      Control.parse({ id: "t", type: "thumbstick", address: "/t" }) as ControlOf<"thumbstick">,
+    ).toMatchObject({ rateHz: 30, deadzone: 0.1 });
+    expect(find<"thumbstick">(cfg, "cam")).toMatchObject({ rateHz: 60, press: "/live/cam/reset" });
+  });
+
+  it("image defaults and limits", () => {
+    expect(Control.parse({ id: "i", type: "image", address: "/i" })).toMatchObject({
+      aspect: "free",
+      formats: ["jpeg", "png", "webp", "heic"],
+      maxMB: 10,
+      fit: "cover",
+      library: true,
+    });
+    expect(
+      Control.safeParse({ id: "i", type: "image", address: "/i", formats: ["bmp"] }).success,
+    ).toBe(false);
+    expect(find<"image">(cfg, "photo").aspect).toBe("16:9");
+  });
+
+  it("mic defaults; outputs must be unique", () => {
+    expect(Control.parse({ id: "m", type: "mic", address: "/m" })).toMatchObject({
+      rateHz: 30,
+      outputs: ["level"],
+      gain: 1,
+      bands: 8,
+    });
+    expect(
+      Control.safeParse({ id: "m", type: "mic", address: "/m", outputs: ["level", "level"] })
+        .success,
+    ).toBe(false);
+    expect(find<"mic">(cfg, "mic").outputs).toEqual(["level", "bands", "beat"]);
+  });
+
+  it("prompt defaults; presets are bridge state, not config", () => {
+    expect(Control.parse({ id: "p", type: "prompt", address: "/p" })).toMatchObject({
+      blend: true,
+      maxLength: 500,
+      default: 0,
+    });
+    expect(
+      PromptPreset.parse({
+        id: "p1",
+        pultId: "live",
+        controlId: "prompt",
+        label: "Forest",
+        text: "misty forest at dawn",
+        createdAt: "2026-10-21T00:00:00Z",
+        updatedAt: "2026-10-21T00:00:00Z",
+      }).on,
+    ).toBe(true);
   });
 });

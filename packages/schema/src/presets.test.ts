@@ -17,11 +17,11 @@ describe("built-in presets", () => {
       buttonGrid: { rows: 2, cols: 2, address: "/pad/{index}" },
       sceneList: { scenes: [{ id: "a", label: "A", value: 1 }] },
       meter: { feedback: "/level" },
+      buttonGroup: { buttons: [{ id: "a", label: "A", address: "/a" }] },
     };
     for (const p of BUILTIN_PRESETS) {
       const control = {
         id: "c",
-        grid: { x: 0, y: 0, w: 2, h: 2 },
         address: "/x",
         ...needs[p.type],
         ...p.props,
@@ -43,11 +43,10 @@ describe("resolving presets in a config", () => {
   it("applies a built-in preset; explicit fields win; type can be omitted", () => {
     const cfg = clone(demo) as any;
     first(cfg)[0] = {
-      id: "dim",
+      id: "intensity",
       preset: "fader/brightness",
       address: "/wall/dim",
       default: 0.5,
-      grid: { x: 0, y: 0, w: 2, h: 6 },
     };
     const r = parseConfig(cfg);
     if (!r.ok) throw new Error(JSON.stringify(r));
@@ -69,10 +68,9 @@ describe("resolving presets in a config", () => {
       props: { min: 0, max: 10, unit: "lx", default: 3 },
     });
     first(cfg)[3] = {
-      id: "glow",
+      id: "hue",
       preset: "acme-glow",
       address: "/wall/glow",
-      grid: { x: 9, y: 0, w: 3, h: 3 },
     };
     const r = parseConfig(cfg);
     if (!r.ok) throw new Error(JSON.stringify(r));

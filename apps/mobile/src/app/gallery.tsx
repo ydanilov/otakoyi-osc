@@ -60,6 +60,11 @@ function activeValue(c: Control): ControlValue {
     case "button":
       return { pressed: true };
     case "holdToConfirm":
+    case "buttonGroup":
+    case "thumbstick":
+    case "image":
+    case "mic":
+    case "prompt":
       return null;
   }
 }

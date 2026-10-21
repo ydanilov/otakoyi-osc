@@ -341,6 +341,12 @@ export function messagesFor(c: Control, value: ControlValue): OscMessage[] {
     case "label":
     case "meter":
       return [];
+    case "buttonGroup":
+    case "thumbstick":
+    case "image":
+    case "mic":
+    case "prompt":
+      return []; // TODO(feat/new-controls): message mapping lands in the next commit
   }
 }
 
@@ -368,6 +374,11 @@ export function initialValue(c: Control): ControlValue {
       return { pressed: false };
     case "buttonGrid":
     case "holdToConfirm":
+    case "buttonGroup":
+    case "thumbstick":
+    case "image":
+    case "mic":
+    case "prompt":
       return null;
   }
 }
