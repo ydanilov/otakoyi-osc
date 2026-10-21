@@ -12,29 +12,19 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "Otakoyi Control connects to your installation on the local network to send control commands.",
-        "NSBonjourServices": [
-          "_osc._udp",
-          "_otakoyi._tcp"
-        ],
+        "NSBonjourServices": ["_osc._udp", "_otakoyi._tcp"],
         "UIRequiresFullScreen": false
       }
     },
     "android": {
       "package": "com.otakoyi.osc",
-      "permissions": [
-        "INTERNET",
-        "ACCESS_WIFI_STATE",
-        "CHANGE_WIFI_MULTICAST_STATE"
-      ]
+      "permissions": ["INTERNET", "ACCESS_WIFI_STATE", "CHANGE_WIFI_MULTICAST_STATE"]
     },
     "web": {
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": [
-      "expo-router",
-      "expo-font"
-    ],
+    "plugins": ["expo-router", "expo-font"],
     "experiments": {
       "typedRoutes": true
     }
