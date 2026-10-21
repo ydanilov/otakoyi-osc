@@ -5,6 +5,9 @@
  */
 import { message, toArg, type OscMessage } from "@osc/core";
 import type { Control, ControlOf } from "@osc/schema";
+import type { MicFrame } from "./mic";
+import { knobMode, wrapHue } from "./modes";
+import type { PromptValue } from "./prompt";
 
 export type Curve = "linear" | "log" | "exp";
 
@@ -128,11 +131,6 @@ export function resetValue(c: {
 }): number {
   return c.default ?? (c.centered ? (c.min + c.max) / 2 : c.min);
 }
-
-/** Knob sweep is 270° with the gap at the bottom. Angle in degrees, 0 = up, clockwise. */
-export const KNOB_START = -135;
-export const KNOB_SWEEP = 270;
-export const knobAngle = (pos: number) => KNOB_START + clamp(pos) * KNOB_SWEEP;
 
 /** XY pad: pointer → normalised point, y grows upwards. */
 export function xyPosition(
@@ -258,6 +256,33 @@ export function meterLevel(
   return "normal";
 }
 
+// ---------- button group ----------
+
+/** Latching state of a button group: the ids that are lit, plus the one that just changed. */
+export interface GroupValue {
+  on: string[];
+  /** The button this interaction toggled; without it, every button's state is sent (full sync). */
+  changed?: string | undefined;
+}
+
+/**
+ * Toggle one button of a group. Buttons latch independently: the others keep their state.
+ * The result lists lit ids in button order.
+ */
+export function toggleInGroup(
+  c: Pick<ControlOf<"buttonGroup">, "buttons">,
+  current: ControlValue,
+  id: string,
+): GroupValue {
+  const lit = new Set(isGroupValue(current) ? current.on : []);
+  if (lit.has(id)) lit.delete(id);
+  else lit.add(id);
+  return { on: c.buttons.filter((b) => lit.has(b.id)).map((b) => b.id), changed: id };
+}
+
+export const isGroupValue = (v: unknown): v is GroupValue =>
+  typeof v === "object" && v !== null && Array.isArray((v as GroupValue).on);
+
 /** Fill `{row}`, `{col}`, `{index}` (0-based) in a button-grid address. */
 export function gridCellAddress(template: string, row: number, col: number, cols: number): string {
   return template
@@ -273,10 +298,25 @@ export type ControlValue =
   | number
   | boolean
   | string
+  /** xy (0..1) and thumbstick (−1..1). */
   | { x: number; y: number }
+  /** button, thumbstick click. */
   | { pressed: boolean }
   | { cell: number; on: boolean }
+  /** Relative (endless) fader or knob: change since the last message. */
+  | { delta: number }
+  | GroupValue
+  /** Image control: a library image and its absolute path on the installation machine. */
+  | { image: string; path: string }
+  | MicFrame
+  | PromptValue
   | null;
+
+/** Loose view of an object value, for shape checks before reading fields. */
+const rec = (v: unknown): Record<string, unknown> =>
+  typeof v === "object" && v !== null ? (v as Record<string, unknown>) : {};
+const hasDelta = (v: unknown): v is { delta: number } =>
+  typeof rec(v).delta === "number" && Number.isFinite(rec(v).delta);
 
 const num = (v: number, int?: boolean) =>
   int ? { type: "i" as const, value: Math.round(v) } : { type: "f" as const, value: v };
@@ -298,8 +338,60 @@ export function messagesFor(c: Control, value: ControlValue): OscMessage[] {
     case "toggle":
       return [message(c.address, ...(value ? c.on : c.off))];
     case "fader":
-    case "knob":
-      return typeof value === "number" ? [{ address: c.address, args: [num(value, c.int)] }] : [];
+    case "knob": {
+      const relative = c.type === "fader" ? c.mode === "relative" : knobMode(c) === "relative";
+      if (relative)
+        return hasDelta(value) && value.delta !== 0
+          ? [{ address: c.address, args: [num(roundFloat(value.delta), c.int)] }]
+          : [];
+      if (typeof value !== "number") return [];
+      const v = c.type === "knob" && c.mode === "hue" ? wrapHue(value) : value;
+      return [{ address: c.address, args: [num(v, c.int)] }];
+    }
+    case "thumbstick": {
+      const o = rec(value);
+      if (typeof o.pressed === "boolean")
+        return c.press ? [message(c.press, o.pressed ? 1 : 0)] : [];
+      if (typeof o.x !== "number" || typeof o.y !== "number") return [];
+      return [{ address: c.address, args: [num(roundFloat(o.x)), num(roundFloat(o.y))] }];
+    }
+    case "buttonGroup": {
+      if (!isGroupValue(value)) return [];
+      const lit = new Set(value.on);
+      const buttons = value.changed ? c.buttons.filter((b) => b.id === value.changed) : c.buttons;
+      return buttons.map((b) =>
+        lit.has(b.id) ? message(b.address, b.value ?? 1) : message(b.address, 0),
+      );
+    }
+    case "image": {
+      const path = rec(value).path;
+      return typeof path === "string" && path ? [message(c.address, path)] : [];
+    }
+    case "mic": {
+      if (typeof value !== "object" || value === null) return [];
+      const f = value as MicFrame;
+      const out: OscMessage[] = [];
+      for (const o of c.outputs) {
+        if (o === "level" && typeof f.level === "number")
+          out.push({ address: `${c.address}/level`, args: [num(roundFloat(f.level))] });
+        if (o === "bands" && Array.isArray(f.bands)) {
+          const bands = Array.from({ length: c.bands }, (_, i) => f.bands![i] ?? 0);
+          out.push({ address: `${c.address}/bands`, args: bands.map((b) => num(roundFloat(b))) });
+        }
+        if (o === "beat" && f.beat === true) out.push(message(`${c.address}/beat`, 1));
+      }
+      return out;
+    }
+    case "prompt": {
+      if (typeof rec(value).mix !== "number") return [];
+      const p = value as PromptValue;
+      if (!c.blend) return [message(c.address, p.a ?? "")];
+      return [
+        message(`${c.address}/a`, p.a ?? ""),
+        message(`${c.address}/b`, p.b ?? ""),
+        { address: `${c.address}/mix`, args: [num(roundFloat(p.mix))] },
+      ];
+    }
     case "xy": {
       if (typeof value !== "object" || value === null || !("x" in value)) return [];
       const x = c.x.min + value.x * (c.x.max - c.x.min);
@@ -341,12 +433,6 @@ export function messagesFor(c: Control, value: ControlValue): OscMessage[] {
     case "label":
     case "meter":
       return [];
-    case "buttonGroup":
-    case "thumbstick":
-    case "image":
-    case "mic":
-    case "prompt":
-      return []; // TODO(feat/new-controls): message mapping lands in the next commit
   }
 }
 
@@ -354,8 +440,24 @@ export function messagesFor(c: Control, value: ControlValue): OscMessage[] {
 export function initialValue(c: Control): ControlValue {
   switch (c.type) {
     case "fader":
-    case "knob":
+      if (c.mode === "relative") return null; // endless: no position to hold
+      return c.default ?? (c.centered || c.mode === "crossfade" ? (c.min + c.max) / 2 : c.min);
+    case "knob": {
+      const mode = knobMode(c);
+      if (mode === "relative") return null;
+      if (mode === "hue") return wrapHue(c.default ?? 0);
       return c.default ?? (c.centered ? (c.min + c.max) / 2 : c.min);
+    }
+    case "buttonGroup":
+      return { on: c.buttons.filter((b) => c.default.includes(b.id)).map((b) => b.id) };
+    case "thumbstick":
+      return { x: 0, y: 0 };
+    case "prompt":
+      return { a: null, b: null, mix: c.default };
+    case "mic":
+      return {};
+    case "image":
+      return null;
     case "toggle":
       return c.default;
     case "xy":
@@ -374,11 +476,6 @@ export function initialValue(c: Control): ControlValue {
       return { pressed: false };
     case "buttonGrid":
     case "holdToConfirm":
-    case "buttonGroup":
-    case "thumbstick":
-    case "image":
-    case "mic":
-    case "prompt":
       return null;
   }
 }

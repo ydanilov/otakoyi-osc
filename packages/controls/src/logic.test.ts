@@ -10,7 +10,6 @@ import {
   holdProgress,
   hsvToHex,
   initialValue,
-  knobAngle,
   relativeDrag,
   resetValue,
   startDrag,
@@ -21,6 +20,7 @@ import {
   valueToPosition,
   xyPosition,
 } from "./logic";
+import { knobAngle } from "./modes";
 
 const parsed = parseConfig(demo);
 if (!parsed.ok) throw new Error("demo config invalid");
@@ -55,10 +55,11 @@ describe("gestures", () => {
     expect(faderPosition({ x: 0, y: -20 }, { width: 50, height: 300 }, "vertical")).toBe(1);
     expect(faderPosition({ x: 25, y: 0 }, { width: 100, height: 40 }, "horizontal")).toBe(0.25);
   });
-  it("knob sweeps 270° with the gap at the bottom", () => {
-    expect(knobAngle(0)).toBe(-135);
+  it("knob sweeps 240° by default with the gap at the bottom", () => {
+    expect(knobAngle(0)).toBe(-120);
     expect(knobAngle(0.5)).toBe(0);
-    expect(knobAngle(1)).toBe(135);
+    expect(knobAngle(1)).toBe(120);
+    expect(knobAngle(1, 270)).toBe(135);
   });
   it("xy y grows upwards", () => {
     expect(xyPosition({ x: 50, y: 0 }, { width: 100, height: 100 })).toEqual({ x: 0.5, y: 1 });

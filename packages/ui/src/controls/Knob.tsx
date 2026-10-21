@@ -1,7 +1,6 @@
 import { Canvas, Circle, Line, Path, Skia, vec } from "@shopify/react-native-skia";
 import {
-  KNOB_START,
-  KNOB_SWEEP,
+  knobStart,
   createThrottle,
   formatValue,
   positionToValue,
@@ -134,24 +133,26 @@ export function Knob({ control: c, value, onChange, disabled }: ControlProps<"kn
   const cy = h / 2;
   const oval = Skia.XYWHRect(cx - r, cy - r, r * 2, r * 2);
   // Skia measures angles from 3 o'clock; ours from 12 o'clock.
-  const skStart = KNOB_START - 90;
+  const travel = c.travel;
+  const start = knobStart(travel);
+  const skStart = start - 90;
   const track = React.useMemo(() => {
-    return Skia.PathBuilder.Make().addArc(oval, skStart, KNOB_SWEEP).build();
-  }, [oval.x, oval.y, oval.width, skStart]); // eslint-disable-line react-hooks/exhaustive-deps
+    return Skia.PathBuilder.Make().addArc(oval, skStart, travel).build();
+  }, [oval.x, oval.y, oval.width, skStart, travel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const centerPos = c.centered ? 0.5 : 0;
   const fillPath = useDerivedValue(() => {
-    const from = skStart + centerPos * KNOB_SWEEP;
+    const from = skStart + centerPos * travel;
     return Skia.PathBuilder.Make()
-      .addArc(oval, from, (pos.value - centerPos) * KNOB_SWEEP)
+      .addArc(oval, from, (pos.value - centerPos) * travel)
       .build();
   });
   const tip = useDerivedValue(() => {
-    const a = ((KNOB_START + pos.value * KNOB_SWEEP - 90) * Math.PI) / 180;
+    const a = ((start + pos.value * travel - 90) * Math.PI) / 180;
     return vec(cx + Math.cos(a) * (r - stroke * 2), cy + Math.sin(a) * (r - stroke * 2));
   });
   const innerTip = useDerivedValue(() => {
-    const a = ((KNOB_START + pos.value * KNOB_SWEEP - 90) * Math.PI) / 180;
+    const a = ((start + pos.value * travel - 90) * Math.PI) / 180;
     return vec(cx + Math.cos(a) * r * 0.25, cy + Math.sin(a) * r * 0.25);
   });
 

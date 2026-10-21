@@ -1,5 +1,6 @@
 import type { Control } from "@osc/schema";
 import { clamp, type ControlValue } from "./logic";
+import { knobMode, wrapHue } from "./modes";
 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const isObj = (v: unknown): v is Record<string, unknown> =>
@@ -14,7 +15,15 @@ export function coerceValue(c: Control, v: unknown): ControlValue | undefined {
   switch (c.type) {
     case "fader":
     case "knob": {
+      const mode = c.type === "knob" ? knobMode(c) : c.mode;
+      const span = Math.abs(c.max - c.min);
+      if (mode === "relative") {
+        // A delta larger than a full sweep in one message is not a finger.
+        if (!isObj(v) || !isNum(v.delta)) return undefined;
+        return { delta: clamp(v.delta, -span, span) };
+      }
       if (!isNum(v)) return undefined;
+      if (mode === "hue") return wrapHue(c.int ? Math.round(v) : v);
       const lo = Math.min(c.min, c.max);
       const hi = Math.max(c.min, c.max);
       const x = clamp(v, lo, hi);
@@ -48,11 +57,47 @@ export function coerceValue(c: Control, v: unknown): ControlValue | undefined {
     case "meter":
       // Display-only: values come from the installation, never from a device.
       return undefined;
-    case "buttonGroup":
     case "thumbstick":
+      if (isObj(v) && typeof v.pressed === "boolean" && Object.keys(v).length === 1)
+        return c.press ? { pressed: v.pressed } : undefined;
+      return isObj(v) && isNum(v.x) && isNum(v.y)
+        ? { x: clamp(v.x, -1, 1), y: clamp(v.y, -1, 1) }
+        : undefined;
+    case "buttonGroup": {
+      if (!isObj(v) || !Array.isArray(v.on)) return undefined;
+      const known = new Set(c.buttons.map((b) => b.id));
+      if (!v.on.every((id) => typeof id === "string" && known.has(id))) return undefined;
+      if (v.changed !== undefined && !(typeof v.changed === "string" && known.has(v.changed)))
+        return undefined;
+      const on = c.buttons.filter((b) => (v.on as string[]).includes(b.id)).map((b) => b.id);
+      return v.changed === undefined ? { on } : { on, changed: v.changed as string };
+    }
+    case "mic": {
+      if (!isObj(v)) return undefined;
+      const frame: { level?: number; bands?: number[]; beat?: boolean } = {};
+      if (c.outputs.includes("level") && isNum(v.level)) frame.level = clamp(v.level);
+      if (c.outputs.includes("bands") && Array.isArray(v.bands)) {
+        if (v.bands.length > c.bands || !v.bands.every(isNum)) return undefined;
+        frame.bands = (v.bands as number[]).map((b) => clamp(b));
+      }
+      if (c.outputs.includes("beat") && typeof v.beat === "boolean") frame.beat = v.beat;
+      return Object.keys(frame).length ? frame : undefined;
+    }
+    case "prompt": {
+      if (!isObj(v) || !isNum(v.mix)) return undefined;
+      const text = (t: unknown) =>
+        t === null || t === undefined
+          ? null
+          : typeof t === "string" && t.length <= c.maxLength
+            ? t
+            : undefined;
+      const a = text(v.a);
+      const b = c.blend ? text(v.b) : null;
+      if (a === undefined || b === undefined) return undefined;
+      return { a, b, mix: clamp(v.mix) };
+    }
     case "image":
-    case "mic":
-    case "prompt":
-      return undefined; // TODO(feat/new-controls): validation lands with the control logic
+      // The path is decided by the bridge after a validated upload (HTTP), never by a device.
+      return undefined;
   }
 }
