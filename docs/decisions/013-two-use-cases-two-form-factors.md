@@ -20,14 +20,26 @@ each of them.
 config; `paginate` runs per form factor. Figma has a phone and a tablet frame for every screen of
 the app and for every client pult. QA checks both before a delivery.
 
-**Navigation and depth.**
+**Navigation (Apple HIG, iOS / iPadOS 26+).**
 
-- The pult screen shows only the controls and a minimal header (connection status, view-only /
-  studio banners). Everything else lives in two swipe drawers, which may scroll vertically:
-  - **left edge → Settings**: appearance, control preferences, pairing QR, what's new, help, sign out;
-  - **right edge → Installation**: installation name and status, pult switcher, quick actions
-    (Flash, Restart and Blackout with hold-to-confirm), modes (Idle — stop reacting to people;
-    Pause — optional per installation).
+- The pult screen shows only the controls and a minimal header: **Settings** button on the leading
+  side, connection status, **Installation** button on the trailing side. Edge swipes are shortcuts
+  only, never the only way in: right edge → Installation (phone and tablet), left edge → Settings
+  (phone only; on iPad the leading edge belongs to the system sidebar gesture).
+- **Settings**: iPhone → system sheet (large detent, grabber, Close × leading); iPad → form sheet
+  over a dimmed console. Contents: appearance, control preferences, pairing QR, what's new, help.
+- **Installation**: iPhone → system sheet (large detent); iPad → inspector panel on the trailing side
+  (390 pt, Close ×, no dimming). Contents: name and status, pult switcher, quick actions (Flash,
+  Restart, Blackout with hold-to-confirm), modes (Idle, optional Pause).
+- **Dialogs** are content inside the system sheet (iPhone medium detent) or form sheet (iPad); the
+  system provides grabber, Close and material. Cancel / Close leading, one prominent action trailing.
+- **Menus**: long-press = system context menu with a preview; destructive item last, in red. Choices
+  from a button = pop-up button (one of many) or pull-down menu (commands, 3+ items).
+- **No confirmation for undoable actions**: deleting a prompt deletes immediately and shows an Undo
+  toast. Confirmation only for actions that cannot be undone (action sheet on iPhone, popover on iPad).
+- **Launch**: the system launch screen is a plain background matching the first screen (no logo or
+  text). The client-branded loading screen (logo over a full-screen image) shows after launch while
+  the app connects; connection problems are shown inline, not as an alert at startup.
 - **Take control** is not in a drawer: while a device is view-only, every pult screen shows the
   "View only — Take control" banner in the header.
 - Depth in the UI is meaningful: **inset** = active/pressed state or the bed under a control
