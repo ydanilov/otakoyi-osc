@@ -5,6 +5,10 @@ surface) per installation; the client logs in with the installation's login and 
 (Android later) or in a browser. Commands go to TouchDesigner (or any OSC software) on Windows, macOS
 or Linux through a bridge on the installation computer.
 
+Two use cases (ADR-013): in a **lobby / permanent installation** the pult is a stylish, convenient
+controller (usually a phone); at a **live event** it is a VJ console for that installation (usually a
+tablet). Every delivery ships **both phone and tablet layouts**.
+
 Read this file before every task. Humans own direction and approval; agents do the work between
 checkpoints. Plan and business rules: Claude Doc "OSC Controller — план робіт і документація".
 
