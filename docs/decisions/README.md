@@ -21,3 +21,4 @@ Consequences, and add a row below. Read the relevant ADR before proposing a diff
 | 013 | [Two use cases, two form factors](013-two-use-cases-two-form-factors.md)                                                   | Accepted |
 | 014 | [Figma is the builder](014-figma-is-the-builder.md)                                                                        | Accepted |
 | 015 | [New control types and schema v2](015-new-control-types-schema-v2.md)                                                      | Accepted |
+| 016 | [Bridge: installation actions, activity, targets and the runtime](016-bridge-actions-targets-runtime.md)                   | Accepted |
