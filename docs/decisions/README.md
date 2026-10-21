@@ -18,6 +18,7 @@ Short, numbered, immutable. To change a decision, add a new ADR that supersedes 
 | 012 | Pairing by QR on the local network (deep link + web pult), mDNS advertise                        | Accepted |
 | 013 | Two use cases — lobby controller and live-event VJ pult; every pult ships phone + tablet layouts | Accepted |
 | 014 | Figma is the source of truth for each client pult; an exporter turns it into the config          | Proposed |
+| 015 | [New control types and schema v2](015-new-control-types-schema-v2.md)                            | Accepted |
 
 ---
 
