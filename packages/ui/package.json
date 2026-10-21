@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./components/ui/*": "./src/components/ui/*.tsx",
     "./lib/*": "./src/lib/*.ts",
+    "./stories/*": "./src/stories/*.ts",
     "./tailwind-preset": "./tailwind-preset.js"
   },
   "scripts": {
@@ -34,8 +35,13 @@
     "@rn-primitives/toggle-group": "^1.5.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "phosphor-react-native": "^3.0.6",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@storybook/react-native-web-vite": "10.6.3",
+    "storybook": "10.6.3"
   },
   "peerDependencies": {
     "@expo/ui": "*",
@@ -47,6 +53,7 @@
     "react-native-gesture-handler": "*",
     "react-native-reanimated": "*",
     "react-native-screens": "*",
+    "react-native-svg": "*",
     "react-native-worklets": "*"
   }
 }
