@@ -10,11 +10,15 @@ Figma is the builder (ADR-014): there is no separate pult-builder app.
 | Foundations          | Colour, elevation & glow, typography, rules                                                           | `packages/tokens`      |
 | Components           | Design-system library in sections: icons, app chrome, forms & lists, controls, media, containers      | `packages/ui`          |
 | Patterns             | Compositions: Channel Strip, Fader Bank, Knob Group, Mix, Prompt Presets, Installation Actions…       | `packages/ui`          |
+| Guidelines           | Rules for composing a client pult: which control when, do/don’t, layout, annotating a build, copy     | —                      |
 | iOS 27 · System      | System parts from the iOS and iPadOS 27 library: status bar, home indicator, sheets, keyboards, menus | native                 |
 | Client · Phase One   | First client build: every app screen for phone and tablet, prototype flow                             | config + `apps/mobile` |
 | Research, References | Mobbin research board and visual references (Neumorphic Dark Knobs is the lead one)                   | —                      |
 
 ## Client pages are the pult builder
+
+Component documentation lives in Storybook; Figma only carries build-specific annotations: category
+**OSC** (address, args, range, mode, rate, feedback) and **Depends on** on each control instance.
 
 One page per client (`Client / <installation-id>`), built only from library instances. The exporter
 (`tools/figma-export`, planned) reads the page and writes the installation config:
