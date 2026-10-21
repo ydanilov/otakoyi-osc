@@ -417,3 +417,18 @@ export function targetOf(
     (cfg.targets.length === 1 ? cfg.targets[0]!.id : undefined);
   return cfg.targets.find((t) => t.id === tid);
 }
+
+/**
+ * Value snapshot: a saved look (values of many controls), recalled with one tap.
+ * Reserved for a later release (ADR 009): stored by the bridge as installation state, never in the config.
+ */
+export const ValueSnapshot = z.object({
+  id: z.string().min(1),
+  pultId: z.string().min(1),
+  label: z.string().min(1),
+  values: z.record(z.string(), z.unknown()),
+  createdBy: z.enum(["client", "studio"]),
+  createdAt: z.string(),
+  configRevision: z.number().int().nonnegative(),
+});
+export type ValueSnapshot = z.infer<typeof ValueSnapshot>;
