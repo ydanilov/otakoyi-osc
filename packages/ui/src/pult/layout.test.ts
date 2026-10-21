@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reflowForPhone, type Cell } from "./layout";
+import { paginate, reflowForPhone, type Cell } from "./layout";
 
 const overlaps = (a: Cell, b: Cell) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -34,5 +34,35 @@ describe("reflowForPhone", () => {
     const y = (id: string) => out.get(id)!.y;
     expect(y("intensity")).toBeLessThanOrEqual(y("xy"));
     expect(y("xy")).toBeLessThanOrEqual(y("mode"));
+  });
+});
+
+describe("paginate", () => {
+  const cells = new Map<string, Cell>([
+    ["a", { x: 0, y: 0, w: 6, h: 6 }],
+    ["b", { x: 6, y: 0, w: 6, h: 4 }],
+    ["c", { x: 6, y: 4, w: 6, h: 3 }], // overlaps a's rows → same band as a and b
+    ["d", { x: 0, y: 7, w: 12, h: 2 }],
+    ["e", { x: 0, y: 9, w: 6, h: 2 }],
+  ]);
+
+  it("keeps a page on one screen when it fits", () => {
+    expect(paginate(cells, 20)).toEqual([{ ids: ["a", "b", "c", "d", "e"], top: 0, rows: 11 }]);
+  });
+
+  it("splits between bands, never through one", () => {
+    const screens = paginate(cells, 9);
+    expect(screens.map((s) => s.ids)).toEqual([["a", "b", "c", "d"], ["e"]]);
+    expect(screens[1]).toMatchObject({ top: 9, rows: 2 });
+  });
+
+  it("gives an oversized band its own screen", () => {
+    const screens = paginate(cells, 4);
+    expect(screens[0]).toEqual({ ids: ["a", "b", "c"], top: 0, rows: 7 });
+    expect(screens.every((s) => s.ids.length > 0)).toBe(true);
+  });
+
+  it("returns one empty screen for an empty page", () => {
+    expect(paginate(new Map(), 10)).toEqual([{ ids: [], top: 0, rows: 1 }]);
   });
 });

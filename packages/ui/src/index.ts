@@ -1,7 +1,7 @@
 export { ThemeProvider, useTheme } from "./theme/ThemeProvider";
 export { PultStore, type ControlMode, type Transport } from "./pult/store";
 export {
-  PultPage,
+  PultPager,
   PultProvider,
   useControlMode,
   useControlValue,
@@ -26,3 +26,5 @@ export {
   ToggleControl,
   UnsupportedPlaceholder,
 } from "./controls/discrete";
+export { paginate, reflowForPhone, PHONE_BREAKPOINT, type Cell, type Screen } from "./pult/layout";
+export { PultSelect } from "./pult/PultSelect";

@@ -28,8 +28,11 @@ export function PultHeader({
   mode,
   onRequestControl,
   logo,
+  switcher,
 }: {
   name: string;
+  /** Pult dropdown (PultSelect); rendered next to the installation name. */
+  switcher?: React.ReactNode;
   connection: Connection;
   mode: ControlMode;
   onRequestControl?: () => void;
@@ -39,9 +42,18 @@ export function PultHeader({
     <View className="gap-2 border-b border-border px-4 pb-3 pt-2">
       <View className="flex-row items-center gap-3">
         {logo}
-        <Text className="text-foreground flex-1 text-lg font-semibold" numberOfLines={1}>
+        {/* On phones the pult dropdown replaces the installation name to save width. */}
+        <Text
+          className={cn(
+            "text-foreground shrink text-lg font-semibold",
+            switcher ? "hidden sm:flex" : undefined,
+          )}
+          numberOfLines={1}
+        >
           {name}
         </Text>
+        {switcher}
+        <View className="flex-1" />
         <View
           className="flex-row items-center gap-2"
           accessible
