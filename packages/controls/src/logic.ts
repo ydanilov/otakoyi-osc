@@ -70,7 +70,55 @@ export function faderPosition(
  * `sensitivity` is pixels for a full 0→1 sweep; holding a second finger can raise it for fine control.
  */
 export function dragDelta(dx: number, dy: number, sensitivity = 200): number {
+  "worklet";
   return (dx - dy) / sensitivity;
+}
+
+/** Fingers at which a drag switches to fine mode. */
+export const FINE_POINTERS = 2;
+
+/**
+ * Relative drag state, shared by faders and knobs (runs as a worklet on the UI thread).
+ * The anchor is re-taken whenever the number of fingers changes, so adding or lifting the second
+ * finger never makes the value jump — it only changes the speed from that point on.
+ */
+export interface DragState {
+  /** Position (0..1) when the current segment started. */
+  anchor: number;
+  /** Drag distance (px) when the current segment started. */
+  anchorDistance: number;
+  pointers: number;
+}
+
+export function startDrag(pos: number, pointers: number): DragState {
+  "worklet";
+  return { anchor: pos, anchorDistance: 0, pointers };
+}
+
+/**
+ * Next position for a relative drag. `distance` = px dragged in the increasing direction since the
+ * gesture began; `length` = px for a full 0→1 sweep. Returns the new position and the updated state.
+ */
+export function relativeDrag(
+  state: DragState,
+  current: number,
+  distance: number,
+  pointers: number,
+  length: number,
+  fineFactor: number,
+): { pos: number; state: DragState; fine: boolean } {
+  "worklet";
+  let st = state;
+  if (pointers !== state.pointers) st = { anchor: current, anchorDistance: distance, pointers };
+  const fine = st.pointers >= FINE_POINTERS;
+  const factor = fine ? fineFactor : 1;
+  const pos = Math.min(1, Math.max(0, st.anchor + ((distance - st.anchorDistance) / Math.max(1, length)) * factor));
+  return { pos, state: st, fine };
+}
+
+/** Value a control returns to on double-tap. */
+export function resetValue(c: { default?: number | undefined; centered?: boolean; min: number; max: number }): number {
+  return c.default ?? (c.centered ? (c.min + c.max) / 2 : c.min);
 }
 
 /** Knob sweep is 270° with the gap at the bottom. Angle in degrees, 0 = up, clockwise. */

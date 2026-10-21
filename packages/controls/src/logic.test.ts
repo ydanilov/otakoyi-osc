@@ -11,6 +11,9 @@ import {
   hsvToHex,
   initialValue,
   knobAngle,
+  relativeDrag,
+  resetValue,
+  startDrag,
   messagesFor,
   meterLevel,
   positionToValue,
@@ -174,5 +177,39 @@ describe("messagesFor", () => {
     for (const c of all) expect(initialValue(c), c.id).not.toBeUndefined();
     expect(initialValue(get("hue"))).toBe(0);
     expect(initialValue(get("speed"))).toBe(1);
+  });
+});
+
+describe("relative drag", () => {
+  it("a touch alone never changes the value", () => {
+    const st = startDrag(0.2, 1);
+    expect(relativeDrag(st, 0.2, 0, 1, 300, 0.2).pos).toBe(0.2);
+  });
+
+  it("moves by the distance dragged, 1:1 with the track", () => {
+    const st = startDrag(0.2, 1);
+    expect(relativeDrag(st, 0.2, 150, 1, 300, 0.2).pos).toBeCloseTo(0.7);
+    expect(relativeDrag(st, 0.2, -600, 1, 300, 0.2).pos).toBe(0);
+  });
+
+  it("two fingers switch to fine mode without a jump", () => {
+    let st = startDrag(0.5, 1);
+    let r = relativeDrag(st, 0.5, 30, 1, 300, 0.2); // +0.1 with one finger
+    expect(r.pos).toBeCloseTo(0.6);
+    st = r.state;
+    r = relativeDrag(st, r.pos, 30, 2, 300, 0.2); // second finger lands: no jump
+    expect(r.pos).toBeCloseTo(0.6);
+    expect(r.fine).toBe(true);
+    r = relativeDrag(r.state, r.pos, 180, 2, 300, 0.2); // 150 px more at ×0.2 = +0.1
+    expect(r.pos).toBeCloseTo(0.7);
+    r = relativeDrag(r.state, r.pos, 180, 1, 300, 0.2); // finger lifted: no jump, back to 1:1
+    expect(r.pos).toBeCloseTo(0.7);
+    expect(r.fine).toBe(false);
+  });
+
+  it("double-tap resets to the default, the centre, or the minimum", () => {
+    expect(resetValue({ default: 0.6, min: 0, max: 1 })).toBe(0.6);
+    expect(resetValue({ centered: true, min: -180, max: 180 })).toBe(0);
+    expect(resetValue({ min: 0, max: 4 })).toBe(0);
   });
 });

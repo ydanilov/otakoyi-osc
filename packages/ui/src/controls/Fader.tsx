@@ -3,12 +3,21 @@ import {
   createThrottle,
   formatValue,
   positionToValue,
+  relativeDrag,
+  resetValue,
+  startDrag,
   valueToPosition,
+  type DragState,
   type Range,
 } from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
-import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
+import {
+  GestureDetector,
+  usePanGesture,
+  useSimultaneousGestures,
+  useTapGesture,
+} from "react-native-gesture-handler";
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
@@ -18,10 +27,18 @@ import { useLayout } from "./useLayout";
 
 const asNumber = (v: unknown, fallback: number) => (typeof v === "number" ? v : fallback);
 
+/** Px the finger must travel before a relative drag starts, so a tap never moves the value. */
+const RELATIVE_SLOP = 4;
+
 /**
- * Fader: absolute touch (the value jumps to the finger), gesture runs on the UI thread,
- * the canvas reads a shared value so drawing never waits for React. Values leave through
- * a throttle (`throttleHz`), and the last value is always sent on release.
+ * Fader.
+ * - `response: "relative"` (default): a touch changes nothing; dragging moves the value by the
+ *   distance dragged, 1:1 with the track. Safe against accidental touches in a dark venue.
+ * - `response: "absolute"`: the value jumps to the finger — opt-in per control.
+ * - Two fingers: fine mode (`fineFactor`, ×0.2 by default), shown as FINE next to the value.
+ * - Double-tap: back to the default value (`doubleTapReset`).
+ * The gesture runs on the UI thread and the canvas reads a shared value, so drawing never waits for
+ * React. Values leave through a throttle (`throttleHz`); the last value is always sent on release.
  */
 export function Fader({ control: c, value, onChange, disabled }: ControlProps<"fader">) {
   const t = useTheme();
@@ -31,9 +48,12 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
     [c.min, c.max, c.step, c.curve, c.invert, c.int],
   );
   const vertical = c.orientation === "vertical";
+  const absolute = c.response === "absolute";
   const pos = useSharedValue(valueToPosition(asNumber(value, c.min), range));
   const dragging = useSharedValue(false);
+  const drag = useSharedValue<DragState>(startDrag(0, 1));
   const [display, setDisplay] = React.useState(asNumber(value, c.min));
+  const [fine, setFine] = React.useState(false);
 
   // Feedback from the installation or another device moves the fader, unless the finger is on it.
   React.useEffect(() => {
@@ -56,6 +76,7 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
       setDisplay(v);
       if (c.sendOn === "change") throttle.push(v);
       if (final) {
+        setFine(false);
         if (c.sendOn === "release") onChangeRef.current(v);
         else throttle.flush();
       }
@@ -63,30 +84,66 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
     [range, c.sendOn, throttle],
   );
 
+  const reset = React.useCallback(() => {
+    const v = resetValue(c);
+    pos.value = valueToPosition(v, range);
+    setDisplay(v);
+    throttle.cancel();
+    onChangeRef.current(v);
+  }, [c, range, pos, throttle]);
+
   const { width: w, height: h } = size;
+  const length = vertical ? h : w;
+  const fineFactor = c.fineFactor;
   const pan = usePanGesture({
     enabled: !disabled,
-    minDistance: 0,
+    minDistance: absolute ? 0 : RELATIVE_SLOP,
     shouldCancelWhenOutside: false,
     onBegin: (e) => {
       "worklet";
+      if (!absolute) return;
       dragging.value = true;
       const p = vertical ? 1 - e.y / h : e.x / w;
       pos.value = Math.min(1, Math.max(0, p));
       scheduleOnRN(report, pos.value, false);
     },
+    onActivate: (e) => {
+      "worklet";
+      dragging.value = true;
+      if (!absolute) drag.value = startDrag(pos.value, e.numberOfPointers);
+    },
     onUpdate: (e) => {
       "worklet";
-      const p = vertical ? 1 - e.y / h : e.x / w;
-      pos.value = Math.min(1, Math.max(0, p));
+      if (absolute) {
+        const p = vertical ? 1 - e.y / h : e.x / w;
+        pos.value = Math.min(1, Math.max(0, p));
+        scheduleOnRN(report, pos.value, false);
+        return;
+      }
+      const distance = vertical ? -e.translationY : e.translationX;
+      const wasFine = drag.value.pointers >= 2;
+      const r = relativeDrag(drag.value, pos.value, distance, e.numberOfPointers, length, fineFactor);
+      drag.value = r.state;
+      pos.value = r.pos;
+      if (r.fine !== wasFine) scheduleOnRN(setFine, r.fine);
       scheduleOnRN(report, pos.value, false);
     },
     onFinalize: () => {
       "worklet";
+      if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, pos.value, true);
     },
   });
+  const doubleTap = useTapGesture({
+    enabled: !disabled && c.doubleTapReset,
+    numberOfTaps: 2,
+    onActivate: () => {
+      "worklet";
+      scheduleOnRN(reset);
+    },
+  });
+  const gesture = useSimultaneousGestures(pan, doubleTap);
 
   // Fill geometry. Centered faders fill from the middle (bipolar values such as pan).
   const center = c.centered ? 0.5 : 0;
@@ -111,9 +168,10 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
     <ControlFrame
       label={c.label}
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
+      badge={fine ? "FINE" : undefined}
       disabled={disabled}
     >
-      <GestureDetector gesture={pan}>
+      <GestureDetector gesture={gesture}>
         <View
           className="flex-1"
           onLayout={onLayout}
@@ -122,6 +180,7 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
           accessibilityLabel={c.label ?? c.id}
           accessibilityValue={{ text: formatValue(display, { unit: c.unit }) }}
           accessibilityState={{ disabled: !!disabled }}
+          accessibilityHint="Drag to adjust. Two fingers for fine control. Double-tap to reset."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
           onAccessibilityAction={(e) => {
             const next = Math.min(
@@ -152,9 +211,9 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
                 width={w - 1}
                 height={h - 1}
                 r={r}
-                color={t.control.trackBorder}
+                color={fine ? t.color.focus : t.control.trackBorder}
                 style="stroke"
-                strokeWidth={1}
+                strokeWidth={fine ? t.stroke.strong : 1}
               />
             </Canvas>
           )}

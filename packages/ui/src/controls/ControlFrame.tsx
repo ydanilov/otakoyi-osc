@@ -10,7 +10,10 @@ export function ControlFrame({
   children,
   className,
   disabled,
+  badge,
 }: {
+  /** Short state marker next to the value, e.g. FINE while fine-adjusting. */
+  badge?: string | undefined;
   label?: string | undefined;
   value?: string | undefined;
   children: React.ReactNode;
@@ -31,11 +34,18 @@ export function ControlFrame({
           ) : (
             <View />
           )}
-          {value !== undefined && (
-            <Text className="text-foreground shrink-0 font-mono text-sm" numberOfLines={1}>
-              {value}
-            </Text>
-          )}
+          <View className="shrink-0 flex-row items-baseline gap-2">
+            {badge && (
+              <Text className="bg-brand-accent text-brand-accent-foreground rounded-sm px-1.5 font-mono text-xs">
+                {badge}
+              </Text>
+            )}
+            {value !== undefined && (
+              <Text className="text-foreground font-mono text-sm" numberOfLines={1}>
+                {value}
+              </Text>
+            )}
+          </View>
         </View>
       )}
       <View className="flex-1">{children}</View>

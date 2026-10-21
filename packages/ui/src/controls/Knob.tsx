@@ -5,12 +5,21 @@ import {
   createThrottle,
   formatValue,
   positionToValue,
+  relativeDrag,
+  resetValue,
+  startDrag,
   valueToPosition,
+  type DragState,
   type Range,
 } from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
-import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
+import {
+  GestureDetector,
+  usePanGesture,
+  useSimultaneousGestures,
+  useTapGesture,
+} from "react-native-gesture-handler";
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
@@ -21,7 +30,10 @@ import { useLayout } from "./useLayout";
 /** Pixels of vertical drag for a full sweep. Relative drag avoids jumps when the knob is touched. */
 const SWEEP_PX = 220;
 
-/** Rotary knob: 270° arc, drag up/right to increase. Endless knobs send relative steps (+/-). */
+/**
+ * Rotary knob: 270° arc, relative drag up/right to increase (a touch never moves it).
+ * Two fingers = fine mode (`fineFactor`); double-tap = back to default (`doubleTapReset`).
+ */
 export function Knob({ control: c, value, onChange, disabled }: ControlProps<"knob">) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
@@ -31,9 +43,10 @@ export function Knob({ control: c, value, onChange, disabled }: ControlProps<"kn
   );
   const initial = typeof value === "number" ? value : c.centered ? (c.min + c.max) / 2 : c.min;
   const pos = useSharedValue(valueToPosition(initial, range));
-  const startPos = useSharedValue(0);
+  const drag = useSharedValue<DragState>(startDrag(0, 1));
   const dragging = useSharedValue(false);
   const [display, setDisplay] = React.useState(initial);
+  const [fine, setFine] = React.useState(false);
 
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number" || c.endless) return;
@@ -55,6 +68,7 @@ export function Knob({ control: c, value, onChange, disabled }: ControlProps<"kn
       setDisplay(v);
       if (c.sendOn === "change") throttle.push(v);
       if (final) {
+        setFine(false);
         if (c.sendOn === "release") onChangeRef.current(v);
         else throttle.flush();
       }
@@ -62,26 +76,55 @@ export function Knob({ control: c, value, onChange, disabled }: ControlProps<"kn
     [range, c.sendOn, throttle],
   );
 
+  const reset = React.useCallback(() => {
+    const v = resetValue(c);
+    pos.value = valueToPosition(v, range);
+    setDisplay(v);
+    throttle.cancel();
+    onChangeRef.current(v);
+  }, [c, range, pos, throttle]);
+
+  const fineFactor = c.fineFactor;
   const pan = usePanGesture({
     enabled: !disabled,
-    minDistance: 2,
-    onBegin: () => {
+    minDistance: 4,
+    onActivate: (e) => {
       "worklet";
       dragging.value = true;
-      startPos.value = pos.value;
+      drag.value = startDrag(pos.value, e.numberOfPointers);
     },
     onUpdate: (e) => {
       "worklet";
-      const p = startPos.value + (e.translationX - e.translationY) / SWEEP_PX;
-      pos.value = Math.min(1, Math.max(0, p));
+      const wasFine = drag.value.pointers >= 2;
+      const r = relativeDrag(
+        drag.value,
+        pos.value,
+        e.translationX - e.translationY,
+        e.numberOfPointers,
+        SWEEP_PX,
+        fineFactor,
+      );
+      drag.value = r.state;
+      pos.value = r.pos;
+      if (r.fine !== wasFine) scheduleOnRN(setFine, r.fine);
       scheduleOnRN(report, pos.value, false);
     },
     onFinalize: () => {
       "worklet";
+      if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, pos.value, true);
     },
   });
+  const doubleTap = useTapGesture({
+    enabled: !disabled && c.doubleTapReset,
+    numberOfTaps: 2,
+    onActivate: () => {
+      "worklet";
+      scheduleOnRN(reset);
+    },
+  });
+  const gesture = useSimultaneousGestures(pan, doubleTap);
 
   const { width: w, height: h } = size;
   const d = Math.min(w, h);
@@ -117,9 +160,10 @@ export function Knob({ control: c, value, onChange, disabled }: ControlProps<"kn
     <ControlFrame
       label={c.label}
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
+      badge={fine ? "FINE" : undefined}
       disabled={disabled}
     >
-      <GestureDetector gesture={pan}>
+      <GestureDetector gesture={gesture}>
         <View
           className="flex-1"
           onLayout={onLayout}

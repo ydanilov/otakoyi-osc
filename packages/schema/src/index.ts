@@ -85,6 +85,10 @@ const ranged = {
   default: z.number().optional(),
   /** Integer instead of float on the wire. */
   int: z.boolean().default(false),
+  /** Double-tap returns the control to `default` (or its initial value). */
+  doubleTapReset: z.boolean().default(true),
+  /** Two-finger drag moves this many times slower for precise adjustment. */
+  fineFactor: z.number().min(0.01).max(1).default(0.2),
 };
 
 export const Button = z.object({
@@ -110,6 +114,11 @@ export const Fader = z.object({
   ...base,
   ...ranged,
   type: z.literal("fader"),
+  /**
+   * relative (default, safe): a touch never changes the value, only dragging moves it by the
+   * distance dragged. absolute: the value jumps to the finger — opt in for non-critical parameters.
+   */
+  response: z.enum(["relative", "absolute"]).default("relative"),
   orientation: z.enum(["vertical", "horizontal"]).default("vertical"),
   /** Draw fill from the centre (bipolar values like pan). */
   centered: z.boolean().default(false),
