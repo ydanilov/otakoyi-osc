@@ -1,6 +1,10 @@
 # Otakoyi Control - TouchDesigner OSC test patch.
 # Builds /project1/otakoyi: OSC in on UDP 7000, feedback out to 127.0.0.1:9000,
 # a value table, a live preview (brightness/hue/tint/mode) and simulated FPS + audio level.
+# Also plays the installation side of the bridge's system OSC (ADR-016):
+#   /otakoyi/flash (brief white), /otakoyi/blackout 0|1, /otakoyi/idle 0|1 (dimmed),
+#   /otakoyi/pause 0|1 (frozen), /otakoyi/restart (logged; the supervisor does the real restart),
+#   /sys/ping -> /sys/pong, and OTAKOYI_PERFORM=1 -> perform mode on start.
 # Run from the Textport:  exec(open('<repo>/tools/touchdesigner/build_otakoyi_test.py').read())
 
 import os
@@ -24,6 +28,12 @@ values.clear()
 values.appendRow(['address', 'value'])
 values.nodeX, values.nodeY = 200, 0
 
+# Installation state set by the bridge's system OSC (never echoed, never shown as values).
+system = base.create(tableDAT, 'system')
+system.clear()
+system.appendRows([['key', 'value'], ['blackout', '0'], ['idle', '0'], ['pause', '0'], ['flash_until', '0']])
+system.nodeX, system.nodeY = 200, 150
+
 out = base.create(oscoutDAT, 'feedback')
 out.par.address = FB_HOST
 out.par.port = FB_PORT
@@ -32,9 +42,35 @@ out.nodeX, out.nodeY = 200, -150
 cb = base.create(textDAT, 'osc_callbacks')
 cb.nodeX, cb.nodeY = -200, -150
 cb.text = '''
+import time
+
+FLASH_S = 0.15
+
+def _flag(args):
+    try:
+        return '1' if float(args[0]) >= 1 else '0'
+    except Exception:
+        return '0'
+
 def onReceiveOSC(dat, rowIndex, message, byteData, timeStamp, address, args, peer):
+    sysdat = parent().op('system')
+    fb = parent().op('feedback')
+    if address == '/sys/ping':
+        # Heartbeat from the bridge: answer, so it shows the installation as online.
+        fb.sendOSC('/sys/pong', [])
+        return
+    if address == '/otakoyi/flash':
+        sysdat['flash_until', 1] = time.time() + FLASH_S
+        return
+    if address in ('/otakoyi/blackout', '/otakoyi/idle', '/otakoyi/pause'):
+        sysdat[address.split('/')[-1], 1] = _flag(args)
+        return
+    if address == '/otakoyi/restart':
+        # In production Otakoyi Runtime's supervisor restarts the process; here we only log it.
+        debug('otakoyi: restart requested by the bridge')
+        return
     if address.startswith('/otakoyi/'):
-        # System messages from the bridge (pairing mode): never echoed, never shown as values.
+        # Pairing mode (/otakoyi/pair ...): never echoed, never shown as values.
         parent().op('otakoyi_pairing/logic').module.handle(address, args)
         return
     v = parent().op('values')
@@ -86,7 +122,15 @@ def start():
 '''
 boot = base.create(executeDAT, 'on_start')
 boot.nodeX, boot.nodeY = 0, -450
-boot.text = "def onStart():\n    op('/project1/otakoyi/telemetry').module.start()\n    return\n"
+boot.text = (
+    "import os\n"
+    "def onStart():\n"
+    "    op('/project1/otakoyi/telemetry').module.start()\n"
+    "    # Started by Otakoyi Runtime's supervisor with OTAKOYI_PERFORM=1: no editor.\n"
+    "    if os.environ.get('OTAKOYI_PERFORM') == '1':\n"
+    "        ui.performMode = True\n"
+    "    return\n"
+)
 boot.par.start = True
 tel.module.start()
 
@@ -97,24 +141,33 @@ prev.par.resolutionw, prev.par.resolutionh = 640, 360
 prev.nodeX, prev.nodeY = 400, 0
 pcb = prev.par.callbacks.eval()
 pcb.text = '''
-import numpy, colorsys
+import numpy, colorsys, time
 def _num(v, addr, d):
     try:
         return float(str(v[addr, 1]).split()[0])
     except Exception:
         return d
 def onCook(scriptOp):
+    absTime.frame  # cook every frame (flash timing, pause)
     v = parent().op('values')
-    b = _num(v, '/wall/intensity', 0.6)
-    if _num(v, '/wall/blackout', 0) >= 1:
-        b = 0.0
-    h = (_num(v, '/wall/hue', 0) % 360) / 360.0
-    r, g, bl = colorsys.hsv_to_rgb(0.22 + h, 0.75, 1.0)
+    s = parent().op('system')
+    if _num(s, 'pause', 0) >= 1 and scriptOp.fetch('last', None) is not None:
+        scriptOp.copyNumpyArray(scriptOp.fetch('last'))  # paused: hold the last frame
+        return
     img = numpy.zeros((360, 640, 4), dtype=numpy.float32)
-    img[:, :, 0] = r * b
-    img[:, :, 1] = g * b
-    img[:, :, 2] = bl * b
     img[:, :, 3] = 1
+    if time.time() < _num(s, 'flash_until', 0):
+        img[:, :, 0:3] = 1.0  # flash: brief white
+    elif _num(s, 'blackout', 0) < 1 and _num(v, '/wall/blackout', 0) < 1:
+        b = _num(v, '/wall/intensity', 0.6)
+        if _num(s, 'idle', 0) >= 1:
+            b *= 0.25  # idle: not reacting to people, dimmed
+        h = (_num(v, '/wall/hue', 0) % 360) / 360.0
+        r, g, bl = colorsys.hsv_to_rgb(0.22 + h, 0.75, 1.0)
+        img[:, :, 0] = r * b
+        img[:, :, 1] = g * b
+        img[:, :, 2] = bl * b
+    scriptOp.store('last', img)
     scriptOp.copyNumpyArray(img)
     return
 def onSetupParameters(scriptOp):
@@ -128,7 +181,10 @@ label.par.resolutionw, label.par.resolutionh = 640, 360
 label.par.fontsizex = 18
 label.par.alignx = 'left'
 label.par.aligny = 'top'
-label.par.text.expr = "'\\n'.join('%s  %s' % (r[0].val, r[1].val) for r in op('values').rows()[1:])"
+label.par.text.expr = (
+    "' '.join(k.upper() for k in ('blackout', 'idle', 'pause') if op('system')[k, 1] == '1') + '\\n' + "
+    "'\\n'.join('%s  %s' % (r[0].val, r[1].val) for r in op('values').rows()[1:])"
+)
 
 comp = base.create(overTOP, 'show')
 comp.inputConnectors[0].connect(label)
