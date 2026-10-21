@@ -1,0 +1,23 @@
+{
+  "name": "@osc/bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "bundle": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/bridge.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\""
+  },
+  "dependencies": {
+    "@osc/controls": "workspace:*",
+    "@osc/core": "workspace:*",
+    "@osc/protocol": "workspace:*",
+    "@osc/schema": "workspace:*",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.25.12"
+  }
+}
