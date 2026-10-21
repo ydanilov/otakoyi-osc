@@ -28,6 +28,7 @@ export {
   type AudioInput,
   type ControlServices,
   type ImagePicker,
+  type ImageSource,
   type MediaLibrary,
   type PickedImage,
   type PromptPresets,

@@ -1,22 +1,22 @@
 import { parsePairing } from "@osc/protocol";
-import { ThemeProvider } from "@osc/ui";
-import { Button } from "@osc/ui/components/ui/button";
-import { Text } from "@osc/ui/components/ui/text";
+import { Button, InfoCard, Note, ThemeProvider, Viewfinder } from "@osc/ui";
 import { router } from "expo-router";
 import * as React from "react";
-import { View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SheetHeader } from "@/components/ds/Sheet";
+import { SheetTop } from "@/components/SheetTop";
 import { useApp } from "@/lib/app-context";
+import { formFactorOf } from "@/lib/nav";
 import { closeSheet } from "@/lib/navigation";
 import { scanner } from "@/lib/platform/scanner";
 
 /**
  * In-app scanner for the pairing QR (behind the `Scanner` interface: the camera on iOS, a stub on
- * web). A pairing link connects and goes to the loading screen; anything else is ignored with a hint.
+ * web), framed by the DS Viewfinder. A pairing link connects and goes to the loading screen.
  */
 export default function Scan() {
   const app = useApp();
+  const { width } = useWindowDimensions();
   const [hint, setHint] = React.useState<string | null>(null);
   const busy = React.useRef(false);
   const onScan = async (data: string) => {
@@ -28,33 +28,29 @@ export default function Scan() {
     closeSheet();
     router.replace("/loading");
   };
-  const View_ = scanner.View;
+  const Camera = scanner.View;
   return (
     <ThemeProvider>
       <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
-        <SheetHeader title="Scan pairing QR" onClose={closeSheet} />
-        {View_ ? (
-          <View className="flex-1">
-            <View_ onScan={onScan} />
-            <View className="absolute bottom-8 left-6 right-6 bg-background/80 rounded-xl p-3">
-              <Text className="text-foreground text-center text-sm">
-                {hint ?? "Point the camera at the QR on the installation's screen."}
-              </Text>
-            </View>
+        <SheetTop title="Scan pairing QR" onClose={closeSheet} />
+        {Camera ? (
+          <View className="flex-1 items-center justify-center gap-6 px-6">
+            <Viewfinder size={formFactorOf(width)}>
+              <Camera onScan={onScan} />
+            </Viewfinder>
+            <Note>{hint ?? "Point the camera at the QR on the installation's screen."}</Note>
           </View>
         ) : (
-          <View className="flex-1 items-center justify-center gap-5 px-8" testID="scan-unavailable">
-            <Text className="text-muted-foreground text-center text-[15px] leading-6">
-              {scanner.unavailableReason}
-            </Text>
+          <View className="flex-1 justify-center gap-5 px-6" testID="scan-unavailable">
+            <InfoCard>{scanner.unavailableReason ?? "Scanning isn't available here."}</InfoCard>
             <Button
+              label="Enter address and PIN"
               onPress={() => {
                 closeSheet();
                 router.push("/manual");
               }}
-            >
-              <Text>Enter address and PIN</Text>
-            </Button>
+              block
+            />
           </View>
         )}
       </SafeAreaView>

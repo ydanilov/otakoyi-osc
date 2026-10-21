@@ -1,12 +1,23 @@
-import { Switch } from "@osc/ui/components/ui/switch";
+import {
+  BellIcon,
+  InfoIcon,
+  LifebuoyIcon,
+  LightningIcon,
+  ListCard,
+  ListRow,
+  MonitorIcon,
+  Note,
+  QrCodeIcon,
+  Section,
+  SignOutIcon,
+  SunIcon,
+} from "@osc/ui";
 import { Text } from "@osc/ui/components/ui/text";
 import Constants from "expo-constants";
-import { BookOpen, LifeBuoy, LogOut, QrCode, Sparkles, Vibrate, Sun } from "lucide-react-native";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 import { useApp, useSessionState } from "@/lib/app-context";
-import { ListRow, ListSection } from "./ds/ListRow";
-import { SheetHeader } from "./ds/Sheet";
+import { SheetTop } from "./SheetTop";
 
 /**
  * Settings (ADR-013): pairing QR, control preferences, what's new, help, and forget this
@@ -31,13 +42,14 @@ export function SettingsContent({
   if (about)
     return (
       <View className="flex-1">
-        <SheetHeader
+        <SheetTop
           title={about === "help" ? "Help" : "What's new"}
           onBack={() => setAbout(null)}
+          onClose={onClose}
         />
         <ScrollView contentContainerClassName="gap-3 px-5 pb-10 pt-2">
           {(about === "help" ? HELP : WHATS_NEW).map((p) => (
-            <Text key={p} className="text-foreground text-[15px] leading-6">
+            <Text key={p} className="text-foreground text-md leading-6">
               {p}
             </Text>
           ))}
@@ -45,89 +57,69 @@ export function SettingsContent({
       </View>
     );
 
+  const address = session?.bridge?.replace(/^wss?:\/\//, "").replace(/\/ws$/, "");
   return (
     <View className="flex-1" testID="settings-panel">
-      <SheetHeader title="Settings" onClose={onClose} />
+      <SheetTop title="Settings" onClose={onClose} />
       <ScrollView contentContainerClassName="gap-6 px-4 pb-10 pt-2">
-        <ListSection
-          title={demo ? "Demo" : "This installation"}
-          footer={
-            demo
-              ? "A simulated installation inside the app. Nothing leaves this device."
-              : "Another phone on the same Wi-Fi can scan this code to join."
-          }
-        >
-          <ListRow
-            title={s.config?.installation.name ?? session?.displayName ?? "—"}
-            detail={
-              demo
-                ? "Simulated installation"
-                : session?.bridge?.replace(/^wss?:\/\//, "").replace(/\/ws$/, "")
-            }
-          />
-          {!demo && (
+        <Section title={demo ? "Demo" : "This installation"}>
+          <ListCard>
             <ListRow
-              title="Show pairing QR"
-              icon={QrCode}
-              chevron
-              onPress={onShowPairing}
-              testID="settings-pairing"
+              icon={MonitorIcon}
+              title={s.config?.installation.name ?? session?.displayName ?? "—"}
+              trailing="value"
+              value={demo ? "Simulated" : address}
             />
-          )}
-        </ListSection>
+            {!demo && <ListRow icon={QrCodeIcon} title="Show pairing QR" onPress={onShowPairing} />}
+          </ListCard>
+          <Note>
+            {demo
+              ? "A simulated installation inside the app. Nothing leaves this device."
+              : "Another phone on the same Wi-Fi can scan the pairing QR to join."}
+          </Note>
+        </Section>
 
-        <ListSection
-          title="Controls"
-          footer="Two fingers on a fader or knob for fine control. Double-tap resets to the default."
-        >
-          <ListRow
-            title="Haptics"
-            icon={Vibrate}
-            accessory={
-              <Switch
-                checked={prefs.haptics}
-                onCheckedChange={(v) => setPrefs({ haptics: v })}
-                accessibilityLabel="Haptics"
-              />
-            }
-          />
-          <ListRow
-            title="Keep screen awake"
-            icon={Sun}
-            accessory={
-              <Switch
-                checked={prefs.keepAwake}
-                onCheckedChange={(v) => setPrefs({ keepAwake: v })}
-                accessibilityLabel="Keep screen awake"
-              />
-            }
-          />
-        </ListSection>
+        <Section title="Controls">
+          <ListCard>
+            <ListRow
+              icon={LightningIcon}
+              title="Haptics"
+              trailing="switch"
+              checked={prefs.haptics}
+              onCheckedChange={(v) => setPrefs({ haptics: v })}
+            />
+            <ListRow
+              icon={SunIcon}
+              title="Keep screen awake"
+              trailing="switch"
+              checked={prefs.keepAwake}
+              onCheckedChange={(v) => setPrefs({ keepAwake: v })}
+            />
+          </ListCard>
+          <Note>
+            Two fingers on a fader or knob for fine control. Double-tap resets to the default.
+          </Note>
+        </Section>
 
-        <ListSection>
+        <ListCard>
+          <ListRow icon={BellIcon} title="What's new" onPress={() => setAbout("whatsNew")} />
+          <ListRow icon={LifebuoyIcon} title="Help" onPress={() => setAbout("help")} />
           <ListRow
-            title="What's new"
-            icon={Sparkles}
-            chevron
-            onPress={() => setAbout("whatsNew")}
+            icon={InfoIcon}
+            title="About this pult"
+            subtitle="Designed by the studio. Ask them for changes."
+            trailing="none"
           />
-          <ListRow title="Help" icon={LifeBuoy} chevron onPress={() => setAbout("help")} />
-          <ListRow
-            title="About pults"
-            icon={BookOpen}
-            detail="Your pult is designed by the studio. Ask them for changes."
-          />
-        </ListSection>
+        </ListCard>
 
-        <ListSection>
+        <ListCard>
           <ListRow
+            icon={SignOutIcon}
             title={demo ? "Exit demo" : "Forget this installation"}
-            icon={LogOut}
-            destructive
+            trailing="destructive"
             onPress={onLeave}
-            testID="settings-leave"
           />
-        </ListSection>
+        </ListCard>
 
         <Text className="text-muted-foreground text-center text-xs">Otakoyi Control {version}</Text>
       </ScrollView>

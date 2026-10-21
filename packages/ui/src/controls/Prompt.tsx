@@ -15,7 +15,7 @@ import type { PromptPresetDto } from "@osc/protocol";
 import { Control, type ControlOf } from "@osc/schema";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
+import { GestureDetector, usePanGesture, useTapGesture } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -29,14 +29,15 @@ import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
 import { useControlServices } from "../platform/services";
 import { useControlMeta } from "../pult/context";
-import { ContextMenu, type MenuAction } from "./ContextMenu";
+import { Toast } from "../chrome/Toast";
+import { CopyIcon, LightningIcon, PencilSimpleIcon, CircleHalfIcon, TrashIcon } from "../ds/icons";
+import { ContextMenu } from "../menus/ContextMenu";
+import type { MenuItem } from "../menus/menu-types";
 import { ControlFrame } from "./ControlFrame";
 import { Led } from "./discrete";
 import { Fader } from "./Fader";
 import type { ControlProps } from "./types";
 
-/** How long the Undo toast stays after a delete (the bridge keeps the preset restorable longer). */
-const UNDO_TOAST_MS = 5000;
 /** Card width and gap (`w-40`, `gap-2`): one drag slot. */
 const CARD_W = 160;
 const CARD_GAP = 8;
@@ -93,11 +94,6 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
   React.useEffect(() => {
     void refresh();
   }, [refresh]);
-  React.useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), UNDO_TOAST_MS);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   const run = async (fn: () => Promise<unknown>) => {
     setError(null);
@@ -174,39 +170,50 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
       await refresh();
     });
 
-  const menuFor = (p: PromptPresetDto): MenuAction[] => {
+  const menuFor = (p: PromptPresetDto): MenuItem[] => {
     const state = presetCardState({ id: p.id, value: current });
     const on = state !== "off";
     return [
       {
         key: "toggle",
-        title: on ? "Off" : "On",
-        icon: on ? "lightswitch.off" : "lightswitch.on",
+        label: on ? "Off" : "On",
+        icon: LightningIcon,
+        systemImage: on ? "lightswitch.off" : "lightswitch.on",
         onSelect: () => tap(p, state),
       },
       {
         key: "edit",
-        title: "Edit",
-        icon: "pencil",
+        label: "Edit",
+        icon: PencilSimpleIcon,
+        systemImage: "pencil",
         onSelect: () => setSheet({ kind: "edit", preset: p, text: p.text, label: p.label }),
       },
       ...(c.blend
         ? [
             {
               key: "mix",
-              title: "Use in mix",
-              icon: "circle.lefthalf.filled",
+              label: "Use in mix",
+              icon: CircleHalfIcon,
+              systemImage: "circle.lefthalf.filled",
               onSelect: () => emit(presets, useInMix(p.id, current)),
             },
           ]
         : []),
       {
         key: "duplicate",
-        title: "Duplicate",
-        icon: "plus.square.on.square",
+        label: "Duplicate",
+        icon: CopyIcon,
+        systemImage: "plus.square.on.square",
         onSelect: () => duplicate(p),
       },
-      { key: "delete", title: "Delete", icon: "trash", destructive: true, onSelect: () => del(p) },
+      {
+        key: "delete",
+        label: "Delete",
+        icon: TrashIcon,
+        systemImage: "trash",
+        destructive: true,
+        onSelect: () => del(p),
+      },
     ];
   };
 
@@ -254,14 +261,9 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
               const state = presetCardState({ id: p.id, value: current, ack, editing, disabled });
               const lit = state === "on";
               const body = (
-                <Pressable
-                  disabled={disabled || editing}
-                  onPress={() => tap(p, state)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: lit, disabled: !!disabled }}
-                  accessibilityLabel={`${p.label}, ${state}`}
-                  accessibilityHint="Tap to switch on or off. Long-press for more."
-                  className="min-h-touch gap-1"
+                <TapArea
+                  enabled={!disabled && !editing}
+                  onTap={() => tap(p, state)}
                   testID={`prompt-card-${i}`}
                 >
                   <View className="flex-row items-center gap-2">
@@ -300,7 +302,7 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
                           ? `In blend · ${current.aId === p.id ? "A" : "B"}`
                           : p.text}
                   </Text>
-                </Pressable>
+                </TapArea>
               );
               return (
                 <DraggableCard
@@ -315,10 +317,13 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
                   onDrop={(to) => moveTo(p.id, to)}
                   onDelete={() => del(p)}
                 >
-                  {editing ? (
+                  {editing || disabled ? (
                     body
                   ) : (
-                    <ContextMenu title={p.text} actions={menuFor(p)} disabled={disabled}>
+                    <ContextMenu
+                      label={`${p.label}, ${state}. Tap to switch on or off; more actions available.`}
+                      items={menuFor(p)}
+                    >
                       {body}
                     </ContextMenu>
                   )}
@@ -399,18 +404,15 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
       )}
 
       {toast && (
-        // TODO(ds): replace with @osc/ui <Toast> from feat/ds-components-storybook.
-        <View
-          className="bg-popover border-border absolute bottom-2 left-2 right-2 flex-row items-center justify-between rounded-lg border px-3 py-2"
-          accessibilityLiveRegion="polite"
-          testID="undo-toast"
-        >
-          <Text className="text-foreground flex-1 text-xs" numberOfLines={1}>
-            Deleted “{toast.label}”
-          </Text>
-          <Button size="sm" variant="ghost" onPress={() => undo(toast)}>
-            <Text className="text-brand-accent">Undo</Text>
-          </Button>
+        <View className="absolute bottom-2 left-2 right-2" testID="undo-toast">
+          <Toast
+            key={toast.id}
+            message={`Deleted “${toast.label}”`}
+            icon={TrashIcon}
+            actionLabel="Undo"
+            onAction={() => undo(toast)}
+            onDismiss={() => setToast((t) => (t?.id === toast.id ? null : t))}
+          />
         </View>
       )}
     </ControlFrame>
@@ -418,7 +420,33 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
 }
 
 /**
- * A preset card. In edit mode it can be dragged by its grip (the others slide to make room) and
+ * The card's tap target. A gesture-handler tap (not a Pressable), so the long-press of the
+ * context menu around it still reaches its own Pressable.
+ */
+function TapArea({
+  enabled,
+  onTap,
+  testID,
+  children,
+}: {
+  enabled: boolean;
+  onTap: () => void;
+  testID?: string;
+  children: React.ReactNode;
+}) {
+  const tapGesture = useTapGesture({ enabled, runOnJS: true, maxDuration: 300, onActivate: onTap });
+  return (
+    <GestureDetector gesture={tapGesture}>
+      <View className="min-h-touch gap-1" testID={testID}>
+        {children}
+      </View>
+    </GestureDetector>
+  );
+}
+
+/**
+ * A preset card. In edit mode
+ it can be dragged by its grip (the others slide to make room) and
  * deleted with "−"; screen readers get Move left / Move right actions instead of the drag.
  */
 function DraggableCard({

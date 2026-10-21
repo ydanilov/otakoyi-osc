@@ -5,7 +5,10 @@ import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
-import { useControlServices } from "../platform/services";
+import { CameraIcon, FolderSimpleIcon, ImagesIcon, ClockCounterClockwiseIcon } from "../ds/icons";
+import type { MenuItem } from "../menus/menu-types";
+import { PullDownMenu } from "../menus/PullDownMenu";
+import { useControlServices, type ImageSource } from "../platform/services";
 import { useControlMeta } from "../pult/context";
 import { ControlFrame } from "./ControlFrame";
 import { Led } from "./discrete";
@@ -25,6 +28,8 @@ const asImage = (v: ControlValue) =>
 /**
  * Image upload (ADR-015): pick a photo → the bridge validates and stores it and sends
  * `<address> <path>`. With `library`, earlier uploads can be shown again with one tap.
+ * The source is a pull-down menu (HIG): Take Photo / Photo Library / Choose File / Uploads on
+ * This Installation.
  * Picking and uploading go through `useControlServices()` (platform seam, no Platform.OS here).
  */
 export function ImageUpload({ control: c, value, onChange, disabled }: ControlProps<"image">) {
@@ -32,6 +37,7 @@ export function ImageUpload({ control: c, value, onChange, disabled }: ControlPr
   const [items, setItems] = React.useState<ImageAssetDto[]>([]);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [showUploads, setShowUploads] = React.useState(true);
   const current = asImage(value);
   const { rev } = useControlMeta(c.id); // bumped when another pult changed the library
 
@@ -43,9 +49,9 @@ export function ImageUpload({ control: c, value, onChange, disabled }: ControlPr
   const showLocally = (a: ImageAssetDto) => {
     if (!media.remote) onChange({ image: a.id, path: a.path });
   };
-  const pick = async () => {
+  const pick = async (source: ImageSource) => {
     setError(null);
-    const img = await imagePicker.pick({ aspect: c.aspect, formats: c.formats });
+    const img = await imagePicker.pick({ aspect: c.aspect, formats: c.formats, source });
     if (!img) return;
     setBusy(true);
     try {
@@ -66,38 +72,92 @@ export function ImageUpload({ control: c, value, onChange, disabled }: ControlPr
     }
   };
 
+  const sources: MenuItem[] = [
+    {
+      key: "camera",
+      label: "Take Photo",
+      icon: CameraIcon,
+      systemImage: "camera",
+      onSelect: () => void pick("camera"),
+    },
+    {
+      key: "library",
+      label: "Photo Library",
+      icon: ImagesIcon,
+      systemImage: "photo.on.rectangle",
+      onSelect: () => void pick("library"),
+    },
+    {
+      key: "files",
+      label: "Choose File",
+      icon: FolderSimpleIcon,
+      systemImage: "folder",
+      onSelect: () => void pick("files"),
+    },
+    {
+      key: "uploads",
+      label: "Uploads on This Installation",
+      icon: ClockCounterClockwiseIcon,
+      systemImage: "clock.arrow.circlepath",
+      disabled: !c.library || items.length === 0,
+      onSelect: () => {
+        setShowUploads(true);
+        refresh();
+      },
+    },
+  ];
+  const canPick = !disabled && !busy && imagePicker.available;
+
   const name = current
     ? (items.find((i) => i.id === current.image)?.name ?? current.path.split(/[\\/]/).pop())
     : null;
   return (
     <ControlFrame label={c.label} value={name ?? undefined} disabled={disabled}>
       <View className="flex-1 gap-2">
-        <Pressable
-          disabled={disabled || busy || !imagePicker.available}
-          onPress={pick}
-          accessibilityRole="button"
-          accessibilityLabel={`${c.label ?? c.id}: choose a photo`}
-          style={ASPECT[c.aspect] ? { aspectRatio: ASPECT[c.aspect] } : undefined}
-          className={cn(
-            "bg-control-track border-border min-h-touch max-h-full flex-1 items-center justify-center self-center rounded-md border border-dashed px-3",
-            ASPECT[c.aspect] ? "flex-none" : "w-full",
-          )}
-        >
-          <Text className="text-foreground text-sm font-medium">
-            {busy ? "Uploading…" : current ? "Replace photo" : "Choose photo"}
-          </Text>
-          <Text className="text-muted-foreground mt-1 text-center text-xs">
-            {imagePicker.available
-              ? `${c.aspect === "free" ? "Any shape" : c.aspect} · ${c.formats.join(", ")} · ≤ ${c.maxMB} MB`
-              : "Photo picking isn't available on this device yet"}
-          </Text>
-        </Pressable>
+        {canPick ? (
+          <View className="flex-1 items-center justify-center">
+            <PullDownMenu label={`${c.label ?? c.id}: add an image`} items={sources}>
+              <Pressable
+                accessibilityRole="button"
+                testID={`image-source-${c.id}`}
+                className="bg-control-track border-border min-h-touch items-center justify-center rounded-md border border-dashed px-6 py-4"
+              >
+                <Text className="text-foreground text-sm font-medium">
+                  {current ? "Replace image" : "Add image"}
+                </Text>
+                <Text className="text-muted-foreground mt-1 text-center text-xs">
+                  {`${c.aspect === "free" ? "Any shape" : c.aspect} · ${c.formats.join(", ")} · ≤ ${c.maxMB} MB`}
+                </Text>
+              </Pressable>
+            </PullDownMenu>
+          </View>
+        ) : (
+          <Pressable
+            disabled
+            accessibilityRole="button"
+            accessibilityLabel={`${c.label ?? c.id}: choose a photo`}
+            style={ASPECT[c.aspect] ? { aspectRatio: ASPECT[c.aspect] } : undefined}
+            className={cn(
+              "bg-control-track border-border min-h-touch max-h-full flex-1 items-center justify-center self-center rounded-md border border-dashed px-3",
+              ASPECT[c.aspect] ? "flex-none" : "w-full",
+            )}
+          >
+            <Text className="text-foreground text-sm font-medium">
+              {busy ? "Uploading…" : current ? "Replace photo" : "Choose photo"}
+            </Text>
+            <Text className="text-muted-foreground mt-1 text-center text-xs">
+              {imagePicker.available
+                ? `${c.aspect === "free" ? "Any shape" : c.aspect} · ${c.formats.join(", ")} · ≤ ${c.maxMB} MB`
+                : "Photo picking isn't available on this device yet"}
+            </Text>
+          </Pressable>
+        )}
         {error && (
           <Text className="text-status-critical text-xs" numberOfLines={2}>
             {error}
           </Text>
         )}
-        {c.library && items.length > 0 && (
+        {c.library && showUploads && items.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="grow-0">
             <View className="flex-row gap-2">
               {items.map((a) => {

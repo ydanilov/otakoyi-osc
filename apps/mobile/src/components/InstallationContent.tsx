@@ -1,11 +1,29 @@
-import type { BridgeHealth } from "@osc/protocol";
-import { Icon } from "@osc/ui/components/ui/icon";
-import { Switch } from "@osc/ui/components/ui/switch";
+import type { ActivityEntry, BridgeHealth } from "@osc/protocol";
+import {
+  ActivityRow,
+  ArrowClockwiseIcon,
+  Button,
+  CaretLeftIcon,
+  CheckIcon,
+  ClockCounterClockwiseIcon,
+  ConnectionStatus,
+  FlashlightIcon,
+  HandPalmIcon,
+  ListCard,
+  ListRow,
+  MonitorIcon,
+  Note,
+  PauseIcon,
+  PowerIcon,
+  QuickActionsRow,
+  Section,
+  StatTile,
+  type ActivityKind,
+  type QuickActionItem,
+} from "@osc/ui";
 import { Text } from "@osc/ui/components/ui/text";
-import { cn } from "@osc/ui/lib/utils";
-import { Activity, Check } from "lucide-react-native";
 import * as React from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { useApp, useSessionState } from "@/lib/app-context";
 import {
   actionMessage,
@@ -16,59 +34,53 @@ import {
   quickActions,
 } from "@/lib/installation";
 import { installationOnline } from "@/lib/session";
-import { ListRow, ListSection } from "./ds/ListRow";
-import { SheetHeader } from "./ds/Sheet";
-import { QuickActionButton } from "./QuickActionButton";
 
 /** How often the stats refresh while the panel is open. */
 const HEALTH_MS = 2000;
+/** Hold-to-confirm for Restart and Blackout (ADR-016). */
+const HOLD_MS = 1200;
 
-const STATE_DOT = {
-  online: "bg-status-online",
-  offline: "bg-status-offline",
-  blackout: "bg-status-critical",
-  paused: "bg-status-warning",
-  idle: "bg-status-warning",
-} as const;
+export type InstallationView = "main" | "activity";
+
+const ACTION_ICON = { flash: FlashlightIcon, restart: ArrowClockwiseIcon, blackout: PowerIcon };
 
 /**
- * Installation panel (ADR-013): name and status with stats, pult switcher, quick actions
+ * Installation panel body (ADR-013): name and status with stats, pult switcher, quick actions
  * (Flash, Restart and Blackout with hold-to-confirm), modes (Idle, optional Pause) and an Activity
- * row that pushes the activity list. The same content is the iPhone sheet and the iPad inspector.
+ * row that pushes the activity list. Built from DS parts; the route (iPhone sheet) or the DS
+ * Inspector (iPad) provides the frame.
  */
 export function InstallationContent({
+  view,
+  onView,
   pultId,
   onPult,
-  onClose,
+  showBack,
 }: {
+  view: InstallationView;
+  onView: (v: InstallationView) => void;
   pultId: string | null;
   onPult: (id: string) => void;
-  onClose: () => void;
+  /** The inspector has no back button of its own: show one in the pushed Activity view. */
+  showBack?: boolean;
 }) {
-  const [view, setView] = React.useState<"main" | "activity">("main");
-  if (view === "activity") return <ActivityView onBack={() => setView("main")} onClose={onClose} />;
-  return (
-    <MainView
-      pultId={pultId}
-      onPult={onPult}
-      onClose={onClose}
-      onActivity={() => setView("activity")}
-    />
+  return view === "activity" ? (
+    <ActivityList onBack={showBack ? () => onView("main") : undefined} />
+  ) : (
+    <Main pultId={pultId} onPult={onPult} onActivity={() => onView("activity")} />
   );
 }
 
-function MainView({
+function Main({
   pultId,
   onPult,
-  onClose,
   onActivity,
 }: {
   pultId: string | null;
   onPult: (id: string) => void;
-  onClose: () => void;
   onActivity: () => void;
 }) {
-  const { session, prefs } = useApp();
+  const { session } = useApp();
   const s = useSessionState();
   const [health, setHealth] = React.useState<BridgeHealth | null>(null);
   React.useEffect(() => {
@@ -96,164 +108,142 @@ function MainView({
   const last = s.activity.at(-1);
   const lastLine = last ? activityLine(last, s.config, session?.device) : null;
   const pults = s.config?.pults ?? [];
+  const items: QuickActionItem[] = actions.map((a) => ({
+    id: a.name,
+    // Blackout is latched: while it is on, the same hold restores the picture.
+    label: a.name === "blackout" && s.modes.blackout ? "Restore" : a.label,
+    icon: ACTION_ICON[a.name],
+    tone: a.hold ? "critical" : "default",
+    holdMs: a.hold ? HOLD_MS : undefined,
+    disabled: !canControl,
+  }));
 
   return (
-    <View className="flex-1" testID="installation-panel">
-      <SheetHeader title="Installation" onClose={onClose} />
-      <ScrollView contentContainerClassName="gap-6 px-4 pb-10 pt-2">
-        <View className="gap-3">
-          <View className="flex-row items-center gap-2.5">
-            <View className={cn("h-2.5 w-2.5 rounded-full", STATE_DOT[state.name])} />
-            <Text className="text-foreground flex-1 text-xl font-semibold" numberOfLines={1}>
-              {s.config?.installation.name ?? session?.displayName}
-            </Text>
-            <Text className="text-muted-foreground text-sm">{state.label}</Text>
-          </View>
-          <View className="flex-row gap-2">
-            {stats.map((st) => (
-              <View
-                key={st.key}
-                className="bg-muted flex-1 gap-0.5 rounded-lg px-2.5 py-2"
-                accessible
-                accessibilityLabel={`${st.label}: ${st.value}`}
-              >
-                <Text className="text-muted-foreground text-[11px] uppercase tracking-wider">
-                  {st.label}
-                </Text>
-                <Text className="text-foreground font-mono text-[15px]" numberOfLines={1}>
-                  {st.value}
-                </Text>
-              </View>
-            ))}
-          </View>
+    <View className="gap-6" testID="installation-panel">
+      <View className="gap-3">
+        <View className="flex-row items-center gap-3">
+          <Text className="text-foreground flex-1 text-xl font-semibold" numberOfLines={1}>
+            {s.config?.installation.name ?? session?.displayName}
+          </Text>
+          <ConnectionStatus
+            state={online ? "online" : s.connection === "open" ? "connecting" : "offline"}
+          />
         </View>
+        <View className="flex-row flex-wrap gap-2">
+          {stats.map((st) => (
+            <StatTile key={st.key} label={st.label} value={st.value} />
+          ))}
+        </View>
+        {state.name !== "online" && state.name !== "offline" && (
+          <Note>{`The installation is in ${state.label.toLowerCase()} mode.`}</Note>
+        )}
+      </View>
 
-        {pults.length > 1 && (
-          <ListSection title="Pult">
+      {pults.length > 1 && (
+        <Section title="Pult">
+          <ListCard>
             {pults.map((p) => (
               <ListRow
                 key={p.id}
+                icon={p.id === pultId ? CheckIcon : MonitorIcon}
                 title={p.name}
+                value={p.id === pultId ? "On screen" : undefined}
                 onPress={() => onPult(p.id)}
-                accessory={
-                  p.id === pultId ? (
-                    <Icon as={Check} size={18} className="text-brand-accent" />
-                  ) : null
-                }
-                testID={`pult-${p.id}`}
               />
             ))}
-          </ListSection>
-        )}
+          </ListCard>
+        </Section>
+      )}
 
-        {actions.length > 0 && (
-          <View className="gap-1.5">
-            <Text className="text-muted-foreground px-4 text-xs font-medium uppercase tracking-wider">
-              Quick actions
-            </Text>
-            <View className="flex-row gap-2">
-              {actions.map((a) => (
-                <QuickActionButton
-                  key={a.name}
-                  label={a.label}
-                  hold={a.hold}
-                  on={a.latched ? s.modes.blackout : undefined}
-                  disabled={!canControl}
-                  haptics={prefs.haptics}
-                  onTrigger={() => {
-                    const m = actionMessage(a, s.modes);
-                    session?.action(m.name, m.on);
-                  }}
-                />
-              ))}
-            </View>
-            {!canControl && (
-              <Text className="text-muted-foreground px-4 text-xs">
-                Take control to use the quick actions.
-              </Text>
-            )}
-          </View>
-        )}
+      {items.length > 0 && (
+        <View className="gap-2">
+          <QuickActionsRow
+            actions={items}
+            onAction={(id) => {
+              const a = actions.find((x) => x.name === id);
+              if (!a) return;
+              const m = actionMessage(a, s.modes);
+              session?.action(m.name, m.on);
+            }}
+          />
+          {!canControl && <Note>Take control to use the quick actions.</Note>}
+        </View>
+      )}
 
-        {modes.length > 0 && (
-          <ListSection
-            title="Modes"
-            footer="Idle keeps the ambient loop and stops reacting to people."
-          >
+      {modes.length > 0 && (
+        <Section title="Modes">
+          <ListCard>
             {modes.map((m) => (
               <ListRow
                 key={m.name}
+                icon={m.name === "idle" ? HandPalmIcon : PauseIcon}
                 title={m.label}
+                subtitle={m.name === "idle" ? "Keep the ambient loop, stop reacting" : undefined}
+                trailing="switch"
+                checked={s.modes[m.name]}
                 disabled={!canControl}
-                accessory={
-                  <Switch
-                    checked={s.modes[m.name]}
-                    disabled={!canControl}
-                    onCheckedChange={(on) => session?.setMode(m.name, on)}
-                    accessibilityLabel={m.label}
-                    testID={`mode-${m.name}`}
-                  />
-                }
+                onCheckedChange={(on) => session?.setMode(m.name, on)}
               />
             ))}
-          </ListSection>
-        )}
+          </ListCard>
+        </Section>
+      )}
 
-        <ListSection>
-          <ListRow
-            title="Activity"
-            icon={Activity}
-            detail={lastLine ? `${lastLine.title} · ${lastLine.time}` : "Nothing yet"}
-            chevron
-            onPress={onActivity}
-            testID="activity-row"
-          />
-        </ListSection>
-      </ScrollView>
+      <ListCard>
+        <ListRow
+          icon={ClockCounterClockwiseIcon}
+          title="Activity"
+          subtitle={lastLine ? `${lastLine.title} · ${lastLine.time}` : "Nothing yet"}
+          onPress={onActivity}
+        />
+      </ListCard>
     </View>
   );
 }
 
+/** Kind of an activity line, for the DS Activity Row's LED and icon. */
+function kindOf(e: ActivityEntry): ActivityKind {
+  if (e.event === "rejected" || e.event === "disconnect") return "error";
+  if (e.role === "studio") return "studio";
+  if (e.event === "action" && (e.name === "restart" || e.name === "blackout")) return "restart";
+  return "control";
+}
+
 /** The bridge's activity feed, newest first (pushed from the Installation panel). */
-function ActivityView({ onBack, onClose }: { onBack: () => void; onClose: () => void }) {
+function ActivityList({ onBack }: { onBack?: () => void }) {
   const { session } = useApp();
   const s = useSessionState();
   const lines = [...s.activity].reverse();
   return (
-    <View className="flex-1" testID="activity-list">
-      <SheetHeader
-        title="Activity"
-        onBack={onBack}
-        trailing={
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-            className="min-h-touch justify-center px-1"
-          >
-            <Text className="text-brand-accent text-[15px] font-semibold">Done</Text>
-          </Pressable>
-        }
-      />
-      <ScrollView contentContainerClassName="gap-4 px-4 pb-10 pt-2">
-        {lines.length === 0 ? (
-          <Text className="text-muted-foreground py-10 text-center">No activity yet.</Text>
-        ) : (
-          <ListSection footer={`The last ${lines.length} events on this installation.`}>
-            {lines.map((e, i) => {
-              const l = activityLine(e, s.config, session?.device);
-              return (
-                <ListRow
-                  key={`${e.ts}-${i}`}
-                  title={l.title}
-                  detail={l.detail || undefined}
-                  value={l.time}
-                />
-              );
-            })}
-          </ListSection>
-        )}
-      </ScrollView>
+    <View className="gap-4" testID="activity-list">
+      {onBack && (
+        <View className="flex-row">
+          <Button
+            label="Installation"
+            icon={CaretLeftIcon}
+            variant="ghost"
+            size="sm"
+            onPress={onBack}
+          />
+        </View>
+      )}
+      {lines.length === 0 ? (
+        <Text className="text-muted-foreground py-10 text-center">No activity yet.</Text>
+      ) : (
+        <ListCard>
+          {lines.map((e, i) => {
+            const l = activityLine(e, s.config, session?.device);
+            return (
+              <ActivityRow
+                key={`${e.ts}-${i}`}
+                kind={kindOf(e)}
+                text={l.detail ? `${l.title} · ${l.detail}` : l.title}
+                time={l.time}
+              />
+            );
+          })}
+        </ListCard>
+      )}
     </View>
   );
 }

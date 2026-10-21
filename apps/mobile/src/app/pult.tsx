@@ -1,25 +1,31 @@
-import { ControlServicesProvider, PultPager, PultProvider, ThemeProvider } from "@osc/ui";
+import {
+  ControlServicesProvider,
+  EdgeSwipe,
+  Inspector,
+  PultHeader,
+  PultPager,
+  PultProvider,
+  ThemeProvider,
+} from "@osc/ui";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { router } from "expo-router";
 import * as React from "react";
 import { Platform, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Inspector } from "@/components/ds/Inspector";
-import { EdgeSwipes } from "@/components/EdgeSwipes";
-import { InstallationContent } from "@/components/InstallationContent";
+import { DemoBanner } from "@/components/DemoBanner";
+import { InstallationContent, type InstallationView } from "@/components/InstallationContent";
 import { PreviewPanel } from "@/components/PreviewPanel";
-import { DemoBanner, PultHeaderBar, type Connection } from "@/components/PultHeaderBar";
 import { useApp, useSessionState } from "@/lib/app-context";
-import { INSPECTOR_WIDTH, formFactorOf, presentationOf, type Panel } from "@/lib/nav";
-import { bridgeServices } from "@/lib/services";
+import { edgeTarget, formFactorOf, presentationOf, type Panel } from "@/lib/nav";
 import { resetTo } from "@/lib/navigation";
+import { bridgeServices } from "@/lib/services";
 import { installationOnline } from "@/lib/session";
 
 /**
- * The console (pult). Minimal header (ADR-013): Settings leading, status, Installation trailing;
+ * The console (pult). DS Pult Header (ADR-013): Settings leading, status, Installation trailing;
  * edge swipes are shortcuts. iPhone: both open as sheets. iPad: Settings is a form sheet,
- * Installation a 390 pt inspector over the console (no dimming). The demo adds its banner and the
- * live Preview of the simulated installation.
+ * Installation the DS Inspector (390 pt) over the console, no dimming. The demo adds its banner
+ * and the live Preview of the simulated installation.
  */
 export default function PultScreen() {
   const app = useApp();
@@ -27,6 +33,7 @@ export default function PultScreen() {
   const { width, height } = useWindowDimensions();
   const ff = formFactorOf(width);
   const [inspector, setInspector] = React.useState(false);
+  const [view, setView] = React.useState<InstallationView>("main");
   const session = app.session;
   const config = s.config;
 
@@ -59,11 +66,13 @@ export default function PultScreen() {
     return <View className="bg-background flex-1" />;
 
   const open = (panel: Panel) => {
-    const how = presentationOf(panel, ff);
-    if (how === "inspector") return setInspector((v) => !v);
+    if (presentationOf(panel, ff) === "inspector") {
+      setView("main");
+      return setInspector((v) => !v);
+    }
     router.push(panel === "settings" ? "/settings" : "/installation");
   };
-  const connection: Connection =
+  const connection =
     s.connection !== "open" ? "offline" : installationOnline(s) ? "online" : "connecting";
   const demo = session.kind === "demo";
   const previewH = Math.round(Math.min(220, Math.max(120, height * (ff === "phone" ? 0.2 : 0.24))));
@@ -73,40 +82,43 @@ export default function PultScreen() {
       <PultProvider store={store}>
         <ControlServicesProvider value={pultServices}>
           <SafeAreaView className="flex-1" edges={["top", "left", "right", "bottom"]}>
-            <View className="flex-1">
-              <PultHeaderBar
-                name={config.installation.name}
-                pultName={config.pults.length > 1 ? pult.name : undefined}
-                connection={connection}
-                mode={session.controlMode()}
-                inspectorOpen={inspector}
-                onSettings={() => open("settings")}
-                onInstallation={() => open("installation")}
-                onTakeControl={() => session.take()}
+            <PultHeader
+              name={config.installation.name}
+              connection={connection}
+              mode={session.controlMode()}
+              onRequestControl={() => session.take()}
+              onOpenSettings={() => open("settings")}
+              onOpenInstallation={() => open("installation")}
+            />
+            {demo && (
+              <DemoBanner
+                onExit={() => {
+                  void app.leave();
+                  resetTo("/connect");
+                }}
               />
-              {demo && (
-                <DemoBanner
-                  onExit={() => {
-                    void app.leave();
-                    resetTo("/connect");
-                  }}
-                />
-              )}
-              {demo && app.sim && (
-                <View className="px-4 pt-2" style={{ height: previewH }}>
-                  <PreviewPanel sim={app.sim} />
-                </View>
-              )}
-              <PultPager key={pult.id} pages={pult.pages} />
-            </View>
+            )}
+            {demo && app.sim && (
+              <View className="px-4 pt-2" style={{ height: previewH }}>
+                <PreviewPanel sim={app.sim} />
+              </View>
+            )}
+            <PultPager key={pult.id} pages={pult.pages} />
           </SafeAreaView>
-          <EdgeSwipes ff={ff} onOpen={open} />
-          {ff === "tablet" && inspector && (
-            <Inspector width={INSPECTOR_WIDTH}>
+          {edgeTarget("left", ff) && <EdgeSwipe side="left" onOpen={() => open("settings")} />}
+          <EdgeSwipe side="right" onOpen={() => open("installation")} />
+          {ff === "tablet" && (
+            <Inspector
+              open={inspector}
+              onClose={() => setInspector(false)}
+              title={view === "activity" ? "Activity" : "Installation"}
+            >
               <InstallationContent
+                view={view}
+                onView={setView}
                 pultId={pult.id}
                 onPult={app.setPultId}
-                onClose={() => setInspector(false)}
+                showBack
               />
             </Inspector>
           )}

@@ -17,11 +17,21 @@ export interface PickedImage {
   uri?: string | undefined;
 }
 
+/** Where a new image comes from (Take Photo / Photo Library / Choose File). */
+export type ImageSource = "camera" | "library" | "files";
+
 export interface ImagePicker {
   /** False when the platform part is not available yet (shown as a hint, the control stays drawn). */
   readonly available: boolean;
-  /** Ask for permission if needed and let the user pick one image. null = cancelled / denied. */
-  pick(opts: { aspect: string; formats: readonly string[] }): Promise<PickedImage | null>;
+  /**
+   * Ask for permission if needed and let the user pick one image. null = cancelled / denied.
+   * `source` is the choice from the image control's pull-down menu (default: photo library).
+   */
+  pick(opts: {
+    aspect: string;
+    formats: readonly string[];
+    source?: ImageSource;
+  }): Promise<PickedImage | null>;
 }
 
 export interface AudioInput {
