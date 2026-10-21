@@ -19,7 +19,7 @@ export function bridgeServices(
       show: http.images.show,
       remove: http.images.remove,
     },
-    prompts: http.prompts,
+    prompts: { ...http.prompts, remote: true },
   };
 }
 

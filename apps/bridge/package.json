@@ -7,7 +7,8 @@
     "start": "tsx src/main.ts",
     "typecheck": "tsc -p .",
     "test": "vitest run",
-    "bundle": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/bridge.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\""
+    "bundle": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/bridge.mjs --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
+    "build:bin": "node scripts/build-bin.mjs"
   },
   "dependencies": {
     "@osc/controls": "workspace:*",
@@ -23,6 +24,7 @@
     "@types/pngjs": "^6.0.5",
     "@types/qrcode": "^1.5.6",
     "@types/ws": "^8.18.1",
-    "esbuild": "^0.25.12"
+    "esbuild": "^0.25.12",
+    "postject": "1.0.0-alpha.6"
   }
 }

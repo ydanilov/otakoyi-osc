@@ -143,6 +143,46 @@ describe("image upload API", () => {
   });
 });
 
+describe("prompt presets API: duplicate, reorder, delete + undo", () => {
+  it("works over HTTP and tells other pults to refetch", async () => {
+    const { call, connect } = await setup();
+    const inbox = await connect("phone");
+    const json = { "content-type": "application/json" };
+    const make = async (label: string) =>
+      (
+        await call("/api/prompts?pult=live&control=prompt", {
+          method: "POST",
+          headers: json,
+          body: JSON.stringify({ label, text: label }),
+        })
+      ).json();
+    const a = await make("A");
+    const b = await make("B");
+    const dup = await (await call(`/api/prompts/${a.id}/duplicate`, { method: "POST" })).json();
+    expect(dup.label).toBe("A copy");
+    const order = await call("/api/prompts/order?pult=live&control=prompt", {
+      method: "PUT",
+      headers: json,
+      body: JSON.stringify({ ids: [b.id, dup.id, a.id] }),
+    });
+    expect((await order.json()).map((p: { label: string }) => p.label)).toEqual([
+      "B",
+      "A copy",
+      "A",
+    ]);
+    const del = await (await call(`/api/prompts/${b.id}`, { method: "DELETE" })).json();
+    expect(del).toMatchObject({ ok: true, undoMs: 30000 });
+    expect((await call(`/api/prompts/${b.id}/restore`, { method: "POST" })).status).toBe(200);
+    const list = await (await call("/api/prompts?pult=live&control=prompt")).json();
+    expect(list.map((p: { label: string }) => p.label)).toEqual(["B", "A copy", "A"]);
+    await until(() => inbox.find((m) => m.t === "data"));
+    // Without the lease: refused.
+    expect(
+      (await call(`/api/prompts/${a.id}`, { method: "DELETE", device: "tablet" })).status,
+    ).toBe(409);
+  });
+});
+
 describe("prompt presets API", () => {
   it("CRUD, persisted per installation", async () => {
     const { call, connect } = await setup();

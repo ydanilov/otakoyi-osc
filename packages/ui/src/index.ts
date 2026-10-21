@@ -3,6 +3,7 @@ export { PultStore, type ControlMode, type Transport } from "./pult/store";
 export {
   PultPager,
   PultProvider,
+  useControlMeta,
   useControlMode,
   useControlValue,
   usePultStore,
@@ -17,7 +18,8 @@ export { XYPad } from "./controls/XYPad";
 export { Meter } from "./controls/Meter";
 export { JogFader } from "./controls/Jog";
 export { Thumbstick } from "./controls/Thumbstick";
-export { ImageUpload, MicControl, PromptControl } from "./controls/media";
+export { ImageUpload, MicControl } from "./controls/media";
+export { PromptControl } from "./controls/Prompt";
 export {
   ControlServicesProvider,
   createMemoryServices,

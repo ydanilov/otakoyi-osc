@@ -325,7 +325,7 @@ describe("prompt", () => {
 
   it("a preset switched off sends an empty slot; toggling turns it back on", () => {
     let v = promptValue(presets, { a: "sea", b: "city", mix: 2 }, 500);
-    expect(v).toEqual({ a: null, b: "neon city in the rain", mix: 1 });
+    expect(v).toEqual({ a: null, b: "neon city in the rain", mix: 1, aId: null, bId: "city" });
     expect(wire(messagesFor(prompt, v))[0]).toEqual(["/live/prompt/a", ""]);
     const on = togglePreset(presets, "sea");
     v = promptValue(on, { a: "sea", b: null, mix: 0 }, 4);
@@ -346,7 +346,12 @@ describe("prompt", () => {
 
   it("validates texts against maxLength", () => {
     expect(coerceValue(prompt, { a: "x".repeat(501), b: null, mix: 0 })).toBeUndefined();
-    expect(coerceValue(prompt, { a: "ok", b: null, mix: 7 })).toEqual({ a: "ok", b: null, mix: 1 });
+    expect(coerceValue(prompt, { a: "ok", b: null, mix: 7 })).toMatchObject({
+      a: "ok",
+      b: null,
+      mix: 1,
+      aId: null,
+    });
   });
 });
 

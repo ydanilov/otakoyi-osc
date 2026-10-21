@@ -6,6 +6,7 @@ import {
   Control,
   PromptPreset,
   SCHEMA_VERSION,
+  actionsOf,
   migrateConfig,
   parseConfig,
   targetOf,
@@ -147,6 +148,32 @@ describe("schema v2 layouts (ADR-014)", () => {
     const r = parseConfig(cfg);
     if (r.ok || r.reason !== "invalid") throw new Error("expected invalid");
     expect(r.issues.map((i) => i.message)).toContain(`Control "intensity" has no phone placement`);
+  });
+});
+
+describe("installation actions and targets (ADR-016)", () => {
+  it("defaults: flash, restart, blackout, idle; pause is opt-in; actions must be unique", () => {
+    expect(actionsOf(ok(demo))).toEqual(["flash", "restart", "blackout", "idle"]);
+    const withPause = clone(demo) as any;
+    withPause.installation.actions = ["flash", "pause"];
+    expect(actionsOf(ok(withPause))).toEqual(["flash", "pause"]);
+    withPause.installation.actions = ["flash", "flash"];
+    expect(parseConfig(withPause).ok).toBe(false);
+  });
+
+  it("targets ping /sys/ping by default, accept discovery and supervisor fields", () => {
+    expect(ok(demo).targets[0]!.heartbeat).toBe("/sys/ping");
+    const cfg = clone(demo) as any;
+    cfg.targets[0] = {
+      ...cfg.targets[0],
+      protocol: "tcp",
+      heartbeat: false,
+      discovery: { name: "Lobby TD" },
+      runtime: { app: "touchdesigner", project: "wall.toe" },
+    };
+    const t = ok(cfg).targets[0]!;
+    expect(t).toMatchObject({ protocol: "tcp", heartbeat: false, discovery: { name: "Lobby TD" } });
+    expect(t.runtime).toMatchObject({ perform: true, hangTimeoutS: 15, startupGraceS: 60 });
   });
 });
 

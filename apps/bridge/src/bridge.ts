@@ -1,16 +1,29 @@
 import { timingSafeEqual } from "node:crypto";
 import { message, type OscMessage } from "@osc/core";
-import { coerceValue, PultStore, type ControlValue } from "@osc/controls";
 import {
+  coerceValue,
+  isPromptValue,
+  promptConfirms,
+  PultStore,
+  reapplyAfterChange,
+  type ControlValue,
+  type PromptValue,
+} from "@osc/controls";
+import {
+  MIN_PROTOCOL_VERSION,
   PROTOCOL_VERSION,
   parseClientMessage,
+  type ActivityEntry,
+  type ClientMessage,
   type ErrorCode,
   type Holder,
+  type InstallationModes,
   type ServerMessage,
   type TargetStatus,
 } from "@osc/protocol";
-import type { InstallationConfig, Target } from "@osc/schema";
+import { actionsOf, type Control, type InstallationConfig, type Target } from "@osc/schema";
 import { Lease } from "./lease";
+import type { Supervisor } from "./supervisor";
 
 /** One connected pult (a phone, a browser tab, the studio's cloud pult). */
 export interface Peer {
@@ -18,13 +31,7 @@ export interface Peer {
   close(): void;
 }
 
-export interface LogEntry {
-  ts: string;
-  event: "connect" | "disconnect" | "set" | "lease" | "rejected" | "pairing";
-  device?: string | undefined;
-  role?: string | undefined;
-  [k: string]: unknown;
-}
+export type LogEntry = ActivityEntry;
 
 export interface BridgeIO {
   sendOsc(target: Target, messages: OscMessage[]): void;
@@ -32,7 +39,30 @@ export interface BridgeIO {
   now(): number;
   /** Links the installation shows in pairing mode (the network address is known to the server). */
   pairingLinks?(): { app: string; web: string; pin: string };
+  /** Starts and watches the installation software (ADR-011). Restart goes through it. */
+  supervisor?: Supervisor | undefined;
+  /** A target stopped answering (the server re-resolves `host: "auto"`). */
+  targetOffline?(target: Target): void;
 }
+
+/**
+ * System OSC to the installation for the installation actions (ADR-013 addendum, ADR-016).
+ * Flash and restart are one-shot; blackout, idle and pause carry 1 / 0 and are re-sent when a
+ * target comes back online, so a restarted project picks up the current state.
+ */
+export const OSC_ACTION = {
+  flash: "/otakoyi/flash",
+  restart: "/otakoyi/restart",
+  blackout: "/otakoyi/blackout",
+  idle: "/otakoyi/idle",
+  pause: "/otakoyi/pause",
+} as const;
+
+/** Activity entries kept for the drawer and `/api/activity`; the last WELCOME_ACTIVITY go in `welcome`. */
+export const ACTIVITY_SIZE = 200;
+export const WELCOME_ACTIVITY = 50;
+/** Repeated `set`s of one control by one device within this window are one activity line. */
+const SET_COALESCE_MS = 2000;
 
 /** How long the pairing QR stays on the installation's output. */
 export const PAIRING_MS = 2 * 60 * 1000;
@@ -76,6 +106,22 @@ export class Bridge {
   private applyingFor: Peer | null = null;
   /** Device behind a value applied over HTTP (no socket of its own). */
   private applyingBy: string | null = null;
+  /** Latched installation state (blackout, idle, pause). */
+  readonly modes: InstallationModes = { blackout: false, idle: false, pause: false };
+  private activityRing: ActivityEntry[] = [];
+  private activityPending: ActivityEntry[] = [];
+  /** Prompts waiting for the installation to confirm, by `pult/control`. */
+  private promptPending = new Map<
+    string,
+    {
+      pult: string;
+      control: Extract<Control, { type: "prompt" }>;
+      sent: PromptValue;
+      seq: number;
+      until: number;
+    }
+  >();
+  private promptSeq = 0;
 
   constructor(
     readonly config: InstallationConfig,
@@ -127,6 +173,12 @@ export class Bridge {
         if (who.role !== "studio")
           return this.error(peer, "no-lease", "Only the studio can show the pairing QR");
         return this.setPairing(msg.show, who);
+      case "action":
+      case "mode": {
+        const r = this.installationAction(msg, who);
+        if (r) this.error(peer, r.code, r.message);
+        return;
+      }
       case "set": {
         if (!this.lease.canSend(who.device)) {
           this.log("rejected", who, { reason: "no-lease", pult: msg.pult, id: msg.id });
@@ -145,6 +197,7 @@ export class Bridge {
         } finally {
           this.applyingFor = null;
         }
+        this.afterSend(msg.pult, control, value);
         this.log("set", who, { pult: msg.pult, id: msg.id, value });
         return;
       }
@@ -154,8 +207,10 @@ export class Bridge {
   /** OSC that came back from the installation. */
   feedback(targetId: string, msg: OscMessage) {
     this.lastFeedback.set(targetId, this.io.now());
+    this.io.supervisor?.heartbeat(targetId);
     if (msg.address === OSC_PAIR_REQUEST)
       return this.setPairing(!this.pairingUntil, { device: `target:${targetId}` });
+    this.checkPromptConfirm(msg);
     for (const store of this.stores.values()) store.receive(msg);
   }
 
@@ -193,17 +248,90 @@ export class Bridge {
     });
   }
 
-  /** Call about once a second: broadcasts target status when it changes. */
+  /**
+   * Call about once a second: heartbeat pings, pairing countdown, target status (broadcast when it
+   * changes) and the batched activity feed.
+   */
   tick() {
+    for (const t of this.config.targets)
+      if (t.heartbeat) this.io.sendOsc(t, [message(t.heartbeat)]);
     if (this.pairingUntil !== null) {
       if (this.io.now() >= this.pairingUntil) this.setPairing(false);
       else this.sendPairing(); // countdown + reaches an installation that restarted meanwhile
     }
     const st = this.status();
     if (st.some((t) => this.online.get(t.id) !== t.online)) {
-      for (const t of st) this.online.set(t.id, t.online);
-      this.broadcast({ t: "status", targets: st });
+      for (const t of st) {
+        const was = this.online.get(t.id);
+        this.online.set(t.id, t.online);
+        const target = this.config.targets.find((x) => x.id === t.id)!;
+        if (t.online && !was) this.sendModes(target); // a restarted project gets the current state
+        if (!t.online && was) this.io.targetOffline?.(target);
+      }
+      this.broadcastStatus(st);
     }
+    for (const [key, p] of this.promptPending)
+      if (this.io.now() >= p.until) {
+        this.promptPending.delete(key);
+        this.broadcast({ t: "prompt", pult: p.pult, id: p.control.id, state: "error", seq: p.seq });
+      }
+    if (this.activityPending.length) {
+      const entries = this.activityPending;
+      this.activityPending = [];
+      this.broadcast({ t: "activity", entries });
+    }
+  }
+
+  /** Recent activity, oldest first. */
+  activity(limit = ACTIVITY_SIZE): ActivityEntry[] {
+    return this.activityRing.slice(-Math.max(0, limit));
+  }
+
+  /**
+   * Flash / restart / blackout and the idle / pause modes. Only the lease holder or the studio,
+   * only what the installation supports (`installation.actions`). Returns an error or null.
+   */
+  installationAction(
+    msg: Extract<ClientMessage, { t: "action" | "mode" }>,
+    who: Holder,
+  ): { code: ErrorCode; message: string } | null {
+    const name = msg.t === "action" ? msg.name : msg.mode;
+    if (!actionsOf(this.config).includes(name))
+      return { code: "unsupported", message: `This installation has no ${name}` };
+    if (!this.canControl(who)) {
+      this.log("rejected", who, { reason: "no-lease", action: name });
+      return { code: "no-lease", message: "Another device is in control" };
+    }
+    if (msg.t === "mode" || name === "blackout") {
+      const on = msg.on;
+      if (typeof on !== "boolean") return { code: "bad-message", message: `${name} needs on` };
+      const key = name as keyof InstallationModes;
+      this.modes[key] = on;
+      for (const t of this.config.targets)
+        this.io.sendOsc(t, [message(OSC_ACTION[key], on ? 1 : 0)]);
+      this.log(msg.t, who, { name, on });
+      this.broadcastStatus(this.status());
+      return null;
+    }
+    for (const t of this.config.targets) this.io.sendOsc(t, [message(OSC_ACTION[name])]);
+    if (name === "restart" && this.io.supervisor)
+      for (const t of this.config.targets)
+        if (t.runtime)
+          this.io.supervisor
+            .restart(t)
+            .catch((e: Error) => this.log("action", who, { name, target: t.id, error: e.message }));
+    this.log("action", who, { name });
+    return null;
+  }
+
+  private sendModes(t: Target) {
+    for (const key of ["blackout", "idle", "pause"] as const)
+      if (key === "blackout" || actionsOf(this.config).includes(key))
+        this.io.sendOsc(t, [message(OSC_ACTION[key], this.modes[key] ? 1 : 0)]);
+  }
+
+  private broadcastStatus(targets: TargetStatus[]) {
+    this.broadcast({ t: "status", targets, modes: { ...this.modes } });
   }
 
   /**
@@ -242,8 +370,81 @@ export class Bridge {
     } finally {
       this.applyingBy = null;
     }
+    this.afterSend(pult, control, value);
     this.log("set", who, { pult, id, value });
     return true;
+  }
+
+  /**
+   * A control's data on the bridge changed (prompt presets, image library): log it and tell every
+   * pult to fetch it again.
+   */
+  dataChanged(
+    pult: string,
+    id: string,
+    kind: "prompts" | "images",
+    who: Holder,
+    extra: Record<string, unknown> = {},
+  ) {
+    this.log(kind === "prompts" ? "prompt" : "image", who, { pult, id, ...extra });
+    this.broadcast({ t: "data", pult, id, kind });
+  }
+
+  /**
+   * A preset changed or was deleted: if it is live on the control, send the control again with
+   * the preset re-resolved (a deleted preset empties its slot: the installation's base look).
+   */
+  reapplyPrompt(
+    pult: string,
+    id: string,
+    presets: readonly { id: string; text: string; on: boolean }[],
+    presetId: string,
+    who: Holder,
+  ): boolean {
+    const store = this.stores.get(pult);
+    const control = store?.control(id);
+    const current = store?.get(id);
+    if (!store || control?.type !== "prompt" || !isPromptValue(current)) return false;
+    const next = reapplyAfterChange(current, presets, presetId, control.maxLength);
+    return next ? this.applyValue(pult, id, next, who) : false;
+  }
+
+  /** After a control sent OSC: a prompt waits for the installation to confirm (Applying → On / Error). */
+  private afterSend(pult: string, control: Control, value: ControlValue) {
+    if (control.type !== "prompt" || !isPromptValue(value)) return;
+    const seq = ++this.promptSeq;
+    const key = `${pult}/${control.id}`;
+    if (control.confirmMs === 0) {
+      this.promptPending.delete(key);
+      return this.broadcast({ t: "prompt", pult, id: control.id, state: "applied", seq });
+    }
+    this.promptPending.set(key, {
+      pult,
+      control,
+      sent: value,
+      seq,
+      until: this.io.now() + control.confirmMs,
+    });
+    this.broadcast({ t: "prompt", pult, id: control.id, state: "applying", seq });
+  }
+
+  private checkPromptConfirm(msg: OscMessage) {
+    if (!this.promptPending.size) return;
+    const first = msg.args[0];
+    const text = first && "value" in first ? first.value : undefined;
+    for (const [key, p] of this.promptPending)
+      if (
+        promptConfirms(p.control.address, p.sent, p.control.blend, { address: msg.address, text })
+      ) {
+        this.promptPending.delete(key);
+        this.broadcast({
+          t: "prompt",
+          pult: p.pult,
+          id: p.control.id,
+          state: "applied",
+          seq: p.seq,
+        });
+      }
   }
 
   get devices(): Holder[] {
@@ -254,8 +455,12 @@ export class Bridge {
 
   private hello(s: Session, msg: Extract<ReturnType<typeof parseClientMessage>, { t: "hello" }>) {
     if (s.holder) return this.error(s.peer, "bad-message", "Already said hello");
-    if (msg.v !== PROTOCOL_VERSION) {
-      this.error(s.peer, "version", `Bridge speaks protocol ${PROTOCOL_VERSION}`);
+    if (msg.v < MIN_PROTOCOL_VERSION || msg.v > PROTOCOL_VERSION) {
+      this.error(
+        s.peer,
+        "version",
+        `Bridge speaks protocol ${MIN_PROTOCOL_VERSION}–${PROTOCOL_VERSION}`,
+      );
       return s.peer.close();
     }
     const expected = msg.role === "studio" ? this.auth.studioKey : this.auth.clientPin;
@@ -284,6 +489,9 @@ export class Bridge {
       state: Object.fromEntries([...this.stores].map(([id, st]) => [id, st.snapshot()])),
       lease: this.lease.holder,
       targets: this.status(),
+      actions: actionsOf(this.config),
+      modes: { ...this.modes },
+      activity: this.activity(WELCOME_ACTIVITY),
     });
     if (this.lease.offer(s.holder)) this.leaseChanged(s.holder);
   }
@@ -321,13 +529,38 @@ export class Bridge {
     who?: Partial<Holder>,
     extra: Record<string, unknown> = {},
   ) {
-    this.io.log({
+    const entry: ActivityEntry = {
       ts: new Date(this.io.now()).toISOString(),
       event,
       device: who?.device,
       role: who?.role,
       ...extra,
-    });
+    };
+    this.io.log(entry);
+    this.remember(entry);
+  }
+
+  /** Add to the activity feed. A burst of moves on one control by one device is one line. */
+  private remember(entry: ActivityEntry) {
+    const last = this.activityRing.at(-1);
+    const sameSet =
+      entry.event === "set" &&
+      last?.event === "set" &&
+      last.device === entry.device &&
+      last.pult === entry.pult &&
+      last.id === entry.id &&
+      Date.parse(entry.ts) - Date.parse(last.ts) < SET_COALESCE_MS;
+    if (sameSet) {
+      this.activityRing[this.activityRing.length - 1] = entry;
+      const i = this.activityPending.lastIndexOf(last!);
+      if (i >= 0) this.activityPending[i] = entry;
+      else this.activityPending.push(entry);
+      return;
+    }
+    this.activityRing.push(entry);
+    if (this.activityRing.length > ACTIVITY_SIZE) this.activityRing.shift();
+    this.activityPending.push(entry);
+    if (this.activityPending.length > ACTIVITY_SIZE) this.activityPending.shift();
   }
 }
 

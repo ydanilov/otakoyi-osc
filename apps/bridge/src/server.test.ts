@@ -68,6 +68,7 @@ describe("bridge server (real sockets)", () => {
       logDir: await mkdtemp(join(tmpdir(), "bridge-")),
       auth: { clientPin: "1234" },
       quiet: true,
+      mdns: false,
     });
     closers.push(() => server.close());
 
@@ -88,7 +89,26 @@ describe("bridge server (real sockets)", () => {
     expect(fb).toMatchObject({ pult: "lobby", value: "60", by: null });
 
     const health = await (await fetch(`http://127.0.0.1:${server.port}/api/health`)).json();
-    expect(health).toMatchObject({ ok: true, protocol: 1, devices: 1 });
+    expect(health).toMatchObject({ ok: true, protocol: 2, devices: 1 });
+    // Per target: last feedback, where it is reached.
+    expect(health.targets[0]).toMatchObject({
+      id: "td",
+      online: true,
+      protocol: "udp",
+      host: "127.0.0.1",
+    });
+    expect(typeof health.targets[0].lastSeen).toBe("string");
+
+    // Activity feed: needs the PIN.
+    expect((await fetch(`http://127.0.0.1:${server.port}/api/activity`)).status).toBe(401);
+    const activity = await (
+      await fetch(`http://127.0.0.1:${server.port}/api/activity`, {
+        headers: { "x-otakoyi-secret": "1234" },
+      })
+    ).json();
+    expect(activity.map((e: { event: string }) => e.event)).toEqual(
+      expect.arrayContaining(["connect", "lease", "set"]),
+    );
 
     // Pairing sheet: local only, shows the PIN and both QR codes.
     const pair = await (await fetch(`http://127.0.0.1:${server.port}/pair`)).text();

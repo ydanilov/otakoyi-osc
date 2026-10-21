@@ -95,7 +95,7 @@ describe("PromptStore", () => {
     const reloaded = new PromptStore(d);
     expect(await reloaded.list("live", "prompt")).toHaveLength(1);
     expect(await reloaded.list("live", "other")).toHaveLength(0);
-    expect(await reloaded.remove(r.value.id)).toBe(true);
+    expect(await reloaded.remove(r.value.id)).toMatchObject({ id: r.value.id });
     expect(await new PromptStore(d).list("live", "prompt")).toEqual([]);
   });
 

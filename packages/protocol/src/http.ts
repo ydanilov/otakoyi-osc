@@ -24,6 +24,7 @@ export interface PromptPresetDto {
   on: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface BridgeHttpOptions {
@@ -95,9 +96,21 @@ export function createBridgeHttp(opts: BridgeHttpOptions) {
         call<PromptPresetDto>(`/api/prompts?${q(pult, control)}`, jsonInit("POST", p)),
       update: (id: string, patch: { label?: string; text?: string; on?: boolean }) =>
         call<PromptPresetDto>(`/api/prompts/${encodeURIComponent(id)}`, jsonInit("PATCH", patch)),
+      /** Soft delete; `undoMs` is how long `restore` works. */
       remove: (id: string) =>
-        call<{ ok: true }>(`/api/prompts/${encodeURIComponent(id)}`, { method: "DELETE" }),
+        call<{ ok: true; undoMs: number }>(`/api/prompts/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        }),
+      restore: (id: string) =>
+        call<PromptPresetDto>(`/api/prompts/${encodeURIComponent(id)}/restore`, { method: "POST" }),
+      duplicate: (id: string) =>
+        call<PromptPresetDto>(`/api/prompts/${encodeURIComponent(id)}/duplicate`, {
+          method: "POST",
+        }),
+      reorder: (pult: string, control: string, ids: string[]) =>
+        call<PromptPresetDto[]>(`/api/prompts/order?${q(pult, control)}`, jsonInit("PUT", { ids })),
     },
+    activity: (limit?: number) => call<unknown[]>(`/api/activity${limit ? `?limit=${limit}` : ""}`),
   };
 }
 

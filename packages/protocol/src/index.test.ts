@@ -1,6 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { modeFor, parseClientMessage } from "./index";
 
+describe("protocol v2", () => {
+  it("parses installation actions and modes", () => {
+    expect(parseClientMessage('{"t":"action","name":"flash"}')).toEqual({
+      t: "action",
+      name: "flash",
+    });
+    expect(parseClientMessage('{"t":"action","name":"blackout","on":true}')).toMatchObject({
+      on: true,
+    });
+    expect(parseClientMessage('{"t":"mode","mode":"idle","on":false}')).toEqual({
+      t: "mode",
+      mode: "idle",
+      on: false,
+    });
+    expect(parseClientMessage('{"t":"action","name":"selfdestruct"}')).toBeNull();
+    expect(parseClientMessage('{"t":"mode","mode":"idle"}')).toBeNull();
+  });
+});
+
 describe("protocol", () => {
   it("parses valid messages and rejects junk", () => {
     expect(parseClientMessage('{"t":"take"}')).toEqual({ t: "take" });

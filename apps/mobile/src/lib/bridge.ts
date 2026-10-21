@@ -126,6 +126,17 @@ export function useBridge(url: string | null, secret: string | undefined): Bridg
             break;
           case "pong":
             return;
+          case "prompt":
+            // Applying → applied / error for the prompt cards.
+            session.stores.get(msg.pult)?.setAck(msg.id, { state: msg.state, seq: msg.seq });
+            return;
+          case "data":
+            // Presets or the image library changed on another pult: controls refetch.
+            session.stores.get(msg.pult)?.bumpRev(msg.id);
+            return;
+          case "activity":
+          case "pairing":
+            return; // drawers (not built yet) will read these
         }
         rerender();
       },

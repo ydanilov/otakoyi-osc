@@ -9,6 +9,30 @@ against real TD instead of a simulation. Same addresses as the demo config
 | OSC in       | UDP **7000** (`/wall/intensity`, `/wall/hue`, `/scene`, `/cue/{n}`, …)                                                              |
 | Feedback out | UDP **9000** on 127.0.0.1 — every received message is echoed back, plus simulated `/wall/audio/level` (10 Hz) and `/sys/fps` (1 Hz) |
 | Inside       | `/project1/otakoyi`: `osc_in` → `values` table → preview TOP (brightness, hue, blackout)                                            |
+| System OSC   | `/otakoyi/*` and `/sys/ping` from the bridge go to the `system` table (see below), never echoed                                     |
+
+## Installation actions and heartbeat (ADR-016)
+
+The bridge sends these to every target; the patch answers like a real installation should:
+
+| Bridge sends                | Patch does                                                                 |
+| --------------------------- | -------------------------------------------------------------------------- |
+| `/otakoyi/flash`            | full-white frame for 150 ms                                                |
+| `/otakoyi/blackout 0\|1`    | black output while 1                                                       |
+| `/otakoyi/idle 0\|1`        | dims to 25 % ("not reacting to people"), shows IDLE                        |
+| `/otakoyi/pause 0\|1`       | holds the last frame, shows PAUSE (only if the config lists `pause`)       |
+| `/otakoyi/restart`          | logs it; the real restart is done by Otakoyi Runtime's supervisor          |
+| `/sys/ping` (1 Hz)          | answers `/sys/pong` (any feedback marks the target online in the bridge)   |
+| prompt `/…/a`, `/…/b`, `/…` | echoed like every message, which is what confirms a prompt (Applying → On) |
+
+Blackout, idle and pause are re-sent by the bridge whenever the target comes back online, so a
+restarted project picks up the current state. When the supervisor starts TouchDesigner it sets
+`OTAKOYI_PERFORM=1`; the patch's `on_start` switches to perform mode then (TouchDesigner has no
+command-line switch for it; TouchPlayer always runs in perform mode).
+
+> `otakoyi_test.tox` in this folder predates these changes: rebuild it from
+> `build_otakoyi_test.py` in TouchDesigner and save the COMP over the .tox (it is a binary file and
+> cannot be regenerated without TD).
 
 ## Use it
 

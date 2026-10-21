@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Control, ControlOf } from "@osc/schema";
 import type { Bridge } from "./bridge";
 import { ImageLibrary, validateImage } from "./images";
-import { PromptStore } from "./prompts";
+import { PromptStore, UNDO_WINDOW_MS } from "./prompts";
 
 /**
  * HTTP API for controls that move more than a value (ADR-015):
@@ -14,7 +14,11 @@ import { PromptStore } from "./prompts";
  *   GET    /api/prompts?pult=&control=        prompt presets
  *   POST   /api/prompts?pult=&control=        { label, text, on? }
  *   PATCH  /api/prompts/<id>                  { label?, text?, on? }
- *   DELETE /api/prompts/<id>
+ *   DELETE /api/prompts/<id>                  soft delete, { undoMs }
+ *   POST   /api/prompts/<id>/restore          undo a delete (410 when too late)
+ *   POST   /api/prompts/<id>/duplicate
+ *   PUT    /api/prompts/order?pult=&control=  { ids } (persisted order)
+ *   GET    /api/activity?limit=                recent activity (connect, set, lease, action, …)
  *
  * Auth: `x-otakoyi-secret` (installation PIN or studio key) and `x-otakoyi-device` (the device id
  * used on the socket). Anything that sends OSC needs the control lease (or the studio).
@@ -57,13 +61,21 @@ export function createApi(bridge: Bridge, dir: string, now: () => number = Date.
 
   async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promise<boolean> {
     const parts = url.pathname.split("/").filter(Boolean); // ["api", "images", id?, action?]
-    if (parts[0] !== "api" || (parts[1] !== "images" && parts[1] !== "prompts")) return false;
+    if (parts[0] !== "api" || !["images", "prompts", "activity"].includes(parts[1] ?? ""))
+      return false;
     const who = bridge.authorize(header(req, "x-otakoyi-secret"), header(req, "x-otakoyi-device"));
     if (!who) throw new HttpError(401, "Wrong PIN");
     const method = req.method ?? "GET";
     const needsLease = () => {
       if (!bridge.canControl(who)) throw new HttpError(409, "Another device is in control");
     };
+
+    if (parts[1] === "activity") {
+      // Activity feed for the Installation drawer (needs the PIN or the studio key).
+      if (method !== "GET") throw new HttpError(405, "Method not allowed");
+      const limit = Number(url.searchParams.get("limit")) || undefined;
+      return json(res, 200, bridge.activity(limit));
+    }
 
     if (parts[1] === "images") {
       const id = parts[2];
@@ -94,6 +106,7 @@ export function createApi(bridge: Bridge, dir: string, now: () => number = Date.
           control.library,
         );
         bridge.applyValue(pult, control.id, { image: asset.id, path: asset.path }, who);
+        bridge.dataChanged(pult, control.id, "images", who, { op: "upload", image: asset.id });
         return json(res, 201, asset);
       }
       if (id && parts[3] === "show" && method === "POST") {
@@ -113,7 +126,12 @@ export function createApi(bridge: Bridge, dir: string, now: () => number = Date.
       }
       if (id && !parts[3] && method === "DELETE") {
         needsLease();
-        if (!(await images.remove(id))) throw new HttpError(404, "No such image");
+        const asset = await images.get(id);
+        if (!asset || !(await images.remove(id))) throw new HttpError(404, "No such image");
+        bridge.dataChanged(asset.pultId, asset.controlId, "images", who, {
+          op: "delete",
+          image: id,
+        });
         return json(res, 200, { ok: true });
       }
       throw new HttpError(405, "Method not allowed");
@@ -121,6 +139,12 @@ export function createApi(bridge: Bridge, dir: string, now: () => number = Date.
 
     // prompts
     const id = parts[2];
+    const changed = async (pult: string, control: string, op: string, presetId?: string) => {
+      bridge.dataChanged(pult, control, "prompts", who, { op, preset: presetId });
+      // A live preset that was edited, switched off or deleted is re-sent (deleted → base look).
+      if (presetId)
+        bridge.reapplyPrompt(pult, control, await prompts.list(pult, control), presetId, who);
+    };
     if (!id && method === "GET") {
       const pult = url.searchParams.get("pult") ?? "";
       const control = url.searchParams.get("control") ?? "";
@@ -134,22 +158,45 @@ export function createApi(bridge: Bridge, dir: string, now: () => number = Date.
       needsLease();
       const r = await prompts.create(pult, control, limits, await readJson(req));
       if (!r.ok) throw new HttpError(r.status, r.message);
+      await changed(pult, control, "create");
       return json(res, 201, r.value);
     }
-    if (id && (method === "PATCH" || method === "DELETE")) {
+    if (id === "order" && method === "PUT") {
+      const pult = url.searchParams.get("pult") ?? "";
+      const control = url.searchParams.get("control") ?? "";
+      promptLimits(pult, control);
+      needsLease();
+      const r = await prompts.reorder(pult, control, (await readJson(req)).ids);
+      if (!r.ok) throw new HttpError(r.status, r.message);
+      await changed(pult, control, "reorder");
+      return json(res, 200, r.value);
+    }
+    if (id && (parts[3] === "duplicate" || parts[3] === "restore") && method === "POST") {
       const cur = await prompts.get(id);
-      if (!cur) throw new HttpError(404, "No such preset");
+      if (!cur) throw new HttpError(parts[3] === "restore" ? 410 : 404, "No such preset");
+      const limits = promptLimits(cur.pultId, cur.controlId);
+      needsLease();
+      const r =
+        parts[3] === "duplicate"
+          ? await prompts.duplicate(id, limits)
+          : await prompts.restore(id, limits);
+      if (!r.ok) throw new HttpError(r.status, r.message);
+      await changed(cur.pultId, cur.controlId, parts[3]);
+      return json(res, parts[3] === "duplicate" ? 201 : 200, r.value);
+    }
+    if (id && !parts[3] && (method === "PATCH" || method === "DELETE")) {
+      const cur = await prompts.get(id);
+      if (!cur || cur.deletedAt) throw new HttpError(404, "No such preset");
+      const limits = promptLimits(cur.pultId, cur.controlId);
       needsLease();
       if (method === "DELETE") {
         await prompts.remove(id);
-        return json(res, 200, { ok: true });
+        await changed(cur.pultId, cur.controlId, "delete", id);
+        return json(res, 200, { ok: true, undoMs: UNDO_WINDOW_MS });
       }
-      const r = await prompts.update(
-        id,
-        promptLimits(cur.pultId, cur.controlId),
-        await readJson(req),
-      );
+      const r = await prompts.update(id, limits, await readJson(req));
       if (!r.ok) throw new HttpError(r.status, r.message);
+      await changed(cur.pultId, cur.controlId, "update", id);
       return json(res, 200, r.value);
     }
     throw new HttpError(405, "Method not allowed");

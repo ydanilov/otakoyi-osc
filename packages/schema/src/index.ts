@@ -34,16 +34,36 @@ const oscValue = z.union([z.number(), z.string(), z.boolean(), z.null()]);
  */
 export const TargetRuntime = z.object({
   app: z.enum(["touchdesigner", "touchplayer", "command"]),
-  /** Project file relative to the runtime folder, e.g. "installation.toe". */
+  /**
+   * Path to the TouchDesigner / TouchPlayer executable. Default: the standard install location on
+   * Windows / macOS (see apps/bridge/src/process-supervisor.ts).
+   */
+  executable: z.string().min(1).optional(),
+  /** Project file (.toe), absolute or relative to the runtime folder, e.g. "installation.toe". */
   project: z.string().min(1).optional(),
   /** Exact TouchDesigner build the project was made with, e.g. "2025.33070". */
   version: z.string().optional(),
   /** For app "command": executable and arguments. */
   command: z.array(z.string()).optional(),
-  /** OSC address the project sends every second; silence = hung, restart. */
+  /**
+   * Start in perform mode (no editor). TouchPlayer always is; for TouchDesigner the supervisor sets
+   * OTAKOYI_PERFORM=1 and the project switches itself (or uses "Start in Perform Mode").
+   */
+  perform: z.boolean().default(true),
+  /** @deprecated Any feedback from the target now counts as alive (ADR-016); still accepted. */
   heartbeat: z.string().startsWith("/").optional(),
   restartOnCrash: z.boolean().default(true),
+  /** No feedback for this long while running = hung → restart. 0 = never. */
+  hangTimeoutS: z.number().min(0).max(600).default(15),
+  /** Time a freshly started project gets before hang detection starts (TD loads slowly). */
+  startupGraceS: z.number().min(0).max(600).default(60),
 });
+
+/** Installation actions a pult may trigger (ADR-013, ADR-016). */
+export const INSTALLATION_ACTIONS = ["flash", "restart", "blackout", "idle", "pause"] as const;
+export type InstallationAction = (typeof INSTALLATION_ACTIONS)[number];
+/** Without `installation.actions`: everything except the optional Pause. */
+export const DEFAULT_ACTIONS: InstallationAction[] = ["flash", "restart", "blackout", "idle"];
 
 export const Target = z.object({
   id,
@@ -52,8 +72,17 @@ export const Target = z.object({
   /** "auto" = discover via the bridge / mDNS. */
   host: z.union([z.literal("auto"), z.string().min(1)]).default("auto"),
   port: z.number().int().min(1).max(65535),
+  /** Tried in order when `host: "auto"` finds nothing (or the found host goes offline). */
   fallbackHosts: z.array(z.string()).default([]),
+  /** For `host: "auto"`: the mDNS `_osc._udp` service name to pick (default: the first found). */
+  discovery: z.object({ name: z.string().min(1).optional() }).optional(),
+  /** UDP feedback port. TCP targets send feedback on the same connection. */
   feedbackPort: z.number().int().min(1).max(65535).optional(),
+  /**
+   * Address the bridge sends once a second so the installation can answer (any feedback counts
+   * as alive). `false` = no ping.
+   */
+  heartbeat: z.union([address, z.literal(false)]).default("/sys/ping"),
   runtime: TargetRuntime.optional(),
 });
 
@@ -393,6 +422,11 @@ export const Prompt = z.object({
   maxPresets: z.number().int().min(1).max(200).default(32),
   /** Initial blend amount (0 = all A, 1 = all B). */
   default: z.number().min(0).max(1).default(0),
+  /**
+   * How long the installation has to confirm a new prompt (echo of the text, or
+   * `<address>/applied`) before the pult shows Error. 0 = no confirmation, applied at once.
+   */
+  confirmMs: z.number().int().min(0).max(60000).default(4000),
 });
 
 export const Control = z.discriminatedUnion("type", [
@@ -477,6 +511,14 @@ const InstallationConfigBase = z
       name: z.string().min(1),
       revision: z.number().int().min(1),
       publishedAt: z.iso.datetime().optional(),
+      /**
+       * Actions the installation supports (drawer → Installation). Omitted: flash, restart,
+       * blackout, idle (pause is opt-in).
+       */
+      actions: z
+        .array(z.enum(INSTALLATION_ACTIONS))
+        .refine((a) => new Set(a).size === a.length, "Actions must be unique")
+        .optional(),
     }),
     targets: z.array(Target).min(1),
     theme: Theme.default({ mode: "dark" }),
@@ -603,6 +645,11 @@ export function parseConfig(input: unknown): ParseResult {
   };
 }
 
+/** Actions this installation supports (config list or the default set). */
+export function actionsOf(cfg: Pick<InstallationConfig, "installation">): InstallationAction[] {
+  return cfg.installation.actions ?? DEFAULT_ACTIONS;
+}
+
 /** Resolve which target a control sends to. */
 export function targetOf(
   cfg: InstallationConfig,
@@ -646,6 +693,8 @@ export const PromptPreset = z.object({
   on: z.boolean().default(true),
   createdAt: z.string(),
   updatedAt: z.string(),
+  /** Soft delete: restorable (Undo) until the bridge purges it. */
+  deletedAt: z.string().optional(),
 });
 export type PromptPreset = z.infer<typeof PromptPreset>;
 
