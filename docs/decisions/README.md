@@ -20,3 +20,4 @@ Consequences, and add a row below. Read the relevant ADR before proposing a diff
 | 012 | [Pairing by QR on the local network](012-pairing-by-qr-on-the-local-network.md)                                            | Accepted |
 | 013 | [Two use cases, two form factors](013-two-use-cases-two-form-factors.md)                                                   | Accepted |
 | 014 | [Figma is the builder](014-figma-is-the-builder.md)                                                                        | Accepted |
+| 015 | [New control types and schema v2](015-new-control-types-schema-v2.md)                                                      | Accepted |

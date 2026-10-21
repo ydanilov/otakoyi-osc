@@ -1,5 +1,6 @@
 import { argValue, type OscMessage } from "@osc/core";
-import { initialValue, messagesFor, type ControlValue } from "./logic";
+import { initialValue, isGroupValue, messagesFor, type ControlValue } from "./logic";
+import { knobMode, wrapHue } from "./modes";
 import {
   targetOf,
   type AnyControl,
@@ -46,7 +47,10 @@ export class PultStore {
     for (const c of this.controls()) {
       this.values.set(c.id, initialValue(c));
       const fb = c.feedback ?? ("address" in c && !c.address.includes("{") ? c.address : undefined);
-      if (fb) this.byFeedback.set(fb, [...(this.byFeedback.get(fb) ?? []), c]);
+      // A button group listens on every button's own address.
+      const addrs =
+        c.type === "buttonGroup" && !c.feedback ? c.buttons.map((b) => b.address) : [fb];
+      for (const a of addrs) if (a) this.byFeedback.set(a, [...(this.byFeedback.get(a) ?? []), c]);
     }
   }
 
@@ -121,20 +125,39 @@ export class PultStore {
   /** Apply an incoming OSC message to every control listening on its address. */
   receive(msg: OscMessage) {
     for (const c of this.byFeedback.get(msg.address) ?? []) {
-      const v = feedbackValue(c, msg);
+      const v = feedbackValue(c, msg, this.get(c.id));
       if (v !== undefined) this.set(c.id, v);
     }
   }
 }
 
-function feedbackValue(c: Control, msg: OscMessage): ControlValue | undefined {
+function feedbackValue(
+  c: Control,
+  msg: OscMessage,
+  current: ControlValue,
+): ControlValue | undefined {
   const vals = msg.args.map(argValue);
   const first = vals[0];
   switch (c.type) {
     case "fader":
-    case "knob":
+      // An endless jog has no position the installation could report.
+      return c.mode !== "relative" && typeof first === "number" ? first : undefined;
+    case "knob": {
+      const mode = knobMode(c);
+      if (mode === "relative" || typeof first !== "number") return undefined;
+      return mode === "hue" ? wrapHue(first) : first;
+    }
     case "meter":
       return typeof first === "number" ? first : undefined;
+    case "buttonGroup": {
+      const b = c.buttons.find((x) => x.address === msg.address);
+      if (!b) return undefined;
+      const lit = first === true || first === 1 || (b.value !== undefined && first === b.value);
+      const on = new Set(isGroupValue(current) ? current.on : []);
+      if (lit) on.add(b.id);
+      else on.delete(b.id);
+      return { on: c.buttons.filter((x) => on.has(x.id)).map((x) => x.id) };
+    }
     case "toggle":
       return first === true || first === 1 || first === c.on[0];
     case "label":

@@ -1,3 +1,7 @@
 export * from "./logic";
+export * from "./modes";
+export * from "./thumbstick";
+export * from "./mic";
+export * from "./prompt";
 export * from "./store";
 export * from "./coerce";

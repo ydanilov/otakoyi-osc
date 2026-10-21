@@ -9,7 +9,7 @@ import { controlRegistry } from "../controls/registry";
 import type { ControlProps } from "../controls/types";
 import { useLayout } from "../controls/useLayout";
 import { useTheme } from "../theme/ThemeProvider";
-import { PHONE_BREAKPOINT, paginate, reflowForPhone, type Cell, type Screen } from "./layout";
+import { PHONE_BREAKPOINT, paginate, type Cell, type Screen } from "./layout";
 import type { ControlMode, PultStore } from "./store";
 
 const StoreContext = React.createContext<PultStore | null>(null);
@@ -95,9 +95,8 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
     if (!innerH) return [];
     const maxRows = Math.max(1, Math.floor((innerH + gap) / (MIN_ROW + gap)));
     return pages.flatMap((page) => {
-      const cells = phone
-        ? reflowForPhone(page.controls, page.columns)
-        : new Map(page.controls.map((c) => [c.id, c.grid]));
+      // Schema v2: each page carries its own phone and tablet layout (ADR-014).
+      const cells = new Map<string, Cell>(Object.entries(page.layout[phone ? "phone" : "tablet"]));
       const split = paginate(cells, maxRows);
       return split.map((screen, i) => ({
         key: `${page.id}:${i}`,

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "installation": {
     "id": "demo",
     "name": "Demo installation",
@@ -36,12 +36,6 @@
               "label": "Intensity",
               "address": "/wall/intensity",
               "default": 0.6,
-              "grid": {
-                "x": 0,
-                "y": 0,
-                "w": 2,
-                "h": 6
-              },
               "preset": "fader/brightness"
             },
             {
@@ -49,37 +43,19 @@
               "type": "fader",
               "label": "Speed",
               "address": "/wall/speed",
-              "grid": {
-                "x": 2,
-                "y": 0,
-                "w": 2,
-                "h": 6
-              },
               "preset": "acme-speed"
             },
             {
               "id": "position",
               "type": "xy",
               "label": "Focus point",
-              "address": "/wall/focus",
-              "grid": {
-                "x": 4,
-                "y": 0,
-                "w": 5,
-                "h": 6
-              }
+              "address": "/wall/focus"
             },
             {
               "id": "hue",
               "type": "knob",
               "label": "Hue shift",
               "address": "/wall/hue",
-              "grid": {
-                "x": 9,
-                "y": 0,
-                "w": 3,
-                "h": 3
-              },
               "preset": "knob/hue"
             },
             {
@@ -87,12 +63,6 @@
               "type": "meter",
               "label": "Audio",
               "feedback": "/wall/audio/level",
-              "grid": {
-                "x": 9,
-                "y": 3,
-                "w": 1,
-                "h": 3
-              },
               "preset": "meter/audio"
             },
             {
@@ -100,12 +70,6 @@
               "type": "label",
               "label": "FPS",
               "feedback": "/sys/fps",
-              "grid": {
-                "x": 10,
-                "y": 3,
-                "w": 2,
-                "h": 3
-              },
               "preset": "label/fps"
             },
             {
@@ -126,52 +90,154 @@
                   "label": "Show",
                   "value": "show"
                 }
-              ],
-              "grid": {
-                "x": 0,
-                "y": 6,
-                "w": 6,
-                "h": 2
-              }
+              ]
             },
             {
               "id": "logo",
               "type": "toggle",
               "label": "Logo",
-              "address": "/wall/logo",
-              "grid": {
-                "x": 6,
-                "y": 6,
-                "w": 2,
-                "h": 2
-              }
+              "address": "/wall/logo"
             },
             {
               "id": "flash",
               "type": "button",
               "label": "Flash",
-              "address": "/wall/flash",
-              "grid": {
-                "x": 8,
-                "y": 6,
-                "w": 2,
-                "h": 2
-              }
+              "address": "/wall/flash"
             },
             {
               "id": "blackout",
               "type": "holdToConfirm",
               "label": "Blackout",
               "address": "/wall/blackout",
-              "grid": {
+              "preset": "holdToConfirm/blackout"
+            }
+          ],
+          "layout": {
+            "tablet": {
+              "intensity": {
+                "x": 0,
+                "y": 0,
+                "w": 2,
+                "h": 6
+              },
+              "speed": {
+                "x": 2,
+                "y": 0,
+                "w": 2,
+                "h": 6
+              },
+              "position": {
+                "x": 4,
+                "y": 0,
+                "w": 5,
+                "h": 6
+              },
+              "hue": {
+                "x": 9,
+                "y": 0,
+                "w": 3,
+                "h": 3
+              },
+              "audio": {
+                "x": 9,
+                "y": 3,
+                "w": 1,
+                "h": 3
+              },
+              "status": {
                 "x": 10,
+                "y": 3,
+                "w": 2,
+                "h": 3
+              },
+              "mode": {
+                "x": 0,
+                "y": 6,
+                "w": 6,
+                "h": 2
+              },
+              "logo": {
+                "x": 6,
                 "y": 6,
                 "w": 2,
                 "h": 2
               },
-              "preset": "holdToConfirm/blackout"
+              "flash": {
+                "x": 8,
+                "y": 6,
+                "w": 2,
+                "h": 2
+              },
+              "blackout": {
+                "x": 10,
+                "y": 6,
+                "w": 2,
+                "h": 2
+              }
+            },
+            "phone": {
+              "intensity": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 6
+              },
+              "speed": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 6
+              },
+              "position": {
+                "x": 0,
+                "y": 6,
+                "w": 12,
+                "h": 6
+              },
+              "hue": {
+                "x": 0,
+                "y": 12,
+                "w": 6,
+                "h": 3
+              },
+              "audio": {
+                "x": 6,
+                "y": 12,
+                "w": 6,
+                "h": 3
+              },
+              "status": {
+                "x": 0,
+                "y": 15,
+                "w": 6,
+                "h": 3
+              },
+              "mode": {
+                "x": 0,
+                "y": 18,
+                "w": 12,
+                "h": 2
+              },
+              "logo": {
+                "x": 0,
+                "y": 20,
+                "w": 6,
+                "h": 2
+              },
+              "flash": {
+                "x": 6,
+                "y": 20,
+                "w": 6,
+                "h": 2
+              },
+              "blackout": {
+                "x": 0,
+                "y": 22,
+                "w": 6,
+                "h": 2
+              }
             }
-          ]
+          }
         },
         {
           "id": "scenes",
@@ -204,13 +270,7 @@
                   "label": "Event",
                   "value": 4
                 }
-              ],
-              "grid": {
-                "x": 0,
-                "y": 0,
-                "w": 6,
-                "h": 8
-              }
+              ]
             },
             {
               "id": "pads",
@@ -219,12 +279,6 @@
               "address": "/cue/{index}",
               "rows": 3,
               "cols": 4,
-              "grid": {
-                "x": 6,
-                "y": 0,
-                "w": 6,
-                "h": 5
-              },
               "preset": "buttonGrid/cues"
             },
             {
@@ -232,15 +286,51 @@
               "type": "colorPicker",
               "label": "Tint",
               "address": "/wall/tint",
-              "swatches": ["#C6FF3D", "#3DD6FF", "#FF3D8B", "#FFFFFF"],
-              "grid": {
+              "swatches": ["#C6FF3D", "#3DD6FF", "#FF3D8B", "#FFFFFF"]
+            }
+          ],
+          "layout": {
+            "tablet": {
+              "scene": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 8
+              },
+              "pads": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 5
+              },
+              "tint": {
                 "x": 6,
                 "y": 5,
                 "w": 6,
                 "h": 3
               }
+            },
+            "phone": {
+              "scene": {
+                "x": 0,
+                "y": 0,
+                "w": 12,
+                "h": 8
+              },
+              "pads": {
+                "x": 0,
+                "y": 8,
+                "w": 12,
+                "h": 5
+              },
+              "tint": {
+                "x": 0,
+                "y": 13,
+                "w": 12,
+                "h": 3
+              }
             }
-          ]
+          }
         }
       ]
     },
@@ -279,13 +369,7 @@
                   "label": "Sponsors",
                   "value": 4
                 }
-              ],
-              "grid": {
-                "x": 0,
-                "y": 0,
-                "w": 6,
-                "h": 6
-              }
+              ]
             },
             {
               "id": "brightness",
@@ -293,12 +377,6 @@
               "label": "Brightness",
               "address": "/hall/brightness",
               "default": 0.8,
-              "grid": {
-                "x": 6,
-                "y": 0,
-                "w": 3,
-                "h": 6
-              },
               "preset": "fader/brightness"
             },
             {
@@ -307,12 +385,6 @@
               "label": "Audio reactivity",
               "address": "/hall/reactivity",
               "default": 0.5,
-              "grid": {
-                "x": 9,
-                "y": 0,
-                "w": 3,
-                "h": 6
-              },
               "preset": "knob/amount"
             },
             {
@@ -320,15 +392,335 @@
               "type": "holdToConfirm",
               "label": "Blackout",
               "address": "/hall/blackout",
-              "grid": {
+              "preset": "holdToConfirm/blackout"
+            }
+          ],
+          "layout": {
+            "tablet": {
+              "backdrop": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 6
+              },
+              "brightness": {
+                "x": 6,
+                "y": 0,
+                "w": 3,
+                "h": 6
+              },
+              "reactivity": {
+                "x": 9,
+                "y": 0,
+                "w": 3,
+                "h": 6
+              },
+              "hall-blackout": {
                 "x": 0,
                 "y": 6,
                 "w": 12,
                 "h": 2
+              }
+            },
+            "phone": {
+              "backdrop": {
+                "x": 0,
+                "y": 0,
+                "w": 12,
+                "h": 6
               },
-              "preset": "holdToConfirm/blackout"
+              "brightness": {
+                "x": 0,
+                "y": 6,
+                "w": 6,
+                "h": 6
+              },
+              "reactivity": {
+                "x": 6,
+                "y": 6,
+                "w": 6,
+                "h": 6
+              },
+              "hall-blackout": {
+                "x": 0,
+                "y": 12,
+                "w": 12,
+                "h": 2
+              }
             }
-          ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "live",
+      "name": "Live VJ console",
+      "defaultTarget": "td",
+      "pages": [
+        {
+          "id": "mix",
+          "title": "Mix",
+          "controls": [
+            {
+              "id": "xfade",
+              "type": "fader",
+              "label": "Day / Night",
+              "address": "/live/mix",
+              "preset": "fader/crossfade",
+              "labels": {
+                "a": "Day",
+                "b": "Night"
+              }
+            },
+            {
+              "id": "jog",
+              "type": "fader",
+              "label": "Scrub",
+              "address": "/live/jog",
+              "preset": "fader/jog"
+            },
+            {
+              "id": "level",
+              "type": "fader",
+              "label": "Level",
+              "address": "/live/level",
+              "response": "absolute",
+              "default": 0.75
+            },
+            {
+              "id": "zoom",
+              "type": "knob",
+              "label": "Zoom",
+              "address": "/live/zoom",
+              "preset": "knob/encoder"
+            },
+            {
+              "id": "color",
+              "type": "knob",
+              "label": "Colour",
+              "address": "/live/color",
+              "preset": "knob/color-hue"
+            },
+            {
+              "id": "cam",
+              "type": "thumbstick",
+              "label": "Camera",
+              "address": "/live/cam",
+              "press": "/live/cam/reset",
+              "preset": "thumbstick/camera"
+            },
+            {
+              "id": "layers",
+              "type": "buttonGroup",
+              "label": "Layers",
+              "buttons": [
+                {
+                  "id": "particles",
+                  "label": "Particles",
+                  "caption": "L1",
+                  "address": "/live/layer/particles"
+                },
+                {
+                  "id": "lines",
+                  "label": "Lines",
+                  "caption": "L2",
+                  "address": "/live/layer/lines"
+                },
+                {
+                  "id": "text",
+                  "label": "Text",
+                  "caption": "L3",
+                  "address": "/live/layer/text"
+                },
+                {
+                  "id": "logo",
+                  "label": "Logo",
+                  "caption": "L4",
+                  "address": "/live/layer/logo",
+                  "value": "on"
+                }
+              ],
+              "default": ["particles"]
+            },
+            {
+              "id": "strobe",
+              "type": "toggle",
+              "label": "Strobe",
+              "address": "/live/strobe",
+              "preset": "toggle/switch"
+            }
+          ],
+          "layout": {
+            "tablet": {
+              "xfade": {
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 2
+              },
+              "jog": {
+                "x": 8,
+                "y": 0,
+                "w": 4,
+                "h": 2
+              },
+              "level": {
+                "x": 0,
+                "y": 2,
+                "w": 2,
+                "h": 6
+              },
+              "zoom": {
+                "x": 2,
+                "y": 2,
+                "w": 2,
+                "h": 3
+              },
+              "color": {
+                "x": 2,
+                "y": 5,
+                "w": 2,
+                "h": 3
+              },
+              "cam": {
+                "x": 4,
+                "y": 2,
+                "w": 4,
+                "h": 6
+              },
+              "layers": {
+                "x": 8,
+                "y": 2,
+                "w": 4,
+                "h": 3
+              },
+              "strobe": {
+                "x": 8,
+                "y": 5,
+                "w": 4,
+                "h": 3
+              }
+            },
+            "phone": {
+              "xfade": {
+                "x": 0,
+                "y": 0,
+                "w": 12,
+                "h": 2
+              },
+              "jog": {
+                "x": 0,
+                "y": 2,
+                "w": 12,
+                "h": 2
+              },
+              "cam": {
+                "x": 0,
+                "y": 4,
+                "w": 6,
+                "h": 5
+              },
+              "level": {
+                "x": 6,
+                "y": 4,
+                "w": 6,
+                "h": 5
+              },
+              "zoom": {
+                "x": 0,
+                "y": 9,
+                "w": 6,
+                "h": 3
+              },
+              "color": {
+                "x": 6,
+                "y": 9,
+                "w": 6,
+                "h": 3
+              },
+              "layers": {
+                "x": 0,
+                "y": 12,
+                "w": 12,
+                "h": 3
+              },
+              "strobe": {
+                "x": 0,
+                "y": 15,
+                "w": 12,
+                "h": 2
+              }
+            }
+          }
+        },
+        {
+          "id": "media",
+          "title": "Media",
+          "controls": [
+            {
+              "id": "photo",
+              "type": "image",
+              "label": "Guest photo",
+              "address": "/live/image",
+              "preset": "image/screen"
+            },
+            {
+              "id": "mic",
+              "type": "mic",
+              "label": "Room mic",
+              "address": "/live/mic",
+              "preset": "mic/full"
+            },
+            {
+              "id": "prompt",
+              "type": "prompt",
+              "label": "Prompt",
+              "address": "/live/prompt",
+              "preset": "prompt/blend"
+            }
+          ],
+          "layout": {
+            "tablet": {
+              "photo": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 8
+              },
+              "mic": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 3
+              },
+              "prompt": {
+                "x": 6,
+                "y": 3,
+                "w": 6,
+                "h": 5
+              }
+            },
+            "phone": {
+              "photo": {
+                "x": 0,
+                "y": 0,
+                "w": 12,
+                "h": 6
+              },
+              "mic": {
+                "x": 0,
+                "y": 6,
+                "w": 12,
+                "h": 3
+              },
+              "prompt": {
+                "x": 0,
+                "y": 9,
+                "w": 12,
+                "h": 6
+              }
+            }
+          }
         }
       ]
     }

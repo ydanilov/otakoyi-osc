@@ -1,16 +1,21 @@
 import { isValidAddress } from "@osc/core";
 import { checkBrand } from "@osc/tokens";
 import { z } from "zod";
+import { migrateConfig } from "./migrate";
 import { resolvePresets } from "./presets";
 
 export * from "./presets";
+export * from "./layout";
+export { migrateConfig } from "./migrate";
 
 /**
  * Installation config — the "build" a client receives after login.
  * Published by the studio from the builder as a numbered revision; rendered by the app,
  * the local web pult (served by the bridge) and the cloud web pult. Platform-agnostic.
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
+/** Oldest schema this app still reads; older-but-supported configs are migrated on parse. */
+export const MIN_SCHEMA_VERSION = 1;
 
 const id = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i, "ids: letters, digits, - and _, max 64");
 const hex = z.string().regex(/^#([0-9a-f]{6}|[0-9a-f]{8})$/i, "hex colour like #C6FF3D");
@@ -87,7 +92,6 @@ const base = {
   preset: z.string().optional(),
   label: z.string().optional(),
   target: id.optional(),
-  grid: Grid,
   /** Prevents accidental touches: control unlocks on long-press. */
   lock: z.boolean().default(false),
   /** Service controls visible only in studio sessions. */
@@ -131,6 +135,11 @@ export const Toggle = z.object({
   on: z.array(oscValue).default([1]),
   off: z.array(oscValue).default([0]),
   default: z.boolean().default(false),
+  /**
+   * button: a latching pad. switch: a hardware-style latching switch with two LEDs (ON / OFF).
+   * Same messages either way.
+   */
+  style: z.enum(["button", "switch"]).default("button"),
 });
 
 export const Fader = z.object({
@@ -138,11 +147,25 @@ export const Fader = z.object({
   ...ranged,
   type: z.literal("fader"),
   /**
+   * What the fader sends (ADR-015):
+   * - absolute (default): a value in min..max.
+   * - relative: an endless jog wheel; sends the change since the last message (a full track of
+   *   travel = max − min). There is no position, so `response`, `default` and reset do not apply.
+   * - crossfade: bipolar A/B mix in min..max (0..1 by default) with a centre detent; `labels`
+   *   names the two ends.
+   */
+  mode: z.enum(["absolute", "relative", "crossfade"]).default("absolute"),
+  /**
+   * How a touch maps to the value (ADR-007), for absolute and crossfade modes.
    * relative (default, safe): a touch never changes the value, only dragging moves it by the
    * distance dragged. absolute: the value jumps to the finger — opt in for non-critical parameters.
    */
   response: z.enum(["relative", "absolute"]).default("relative"),
   orientation: z.enum(["vertical", "horizontal"]).default("vertical"),
+  /** Crossfade: names of the two ends, e.g. { a: "Day", b: "Night" }. */
+  labels: z.object({ a: z.string().min(1), b: z.string().min(1) }).optional(),
+  /** Crossfade: half-width of the centre detent as a share of the track (0 = no detent). */
+  detent: z.number().min(0).max(0.25).default(0.04),
   /** Draw fill from the centre (bipolar values like pan). */
   centered: z.boolean().default(false),
   showValue: z.boolean().default(true),
@@ -153,7 +176,16 @@ export const Knob = z.object({
   ...base,
   ...ranged,
   type: z.literal("knob"),
-  /** Endless encoder sends relative steps instead of absolute values. */
+  /**
+   * What the knob sends (ADR-015):
+   * - absolute (default): a value in min..max over `travel` degrees.
+   * - relative: endless encoder; sends the change since the last message (one `travel` = max − min).
+   * - hue: colour wheel; sends the hue in degrees 0..360 and wraps past 360 (min/max are ignored).
+   */
+  mode: z.enum(["absolute", "relative", "hue"]).default("absolute"),
+  /** Degrees of rotation from min to max, gap centred at the bottom. Figma library: 240°. */
+  travel: z.number().min(30).max(360).default(240),
+  /** @deprecated v1 name for `mode: "relative"`; still read (see `knobMode`). */
   endless: z.boolean().default(false),
   centered: z.boolean().default(false),
   showValue: z.boolean().default(true),
@@ -250,6 +282,119 @@ export const ColorPicker = z.object({
   swatches: z.array(hex).optional(),
 });
 
+/** Multi-select latching buttons: each button toggles on its own and has its own address. */
+export const ButtonGroup = z
+  .object({
+    ...base,
+    type: z.literal("buttonGroup"),
+    buttons: z
+      .array(
+        z.object({
+          id,
+          label: z.string().min(1),
+          caption: z.string().optional(),
+          address,
+          /** Sent when the button turns on (default 1); 0 is sent when it turns off. */
+          value: oscValue.optional(),
+        }),
+      )
+      .min(1)
+      .max(16),
+    /** Buttons that start lit. */
+    default: z.array(id).default([]),
+  })
+  .superRefine((c, ctx) => {
+    const ids = new Set<string>();
+    c.buttons.forEach((b, i) => {
+      if (ids.has(b.id))
+        ctx.addIssue({
+          code: "custom",
+          path: ["buttons", i, "id"],
+          message: `Duplicate button "${b.id}"`,
+        });
+      ids.add(b.id);
+    });
+    c.default.forEach((d, i) => {
+      if (!ids.has(d))
+        ctx.addIssue({ code: "custom", path: ["default", i], message: `Unknown button "${d}"` });
+    });
+  });
+
+/**
+ * Relative 2-D joystick: springs back to the centre; while held it sends the x / y deflection
+ * (−1..1, y up) at `rateHz`, and 0 0 once on release.
+ */
+export const Thumbstick = z.object({
+  ...base,
+  type: z.literal("thumbstick"),
+  address,
+  rateHz: z.number().min(1).max(120).default(30),
+  /** Radial dead zone around the centre (share of the radius); outside it the travel is rescaled. */
+  deadzone: z.number().min(0).max(0.5).default(0.1),
+  /** Optional click (press the stick): sends 1 on press, 0 on release. */
+  press: address.optional(),
+});
+
+export const IMAGE_FORMATS = ["jpeg", "png", "webp", "heic", "gif"] as const;
+export type ImageFormat = (typeof IMAGE_FORMATS)[number];
+
+/**
+ * Image upload: the client picks a photo (or one from the installation's library); the bridge
+ * validates and stores it, then sends `<address> <absolute path>` to the installation.
+ */
+export const ImageUpload = z.object({
+  ...base,
+  type: z.literal("image"),
+  address,
+  aspect: z.enum(["16:9", "4:3", "1:1", "9:16", "free"]).default("free"),
+  formats: z.array(z.enum(IMAGE_FORMATS)).min(1).default(["jpeg", "png", "webp", "heic"]),
+  maxMB: z.number().positive().max(100).default(10),
+  fit: z.enum(["cover", "contain"]).default("cover"),
+  /** Keep uploads in the installation's library so they can be picked again. */
+  library: z.boolean().default(true),
+});
+
+export const MIC_OUTPUTS = ["level", "bands", "beat"] as const;
+export type MicOutput = (typeof MIC_OUTPUTS)[number];
+
+/**
+ * On-device audio analysis. Audio never leaves the device: only the analysis is sent, under the
+ * `address` prefix — `<address>/level f`, `<address>/bands f…`, `<address>/beat 1`.
+ */
+export const Mic = z
+  .object({
+    ...base,
+    type: z.literal("mic"),
+    address,
+    rateHz: z.number().min(1).max(60).default(30),
+    outputs: z.array(z.enum(MIC_OUTPUTS)).min(1).default(["level"]),
+    /** Number of frequency bands when `bands` is an output. */
+    bands: z.number().int().min(1).max(32).default(8),
+    /** Input gain applied before analysis. */
+    gain: z.number().min(0).max(16).default(1),
+  })
+  .superRefine((c, ctx) => {
+    if (new Set(c.outputs).size !== c.outputs.length)
+      ctx.addIssue({ code: "custom", path: ["outputs"], message: "Outputs must be unique" });
+  });
+
+/**
+ * Text prompts for generative installations. Prompt presets are created by the client at runtime
+ * and stored on the bridge (like value snapshots, ADR-009), never in the config.
+ * blend: two presets A and B mixed by an amount → `<address>/a s`, `<address>/b s`, `<address>/mix f`.
+ * Without blend: `<address> s`. A preset switched off sends "" in its slot.
+ */
+export const Prompt = z.object({
+  ...base,
+  type: z.literal("prompt"),
+  address,
+  blend: z.boolean().default(true),
+  maxLength: z.number().int().min(1).max(2000).default(500),
+  maxPresets: z.number().int().min(1).max(200).default(32),
+  /** Initial blend amount (0 = all A, 1 = all B). */
+  default: z.number().min(0).max(1).default(0),
+});
+
 export const Control = z.discriminatedUnion("type", [
   Button,
   Toggle,
@@ -263,6 +408,11 @@ export const Control = z.discriminatedUnion("type", [
   Meter,
   HoldToConfirm,
   ColorPicker,
+  ButtonGroup,
+  Thumbstick,
+  ImageUpload,
+  Mic,
+  Prompt,
 ]);
 
 export const CONTROL_TYPES = Control.options.map((o) => o.shape.type.value);
@@ -275,22 +425,31 @@ export const UnsupportedControl = z
   .looseObject({
     id,
     type: z.string().refine((t) => !(CONTROL_TYPES as string[]).includes(t)),
-    grid: Grid,
   })
   .transform((c) => ({
     id: c.id,
-    grid: c.grid,
     type: "unsupported" as const,
     originalType: c.type,
   }));
 
 export const AnyControl = z.union([Control, UnsupportedControl]);
 
+export const FORM_FACTORS = ["phone", "tablet"] as const;
+export type FormFactor = (typeof FORM_FACTORS)[number];
+
+/** Control id → grid placement, for one form factor. */
+export const Placements = z.record(id, Grid);
+
+/** Every page ships a phone and a tablet layout (ADR-013, ADR-014). */
+export const PageLayout = z.object({ phone: Placements, tablet: Placements });
+
 export const Page = z.object({
   id,
   title: z.string().min(1),
   columns: z.literal(12).default(12),
+  /** Controls, once. Their placement per form factor is in `layout`. */
   controls: z.array(AnyControl),
+  layout: PageLayout,
 });
 
 /** A pult is one control surface inside an installation (e.g. "Lobby", "Conference hall"). */
@@ -334,7 +493,33 @@ const InstallationConfigBase = z
           path: ["pults", pi, "defaultTarget"],
           message: `Unknown target "${pult.defaultTarget}"`,
         });
-      pult.pages.forEach((page, gi) =>
+      pult.pages.forEach((page, gi) => {
+        const ids = new Set(page.controls.map((c) => c.id));
+        for (const ff of FORM_FACTORS) {
+          const placements = page.layout[ff];
+          const lpath = ["pults", pi, "pages", gi, "layout", ff];
+          for (const c of page.controls)
+            if (!placements[c.id])
+              ctx.addIssue({
+                code: "custom",
+                path: [...lpath, c.id],
+                message: `Control "${c.id}" has no ${ff} placement`,
+              });
+          for (const [cid, g] of Object.entries(placements)) {
+            if (!ids.has(cid))
+              ctx.addIssue({
+                code: "custom",
+                path: [...lpath, cid],
+                message: `${ff} layout places unknown control "${cid}"`,
+              });
+            else if (g.x + g.w > page.columns)
+              ctx.addIssue({
+                code: "custom",
+                path: [...lpath, cid],
+                message: `Control "${cid}" overflows the 12-column ${ff} grid`,
+              });
+          }
+        }
         page.controls.forEach((c, ci) => {
           const path = ["pults", pi, "pages", gi, "controls", ci];
           const key = `${pult.id}/${c.id}`;
@@ -362,26 +547,20 @@ const InstallationConfigBase = z
               path: [...path, "target"],
               message: `Unknown target "${c.target}"`,
             });
-          if (c.grid.x + c.grid.w > page.columns)
-            ctx.addIssue({
-              code: "custom",
-              path: [...path, "grid"],
-              message: "Control overflows the 12-column grid",
-            });
           if ("min" in c && "max" in c && typeof c.min === "number" && c.max <= c.min)
             ctx.addIssue({
               code: "custom",
               path: [...path, "max"],
               message: "max must be greater than min",
             });
-        }),
-      );
+        });
+      });
     });
   });
 
-/** Installation config with presets resolved first (see presets.ts). */
+/** Installation config: v1 is migrated to v2 (migrate.ts), then presets are resolved (presets.ts). */
 export const InstallationConfig = z.preprocess((input, ctx) => {
-  const { value, issues } = resolvePresets(input);
+  const { value, issues } = resolvePresets(migrateConfig(input));
   for (const issue of issues)
     ctx.issues.push({ code: "custom", message: issue.message, path: issue.path, input });
   return value;
@@ -395,6 +574,8 @@ export type AnyControl = z.infer<typeof AnyControl>;
 export type ControlType = Control["type"];
 export type ControlOf<T extends ControlType> = Extract<Control, { type: T }>;
 export type Page = z.infer<typeof Page>;
+export type PageLayout = z.infer<typeof PageLayout>;
+export type Grid = z.infer<typeof Grid>;
 export type Pult = z.infer<typeof Pult>;
 export type InstallationConfig = z.infer<typeof InstallationConfigBase>;
 export type CustomPreset = z.infer<typeof CustomPreset>;
@@ -450,3 +631,35 @@ export const ValueSnapshot = z.object({
   configRevision: z.number().int().nonnegative(),
 });
 export type ValueSnapshot = z.infer<typeof ValueSnapshot>;
+
+/**
+ * A prompt preset created by the client for a `prompt` control (ADR-015). Installation state,
+ * stored by the bridge; never part of the config.
+ */
+export const PromptPreset = z.object({
+  id,
+  pultId: id,
+  controlId: id,
+  label: z.string().min(1).max(64),
+  text: z.string().max(2000),
+  /** Switched off: the preset stays in the list but sends "" in its slot. */
+  on: z.boolean().default(true),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type PromptPreset = z.infer<typeof PromptPreset>;
+
+/** An image in the installation's library (uploaded through an `image` control, ADR-015). */
+export const ImageAsset = z.object({
+  id,
+  pultId: id,
+  controlId: id,
+  /** Original file name, for display. */
+  name: z.string(),
+  format: z.enum(IMAGE_FORMATS),
+  bytes: z.number().int().nonnegative(),
+  /** Absolute path on the installation machine — what the installation receives over OSC. */
+  path: z.string().min(1),
+  createdAt: z.string(),
+});
+export type ImageAsset = z.infer<typeof ImageAsset>;

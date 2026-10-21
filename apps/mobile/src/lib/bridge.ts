@@ -20,17 +20,23 @@ export interface BridgeSession {
   take(): void;
 }
 
-/** Stable per-browser/device id, so a reconnect keeps the control lease. */
+let cachedId: string | null = null;
+
+/**
+ * Stable per-browser/device id, so a reconnect keeps the control lease. Cached for the process so
+ * the socket and HTTP calls (image uploads, prompt presets) always present the same device.
+ */
 export function deviceId(): string {
+  if (cachedId) return cachedId;
   const key = "otakoyi.device";
   try {
     const existing = globalThis.localStorage?.getItem(key);
-    if (existing) return existing;
+    if (existing) return (cachedId = existing);
     const id = `web-${Math.random().toString(36).slice(2, 10)}`;
     globalThis.localStorage?.setItem(key, id);
-    return id;
+    return (cachedId = id);
   } catch {
-    return `web-${Math.random().toString(36).slice(2, 10)}`;
+    return (cachedId = `web-${Math.random().toString(36).slice(2, 10)}`);
   }
 }
 

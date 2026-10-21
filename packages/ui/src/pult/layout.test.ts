@@ -13,7 +13,7 @@ describe("reflowForPhone", () => {
     { id: "mode", grid: { x: 0, y: 6, w: 6, h: 2 } },
     { id: "flash", grid: { x: 8, y: 6, w: 2, h: 2 } },
   ];
-  const out = reflowForPhone(controls);
+  const out = reflowForPhone(controls.map((c) => [c.id, c.grid] as [string, Cell]));
 
   it("uses half or full rows and stays inside 12 columns", () => {
     expect(out.get("intensity")!.w).toBe(6);

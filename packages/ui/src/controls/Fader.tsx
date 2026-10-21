@@ -1,6 +1,9 @@
 import { Canvas, Group, Rect, RoundedRect, rect, rrect } from "@shopify/react-native-skia";
 import {
   createThrottle,
+  crossfadeMix,
+  crossfadePosition,
+  crossfadeShares,
   formatValue,
   positionToValue,
   relativeDrag,
@@ -12,6 +15,7 @@ import {
 } from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
+import { Text } from "@osc/ui/components/ui/text";
 import {
   GestureDetector,
   usePanGesture,
@@ -22,6 +26,7 @@ import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
+import { JogFader } from "./Jog";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
 
@@ -39,17 +44,41 @@ const RELATIVE_SLOP = 4;
  * - Double-tap: back to the default value (`doubleTapReset`).
  * The gesture runs on the UI thread and the canvas reads a shared value, so drawing never waits for
  * React. Values leave through a throttle (`throttleHz`); the last value is always sent on release.
+ *
+ * `mode: "crossfade"` (ADR-015) fills from the centre, holds a detent at 50 % and shows the A / B
+ * labels with their shares; `mode: "relative"` is an endless jog wheel (`JogFader`).
  */
-export function Fader({ control: c, value, onChange, disabled }: ControlProps<"fader">) {
+export function Fader(props: ControlProps<"fader">) {
+  return props.control.mode === "relative" ? <JogFader {...props} /> : <PositionFader {...props} />;
+}
+
+function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"fader">) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
+  const crossfade = c.mode === "crossfade";
+  const detent = c.detent;
   const range: Range = React.useMemo(
-    () => ({ min: c.min, max: c.max, step: c.step, curve: c.curve, invert: c.invert, int: c.int }),
-    [c.min, c.max, c.step, c.curve, c.invert, c.int],
+    () =>
+      crossfade
+        ? { min: c.min, max: c.max, step: c.step, int: c.int }
+        : { min: c.min, max: c.max, step: c.step, curve: c.curve, invert: c.invert, int: c.int },
+    [crossfade, c.min, c.max, c.step, c.curve, c.invert, c.int],
+  );
+  // Track position ↔ value. A crossfade has a centre detent between the two.
+  const toPos = React.useCallback(
+    (v: number) => {
+      const p = valueToPosition(v, range);
+      return crossfade ? crossfadePosition(p, detent) : p;
+    },
+    [range, crossfade, detent],
+  );
+  const toValue = React.useCallback(
+    (p: number) => positionToValue(crossfade ? crossfadeMix(p, detent) : p, range),
+    [range, crossfade, detent],
   );
   const vertical = c.orientation === "vertical";
   const absolute = c.response === "absolute";
-  const pos = useSharedValue(valueToPosition(asNumber(value, c.min), range));
+  const pos = useSharedValue(toPos(asNumber(value, c.min)));
   const dragging = useSharedValue(false);
   const drag = useSharedValue<DragState>(startDrag(0, 1));
   const [display, setDisplay] = React.useState(asNumber(value, c.min));
@@ -58,9 +87,9 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
   // Feedback from the installation or another device moves the fader, unless the finger is on it.
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
-    pos.value = valueToPosition(value, range);
+    pos.value = toPos(value);
     setDisplay(value);
-  }, [value, range, pos, dragging]);
+  }, [value, toPos, pos, dragging]);
 
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
@@ -72,7 +101,7 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
 
   const report = React.useCallback(
     (p: number, final: boolean) => {
-      const v = positionToValue(p, range);
+      const v = toValue(p);
       setDisplay(v);
       if (c.sendOn === "change") throttle.push(v);
       if (final) {
@@ -81,16 +110,16 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
         else throttle.flush();
       }
     },
-    [range, c.sendOn, throttle],
+    [toValue, c.sendOn, throttle],
   );
 
   const reset = React.useCallback(() => {
-    const v = resetValue(c);
-    pos.value = valueToPosition(v, range);
+    const v = crossfade ? (c.default ?? (c.min + c.max) / 2) : resetValue(c);
+    pos.value = toPos(v);
     setDisplay(v);
     throttle.cancel();
     onChangeRef.current(v);
-  }, [c, range, pos, throttle]);
+  }, [c, crossfade, toPos, pos, throttle]);
 
   const { width: w, height: h } = size;
   const length = vertical ? h : w;
@@ -153,7 +182,7 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
   const gesture = useSimultaneousGestures(pan, doubleTap);
 
   // Fill geometry. Centered faders fill from the middle (bipolar values such as pan).
-  const center = c.centered ? 0.5 : 0;
+  const center = c.centered || crossfade ? 0.5 : 0;
   const fillStart = useDerivedValue(() => Math.min(center, pos.value));
   const fillLen = useDerivedValue(() => Math.abs(pos.value - center));
   const fill = useDerivedValue(() =>
@@ -194,7 +223,7 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
               c.max,
               Math.max(c.min, display + (e.nativeEvent.actionName === "increment" ? step : -step)),
             );
-            pos.value = valueToPosition(next, range);
+            pos.value = toPos(next);
             setDisplay(next);
             onChange(next);
           }}
@@ -222,10 +251,42 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
                 style="stroke"
                 strokeWidth={fine ? t.stroke.strong : 1}
               />
+              {crossfade && (
+                // Centre detent mark.
+                <Rect
+                  x={vertical ? 0 : w / 2 - t.stroke.hairline / 2}
+                  y={vertical ? h / 2 - t.stroke.hairline / 2 : 0}
+                  width={vertical ? w : t.stroke.hairline}
+                  height={vertical ? t.stroke.hairline : h}
+                  color={t.control.tick}
+                />
+              )}
             </Canvas>
           )}
         </View>
       </GestureDetector>
+      {crossfade && <CrossfadeLabels control={c} mix={valueToPosition(display, range)} />}
     </ControlFrame>
+  );
+}
+
+/** A and B names with how much of each is in the mix. */
+function CrossfadeLabels({
+  control: c,
+  mix,
+}: {
+  control: ControlProps<"fader">["control"];
+  mix: number;
+}) {
+  const s = crossfadeShares(mix);
+  return (
+    <View className="mt-1 flex-row justify-between">
+      <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>
+        {c.labels?.a ?? "A"} {s.a}%
+      </Text>
+      <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>
+        {s.b}% {c.labels?.b ?? "B"}
+      </Text>
+    </View>
   );
 }

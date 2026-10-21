@@ -218,6 +218,9 @@ importers:
       '@osc/core':
         specifier: workspace:*
         version: link:../osc-core
+      '@osc/protocol':
+        specifier: workspace:*
+        version: link:../protocol
       '@osc/schema':
         specifier: workspace:*
         version: link:../schema

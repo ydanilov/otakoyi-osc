@@ -7,6 +7,7 @@ import { PROTOCOL_VERSION } from "@osc/protocol";
 import type { InstallationConfig, Target } from "@osc/schema";
 import { Bonjour } from "bonjour-service";
 import { WebSocketServer, type WebSocket } from "ws";
+import { createApi } from "./api";
 import { Bridge, type BridgeAuth, type LogEntry, type Peer } from "./bridge";
 import { pairingUrl, webPultUrl } from "@osc/protocol";
 import QRCode from "qrcode";
@@ -23,6 +24,11 @@ export interface ServerOptions {
   webDir?: string | undefined;
   /** Directory for the JSONL command log. */
   logDir: string;
+  /**
+   * Installation state kept across restarts (image uploads and library, prompt presets), in
+   * `<dataDir>/<installation id>/`. Default: next to the log directory.
+   */
+  dataDir?: string | undefined;
   auth: BridgeAuth;
   quiet?: boolean;
   /** Log every OSC packet in and out (OTAKOYI_DEBUG=1). */
@@ -89,6 +95,11 @@ export async function startServer(opts: ServerOptions) {
     },
   };
   const bridge = new Bridge(opts.config, io, opts.auth);
+  const dataDir = join(
+    resolve(opts.dataDir ?? join(opts.logDir, "..", "data")),
+    opts.config.installation.id,
+  );
+  const api = createApi(bridge, dataDir);
 
   // --- OSC feedback in ------------------------------------------------------------------------
   const feedbackSockets: Socket[] = [];
@@ -133,6 +144,7 @@ export async function startServer(opts: ServerOptions) {
         }),
       );
     }
+    if (url.pathname.startsWith("/api/") && (await api.handle(req, res, url))) return;
     if (url.pathname === "/pair.png") {
       // Images for the installation's own pairing overlay (TouchDesigner loads them from localhost).
       // ?card=1&w=1280&h=720 → full-frame card with the QR on the left; otherwise a bare QR.
@@ -243,6 +255,7 @@ export async function startServer(opts: ServerOptions) {
 
   return {
     bridge,
+    api,
     port,
     async close() {
       if (bonjour)

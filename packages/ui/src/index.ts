@@ -15,11 +15,28 @@ export { Fader } from "./controls/Fader";
 export { Knob } from "./controls/Knob";
 export { XYPad } from "./controls/XYPad";
 export { Meter } from "./controls/Meter";
+export { JogFader } from "./controls/Jog";
+export { Thumbstick } from "./controls/Thumbstick";
+export { ImageUpload, MicControl, PromptControl } from "./controls/media";
+export {
+  ControlServicesProvider,
+  createMemoryServices,
+  stubServices,
+  useControlServices,
+  type AudioInput,
+  type ControlServices,
+  type ImagePicker,
+  type MediaLibrary,
+  type PickedImage,
+  type PromptPresets,
+} from "./platform/services";
 export { HoldToConfirm } from "./controls/HoldToConfirm";
 export {
   ButtonControl,
   ButtonGrid,
+  ButtonGroup,
   ColorPicker,
+  Led,
   LabelControl,
   SceneList,
   Segmented,

@@ -1,0 +1,182 @@
+import type { AudioBlock } from "@osc/controls";
+import type { ImageAssetDto, PromptPresetDto } from "@osc/protocol";
+import * as React from "react";
+
+/**
+ * Platform seams for controls that need more than touches (ADR-015, AGENTS rule 5). Components
+ * only talk to these interfaces; the app decides the implementation (native module, browser API,
+ * bridge HTTP, or a stub). There are no Platform.OS checks in the controls.
+ */
+
+/** A picked image, ready to upload. */
+export interface PickedImage {
+  name: string;
+  /** Raw file bytes (the bridge validates the format by content). */
+  body: Blob | ArrayBuffer | Uint8Array;
+  /** Local preview URI, if the platform has one. */
+  uri?: string | undefined;
+}
+
+export interface ImagePicker {
+  /** False when the platform part is not available yet (shown as a hint, the control stays drawn). */
+  readonly available: boolean;
+  /** Ask for permission if needed and let the user pick one image. null = cancelled / denied. */
+  pick(opts: { aspect: string; formats: readonly string[] }): Promise<PickedImage | null>;
+}
+
+export interface AudioInput {
+  readonly available: boolean;
+  /** Ask for microphone permission. */
+  requestPermission(): Promise<boolean>;
+  /** Start capturing; `onBlock` gets about `rateHz` analysis blocks a second. Returns stop(). */
+  start(
+    opts: { rateHz: number; bands: number },
+    onBlock: (b: AudioBlock) => void,
+  ): Promise<() => void>;
+}
+
+/** Image library on the bridge (or a demo stand-in). */
+export interface MediaLibrary {
+  /**
+   * true: the bridge sends the OSC and syncs the value after upload / show (the control must not
+   * send it again). false: a local stand-in, the control reports the value itself.
+   */
+  readonly remote: boolean;
+  list(pult: string, control: string): Promise<ImageAssetDto[]>;
+  upload(pult: string, control: string, image: PickedImage): Promise<ImageAssetDto>;
+  show(id: string): Promise<ImageAssetDto>;
+  remove(id: string): Promise<unknown>;
+}
+
+/** Prompt presets on the bridge (or a demo stand-in). */
+export interface PromptPresets {
+  list(pult: string, control: string): Promise<PromptPresetDto[]>;
+  create(
+    pult: string,
+    control: string,
+    p: { label: string; text: string; on?: boolean },
+  ): Promise<PromptPresetDto>;
+  update(
+    id: string,
+    patch: { label?: string; text?: string; on?: boolean },
+  ): Promise<PromptPresetDto>;
+  remove(id: string): Promise<unknown>;
+}
+
+export interface ControlServices {
+  /** Pult id the controls belong to (the HTTP API addresses controls by pult + id). */
+  pult: string;
+  imagePicker: ImagePicker;
+  audio: AudioInput;
+  media: MediaLibrary;
+  prompts: PromptPresets;
+}
+
+const unavailable = () => Promise.reject(new Error("Not available on this device yet"));
+
+/** Defaults: nothing wired. Controls render and explain that the feature is not available here. */
+export const stubServices: ControlServices = {
+  pult: "",
+  imagePicker: { available: false, pick: async () => null },
+  audio: {
+    available: false,
+    requestPermission: async () => false,
+    start: unavailable,
+  },
+  media: {
+    remote: false,
+    list: async () => [],
+    upload: unavailable,
+    show: unavailable,
+    remove: unavailable,
+  },
+  prompts: { list: async () => [], create: unavailable, update: unavailable, remove: unavailable },
+};
+
+const ServicesContext = React.createContext<ControlServices>(stubServices);
+
+export function ControlServicesProvider({
+  value,
+  children,
+}: {
+  value: Partial<ControlServices>;
+  children: React.ReactNode;
+}) {
+  const parent = React.useContext(ServicesContext);
+  const merged = React.useMemo(() => ({ ...parent, ...value }), [parent, value]);
+  return <ServicesContext.Provider value={merged}>{children}</ServicesContext.Provider>;
+}
+
+export function useControlServices(): ControlServices {
+  return React.useContext(ServicesContext);
+}
+
+/**
+ * In-memory media library and prompt presets: the demo installation and the gallery use these so
+ * every control works without a bridge.
+ */
+export function createMemoryServices(
+  pult = "demo",
+): Pick<ControlServices, "media" | "prompts" | "pult"> {
+  let n = 0;
+  const now = () => new Date().toISOString();
+  let images: ImageAssetDto[] = [];
+  let presets: PromptPresetDto[] = [];
+  return {
+    pult,
+    media: {
+      remote: false,
+      list: async (p, c) => images.filter((i) => i.pultId === p && i.controlId === c),
+      upload: async (p, c, img) => {
+        const id = `img${++n}`;
+        const asset = {
+          id,
+          pultId: p,
+          controlId: c,
+          name: img.name,
+          format: "jpeg",
+          bytes: 0,
+          path: `/demo/uploads/${id}.jpg`,
+          createdAt: now(),
+        };
+        images = [...images, asset];
+        return asset;
+      },
+      show: async (id) => {
+        const a = images.find((i) => i.id === id);
+        if (!a) throw new Error("No such image");
+        return a;
+      },
+      remove: async (id) => {
+        images = images.filter((i) => i.id !== id);
+      },
+    },
+    prompts: {
+      list: async (p, c) => presets.filter((x) => x.pultId === p && x.controlId === c),
+      create: async (p, c, x) => {
+        const preset = {
+          id: `p${++n}`,
+          pultId: p,
+          controlId: c,
+          label: x.label,
+          text: x.text,
+          on: x.on ?? true,
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        presets = [...presets, preset];
+        return preset;
+      },
+      update: async (id, patch) => {
+        const cur = presets.find((x) => x.id === id);
+        if (!cur) throw new Error("No such preset");
+        const next = { ...cur, ...patch, updatedAt: now() };
+        presets = presets.map((x) => (x.id === id ? next : x));
+        return next;
+      },
+      remove: async (id) => {
+        presets = presets.filter((x) => x.id !== id);
+      },
+    },
+  };
+}
