@@ -25,13 +25,23 @@ import { useLayout } from "./useLayout";
  * (the repeater lives in @osc/controls), springs back to the centre on release and sends 0, 0.
  * A tap sends the optional `press` click.
  */
-export function Thumbstick({ control: c, onChange, disabled }: ControlProps<"thumbstick">) {
+export function Thumbstick({ control: c, value, onChange, disabled }: ControlProps<"thumbstick">) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
   const { width: w, height: h } = size;
   const dx = useSharedValue(0);
   const dy = useSharedValue(0);
   const [display, setDisplay] = React.useState<Deflection>({ x: 0, y: 0 });
+  const held = React.useRef(false);
+
+  // Another device moving the stick (synced through the bridge): follow it while not held here.
+  React.useEffect(() => {
+    if (held.current || typeof value !== "object" || value === null) return;
+    if (!("x" in value) || typeof value.x !== "number" || typeof value.y !== "number") return;
+    dx.value = value.x;
+    dy.value = value.y;
+    setDisplay({ x: value.x, y: value.y });
+  }, [value, dx, dy]);
 
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
@@ -43,6 +53,7 @@ export function Thumbstick({ control: c, onChange, disabled }: ControlProps<"thu
 
   const start = React.useCallback(
     (d: Deflection) => {
+      held.current = true;
       setDisplay(d);
       stick.start(d);
     },
@@ -56,6 +67,7 @@ export function Thumbstick({ control: c, onChange, disabled }: ControlProps<"thu
     [stick],
   );
   const release = React.useCallback(() => {
+    held.current = false;
     setDisplay({ x: 0, y: 0 });
     stick.release();
   }, [stick]);

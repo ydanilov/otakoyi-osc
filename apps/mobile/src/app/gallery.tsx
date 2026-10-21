@@ -1,13 +1,19 @@
 import { initialValue, type ControlValue } from "@osc/controls";
 import type { Control, ControlType } from "@osc/schema";
 import type { BrandInput } from "@osc/tokens";
-import { controlRegistry, ThemeProvider, type ControlProps } from "@osc/ui";
+import {
+  ControlServicesProvider,
+  controlRegistry,
+  ThemeProvider,
+  type ControlProps,
+} from "@osc/ui";
 import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { demoConfig } from "@/lib/demo";
+import { demoServices } from "@/lib/services";
 
 /**
  * Control gallery — every control type in every state, under different themes and client brands.
@@ -21,15 +27,24 @@ const BRANDS: { name: string; brand: BrandInput }[] = [
   { name: "Client B · light", brand: { mode: "light", primary: "#3D5AFE", accent: "#00BFA5" } },
 ];
 
-/** One example of every control type, taken from the demo installation (presets applied). */
+/** Variant of a control that looks and behaves differently (fader / knob mode, toggle style). */
+function variantOf(c: Control): string {
+  if (c.type === "fader" && c.mode !== "absolute") return `fader · ${c.mode}`;
+  if (c.type === "knob" && (c.mode !== "absolute" || c.endless))
+    return `knob · ${c.endless && c.mode === "absolute" ? "relative" : c.mode}`;
+  if (c.type === "toggle" && c.style !== "button") return `toggle · ${c.style}`;
+  return c.type;
+}
+
+/** One example of every control type and variant, from the demo installation (presets applied). */
 const CONTROLS: Control[] = (() => {
-  const seen = new Set<ControlType>();
+  const seen = new Set<string>();
   const out: Control[] = [];
   for (const p of demoConfig.pults)
     for (const g of p.pages)
       for (const c of g.controls)
-        if (c.type !== "unsupported" && !seen.has(c.type)) {
-          seen.add(c.type);
+        if (c.type !== "unsupported" && !seen.has(variantOf(c))) {
+          seen.add(variantOf(c));
           out.push(c);
         }
   return out;
@@ -39,7 +54,11 @@ const CONTROLS: Control[] = (() => {
 function activeValue(c: Control): ControlValue {
   switch (c.type) {
     case "fader":
+      if (c.mode === "relative") return { delta: 0.1 };
+      return c.min + (c.max - c.min) * (c.mode === "crossfade" ? 0.3 : 0.8);
     case "knob":
+      if (c.mode === "hue") return 200;
+      if (c.mode === "relative" || c.endless) return { delta: 0.1 };
       return c.min + (c.max - c.min) * 0.8;
     case "meter":
       return c.min + (c.max - c.min) * 0.9;
@@ -60,12 +79,17 @@ function activeValue(c: Control): ControlValue {
     case "button":
       return { pressed: true };
     case "holdToConfirm":
-    case "buttonGroup":
-    case "thumbstick":
-    case "image":
-    case "mic":
-    case "prompt":
       return null;
+    case "buttonGroup":
+      return { on: c.buttons.slice(0, 2).map((b) => b.id) };
+    case "thumbstick":
+      return { x: 0.6, y: -0.3 };
+    case "image":
+      return { image: "sample", path: "/demo/uploads/sample.jpg" };
+    case "mic":
+      return { level: 0.7, bands: [0.9, 0.7, 0.6, 0.4, 0.5, 0.3, 0.2, 0.1], beat: true };
+    case "prompt":
+      return { a: "misty forest at dawn", b: "neon city in the rain", mix: 0.4 };
   }
 }
 
@@ -76,11 +100,21 @@ function Cell({ control, state }: { control: Control; state: (typeof STATES)[num
     state === "Active" ? activeValue(control) : initialValue(control),
   );
   const Component = controlRegistry[control.type] as React.ComponentType<ControlProps<ControlType>>;
-  const tall = ["fader", "meter", "xy", "sceneList", "buttonGrid"].includes(control.type);
+  const tall = [
+    "fader",
+    "meter",
+    "xy",
+    "sceneList",
+    "buttonGrid",
+    "thumbstick",
+    "image",
+    "mic",
+    "prompt",
+  ].includes(control.type);
   return (
     <View className={cn("w-56 gap-2", tall ? "h-64" : "h-40")}>
       <Text className="text-muted-foreground font-mono text-xs">
-        {control.type} · {state}
+        {variantOf(control)} · {state}
       </Text>
       <View className="flex-1">
         <Component
@@ -97,6 +131,7 @@ function Cell({ control, state }: { control: Control; state: (typeof STATES)[num
 export default function Gallery() {
   const [i, setI] = React.useState(0);
   const current = BRANDS[i]!;
+  const services = React.useMemo(() => ({ ...demoServices(), pult: "gallery" }), []);
   return (
     <ThemeProvider brand={current.brand} className="flex-1">
       <SafeAreaView className="bg-background flex-1">
@@ -118,18 +153,20 @@ export default function Gallery() {
             </Pressable>
           ))}
         </View>
-        <ScrollView contentContainerClassName="gap-8 p-4">
-          {CONTROLS.map((c) => (
-            <View key={c.id} className="gap-3">
-              <Text className="text-foreground font-semibold">{c.type}</Text>
-              <View className="flex-row flex-wrap gap-6">
-                {STATES.map((s) => (
-                  <Cell key={`${current.name}-${c.id}-${s}`} control={c} state={s} />
-                ))}
+        <ControlServicesProvider value={services}>
+          <ScrollView contentContainerClassName="gap-8 p-4">
+            {CONTROLS.map((c) => (
+              <View key={c.id} className="gap-3">
+                <Text className="text-foreground font-semibold">{variantOf(c)}</Text>
+                <View className="flex-row flex-wrap gap-6">
+                  {STATES.map((s) => (
+                    <Cell key={`${current.name}-${c.id}-${s}`} control={c} state={s} />
+                  ))}
+                </View>
               </View>
-            </View>
-          ))}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        </ControlServicesProvider>
       </SafeAreaView>
     </ThemeProvider>
   );
