@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { message, type OscMessage } from "@osc/core";
 import { parseConfig, type Target } from "@osc/schema";
-import demo from "../../../schema/examples/demo-installation.json";
+import demo from "../../schema/examples/demo-installation.json";
 import { PultStore } from "./store";
 
 function setup() {

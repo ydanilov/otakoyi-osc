@@ -20,6 +20,7 @@ checkpoints. Plan and business rules: Claude Doc "OSC Controller — план р
 | OSC           | Pure-TS codec in `packages/osc-core` (OSC 1.0/1.1, bundles, SLIP)               |
 | Control logic | `packages/controls` — value mapping, throttling, messages per control           |
 | Web pult      | The same app exported for web (`pnpm --filter @osc/mobile build:web`)           |
+| Bridge        | `apps/bridge` (Node): WebSocket for pults, UDP OSC, lease, log; `@osc/protocol` |
 | Tests         | Vitest                                                                          |
 
 ## Commands
@@ -30,6 +31,8 @@ pnpm tokens          # regenerate packages/tokens/generated/*
 pnpm verify          # tokens check, format, types, unit tests
 pnpm --filter @osc/mobile start       # Expo dev server
 pnpm --filter @osc/mobile build:web   # web pult → apps/mobile/dist
+OTAKOYI_PIN=2468 pnpm bridge           # bridge on :8080 (serves the web pult, OSC to the demo target)
+pnpm --filter @osc/bridge bundle      # bridge as one file → apps/bridge/dist/bridge.mjs
 ```
 
 Run `pnpm verify` before every commit.
