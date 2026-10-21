@@ -199,3 +199,16 @@ each of them.
 **Consequences.** Pult layouts are defined per form factor (phone portrait, tablet landscape) in the
 config; `paginate` runs per form factor. Figma has a phone and a tablet frame for every screen of
 the app and for every client pult. QA checks both before a delivery.
+
+**Addendum (2026-10-21) — navigation and depth.**
+
+- The pult screen shows only the controls and a minimal header (connection status, view-only /
+  studio banners). Everything else lives in two swipe drawers, which may scroll vertically:
+  - **left edge → Settings**: appearance, control preferences, pairing QR, what's new, help, sign out;
+  - **right edge → Installation**: installation name and status, pult switcher, who is in control +
+    **Request control**, quick actions (Flash, Restart and Blackout with hold-to-confirm), modes
+    (Idle — stop reacting to people; Pause — optional per installation).
+- Depth in the UI is meaningful: **inset** = active/pressed state or the bed under a control
+  (tracks, toggle beds, inputs, tab bars); **raised** = interactive elements and top-level cards and
+  panels; **flat** = information nested inside a card (chips, stat tiles, icon wells). Neon glow
+  appears only on lit values and on press — never on resting buttons.
