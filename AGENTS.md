@@ -5,6 +5,10 @@ surface) per installation; the client logs in with the installation's login and 
 (Android later) or in a browser. Commands go to TouchDesigner (or any OSC software) on Windows, macOS
 or Linux through a bridge on the installation computer.
 
+Two use cases (ADR-013): in a **lobby / permanent installation** the pult is a stylish, convenient
+controller (usually a phone); at a **live event** it is a VJ console for that installation (usually a
+tablet). Every delivery ships **both phone and tablet layouts**.
+
 Read this file before every task. Humans own direction and approval; agents do the work between
 checkpoints. Plan and business rules: Claude Doc "OSC Controller — план робіт і документація".
 
@@ -45,7 +49,7 @@ Run `pnpm verify` before every commit.
    `bg-status-online`). Never hardcode hex in components.
 2. **Brand ≠ status.** A client brand overrides `primary`, `accent`, neutrals, font and logo only.
    Status colours (online, warning, critical, offline, studio) are never brandable.
-3. **The pult never scrolls vertically.** Rows fill the screen height; pages that do not fit are split
+3. **The pult never scrolls vertically.** (The swipe drawers may: settings from the left edge, installation actions from the right edge.) Rows fill the screen height; pages that do not fit are split
    into screens that swipe horizontally (`paginate` in `packages/ui/src/pult/layout.ts`).
 4. **Config, not code, defines a pult.** New pults ship as config revisions, never as app releases.
    A new control type = schema entry + logic + component + tests, in one PR.

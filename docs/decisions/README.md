@@ -2,20 +2,21 @@
 
 Short, numbered, immutable. To change a decision, add a new ADR that supersedes the old one.
 
-| #   | Decision                                                                     | Status   |
-| --- | ---------------------------------------------------------------------------- | -------- |
-| 001 | One app in the store; a client "build" is a config revision, not a binary    | Accepted |
-| 002 | Expo / React Native + TypeScript monorepo                                    | Accepted |
-| 003 | iOS first; Android kept compiling behind platform interfaces                 | Accepted |
-| 004 | Design system: React Native Reusables + NativeWind for chrome, Skia controls | Accepted |
-| 005 | Bridge is the hub: shared state, control lease, local web pult, OSC fan-out  | Accepted |
-| 006 | Pult never scrolls vertically; pages split into horizontally swiped screens  | Accepted |
-| 007 | Relative faders by default; fine mode and double-tap reset on every slider   | Accepted |
-| 008 | Control presets: built-in library + custom studio presets in the config      | Accepted |
-| 009 | Value snapshots (client-saved looks) live in the bridge, not in the config   | Proposed |
-| 010 | Bridge protocol: WebSocket JSON, bridge validates, sends OSC, owns the lease | Accepted |
-| 011 | One program on site: Otakoyi Runtime = bridge + TD supervisor + project      | Accepted |
-| 012 | Pairing by QR on the local network (deep link + web pult), mDNS advertise    | Accepted |
+| #   | Decision                                                                                         | Status   |
+| --- | ------------------------------------------------------------------------------------------------ | -------- |
+| 001 | One app in the store; a client "build" is a config revision, not a binary                        | Accepted |
+| 002 | Expo / React Native + TypeScript monorepo                                                        | Accepted |
+| 003 | iOS first; Android kept compiling behind platform interfaces                                     | Accepted |
+| 004 | Design system: React Native Reusables + NativeWind for chrome, Skia controls                     | Accepted |
+| 005 | Bridge is the hub: shared state, control lease, local web pult, OSC fan-out                      | Accepted |
+| 006 | Pult never scrolls vertically; pages split into horizontally swiped screens                      | Accepted |
+| 007 | Relative faders by default; fine mode and double-tap reset on every slider                       | Accepted |
+| 008 | Control presets: built-in library + custom studio presets in the config                          | Accepted |
+| 009 | Value snapshots (client-saved looks) live in the bridge, not in the config                       | Proposed |
+| 010 | Bridge protocol: WebSocket JSON, bridge validates, sends OSC, owns the lease                     | Accepted |
+| 011 | One program on site: Otakoyi Runtime = bridge + TD supervisor + project                          | Accepted |
+| 012 | Pairing by QR on the local network (deep link + web pult), mDNS advertise                        | Accepted |
+| 013 | Two use cases — lobby controller and live-event VJ pult; every pult ships phone + tablet layouts | Accepted |
 
 ---
 
@@ -176,3 +177,40 @@ and the web pult URL. Scanning with the phone camera opens the app, which stores
 via SecureStore) and connects. The bridge also advertises `_otakoyi._tcp` over mDNS for in-app discovery
 later. Cloud login with a one-time magic link replaces the PIN when the cloud exists; a magic link can
 not survive an App Store install, so the first screen also accepts the QR.
+
+## 013 — Two use cases, two form factors
+
+**Status:** Accepted · 2026-10-21
+
+**Context.** The same installation can be run in two very different ways, and the pult has to fit
+each of them.
+
+**Decision.**
+
+- **Lobby / office / permanent installation** — the pult is a stylish, convenient controller for
+  everyday use: few controls, scenes and modes, safe actions. Usually used on a **phone**.
+- **Live event** — the pult is a **VJ console** for that installation: dense layout, absolute and
+  relative controls, faders, knobs, thumbsticks, cue/layer groups, fine mode. Usually used on a
+  **tablet**.
+- **Every delivery ships both layouts** — phone and tablet — for the same config, whichever use case
+  it is. The config marks the primary form factor (phone for lobby, tablet for live), and the studio
+  designs that one first.
+
+**Consequences.** Pult layouts are defined per form factor (phone portrait, tablet landscape) in the
+config; `paginate` runs per form factor. Figma has a phone and a tablet frame for every screen of
+the app and for every client pult. QA checks both before a delivery.
+
+**Addendum (2026-10-21) — navigation and depth.**
+
+- The pult screen shows only the controls and a minimal header (connection status, view-only /
+  studio banners). Everything else lives in two swipe drawers, which may scroll vertically:
+  - **left edge → Settings**: appearance, control preferences, pairing QR, what's new, help, sign out;
+  - **right edge → Installation**: installation name and status, pult switcher, quick actions
+    (Flash, Restart and Blackout with hold-to-confirm), modes (Idle — stop reacting to people;
+    Pause — optional per installation).
+- **Take control** is not in a drawer: while a device is view-only, every pult screen shows the
+  "View only — Take control" banner in the header.
+- Depth in the UI is meaningful: **inset** = active/pressed state or the bed under a control
+  (tracks, toggle beds, inputs, tab bars); **raised** = interactive elements and top-level cards and
+  panels; **flat** = information nested inside a card (chips, stat tiles, icon wells). Neon glow
+  appears only on lit values and on press — never on resting buttons.
