@@ -15,9 +15,11 @@ import { Input } from "@osc/ui/components/ui/input";
 import { Text } from "@osc/ui/components/ui/text";
 import { activateKeepAwakeAsync } from "expo-keep-awake";
 import * as React from "react";
+import type { Pairing } from "@osc/protocol";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { findBridge, useBridge } from "@/lib/bridge";
+import { clearPairing, loadPairing, savePairing } from "@/lib/pairing";
 import { createDemoTransport, demoConfig } from "@/lib/demo";
 
 const PIN_KEY = "otakoyi.pin";
@@ -45,25 +47,53 @@ export default function PultScreen() {
     if (Platform.OS !== "web") activateKeepAwakeAsync("pult").catch(() => {});
   }, []);
 
-  const [bridgeUrl, setBridgeUrl] = React.useState<string | null | undefined>(undefined);
+  // undefined = still looking; null = no bridge (demo).
+  const [pairing, setPairing] = React.useState<Pairing | null | undefined>(undefined);
   React.useEffect(() => {
-    if (Platform.OS === "web") findBridge().then(setBridgeUrl);
-    else setBridgeUrl(null);
+    (async () => {
+      // A web pult served by a bridge talks to its own origin; otherwise use the saved pairing.
+      const served = Platform.OS === "web" ? await findBridge() : null;
+      const saved = await loadPairing();
+      if (served)
+        return setPairing({
+          bridge: served,
+          pin: readPin() ?? (saved?.bridge === served ? saved.pin : undefined),
+          name: saved?.name,
+        });
+      setPairing(saved);
+    })();
   }, []);
 
-  if (bridgeUrl === undefined)
+  if (pairing === undefined)
     return (
       <Centered>
         <ActivityIndicator />
       </Centered>
     );
-  if (bridgeUrl) return <BridgePult url={bridgeUrl} />;
+  if (pairing)
+    return (
+      <BridgePult
+        key={pairing.bridge}
+        pairing={pairing}
+        onForget={() => {
+          clearPairing();
+          setPairing(null);
+        }}
+      />
+    );
   return <DemoPult />;
 }
 
-function BridgePult({ url }: { url: string }) {
-  const [pin, setPin] = React.useState<string | undefined>(readPin);
-  const session = useBridge(url, pin);
+function BridgePult({ pairing, onForget }: { pairing: Pairing; onForget: () => void }) {
+  const [pin, setPin] = React.useState<string | undefined>(pairing.pin);
+  const session = useBridge(pairing.bridge, pin);
+  // Can't reach the bridge for a while (wrong network, bridge off): offer a way out.
+  const [stuck, setStuck] = React.useState(false);
+  React.useEffect(() => {
+    if (session?.config) return setStuck(false);
+    const t = setTimeout(() => setStuck(true), 8000);
+    return () => clearTimeout(t);
+  }, [session?.config]);
 
   if (session?.error?.code === "auth")
     return (
@@ -73,6 +103,7 @@ function BridgePult({ url }: { url: string }) {
           try {
             globalThis.localStorage?.setItem(PIN_KEY, p);
           } catch {}
+          if (Platform.OS !== "web") savePairing({ ...pairing, pin: p });
           setPin(p);
         }}
       />
@@ -81,7 +112,21 @@ function BridgePult({ url }: { url: string }) {
     return (
       <Centered>
         <ActivityIndicator />
-        <Text className="text-muted-foreground text-sm">Connecting to the installation…</Text>
+        <Text className="text-muted-foreground text-sm">
+          Connecting to {pairing.name ?? "the installation"}…
+        </Text>
+        {stuck && (
+          <View className="items-center gap-3">
+            <Text className="text-muted-foreground max-w-xs text-center text-sm">
+              Can't reach it. Check that this device is on the installation's Wi-Fi.
+            </Text>
+            {Platform.OS !== "web" && (
+              <Button variant="outline" onPress={onForget}>
+                <Text>Forget this installation</Text>
+              </Button>
+            )}
+          </View>
+        )}
       </Centered>
     );
 

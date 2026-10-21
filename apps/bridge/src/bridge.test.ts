@@ -149,3 +149,65 @@ describe("Bridge", () => {
     });
   });
 });
+
+describe("pairing mode", () => {
+  function pairingSetup() {
+    const r = parseConfig(demo);
+    if (!r.ok) throw new Error("demo invalid");
+    let now = 0;
+    const osc: OscMessage[] = [];
+    const bridge = new Bridge(
+      r.config,
+      {
+        sendOsc: (_t, m) => osc.push(...m),
+        log: () => {},
+        now: () => now,
+        pairingLinks: () => ({
+          app: "otakoyi-control://connect?x",
+          web: "http://h/?pin=1",
+          pin: "1",
+        }),
+      },
+      { studioKey: "k" },
+    );
+    return { bridge, osc, advance: (ms: number) => (now += ms) };
+  }
+  const pairMsgs = (osc: OscMessage[]) => osc.filter((m) => m.address === "/otakoyi/pair");
+
+  it("shows the QR on the installation when it asks (Ctrl+Shift+P) and hides it after the timeout", () => {
+    const { bridge, osc, advance } = pairingSetup();
+    bridge.feedback("td", message("/otakoyi/pair/request"));
+    const shown = pairMsgs(osc).at(-1)!;
+    expect(shown.args.map(argValue)).toEqual([
+      1,
+      120,
+      "otakoyi-control://connect?x",
+      "http://h/?pin=1",
+      "1",
+    ]);
+    advance(2 * 60 * 1000);
+    bridge.tick();
+    expect(argValue(pairMsgs(osc).at(-1)!.args[0]!)).toBe(0);
+    expect(bridge.pairingUntil).toBeNull();
+  });
+
+  it("lets only the studio toggle it from a pult", () => {
+    const { bridge, osc } = pairingSetup();
+    const inbox: ServerMessage[] = [];
+    const peer = { send: (m: ServerMessage) => inbox.push(m), close() {} };
+    bridge.connect(peer);
+    bridge.handle(peer, JSON.stringify({ t: "hello", v: 1, device: "c", role: "client" }));
+    bridge.handle(peer, JSON.stringify({ t: "pairing", show: true }));
+    expect(inbox.at(-1)).toMatchObject({ t: "error" });
+    expect(pairMsgs(osc)).toHaveLength(0);
+    const studio = { send: (m: ServerMessage) => inbox.push(m), close() {} };
+    bridge.connect(studio);
+    bridge.handle(
+      studio,
+      JSON.stringify({ t: "hello", v: 1, device: "s", role: "studio", secret: "k" }),
+    );
+    bridge.handle(studio, JSON.stringify({ t: "pairing", show: true }));
+    expect(argValue(pairMsgs(osc).at(-1)!.args[0]!)).toBe(1);
+    expect(inbox.at(-1)).toMatchObject({ t: "pairing" });
+  });
+});

@@ -89,5 +89,10 @@ describe("bridge server (real sockets)", () => {
 
     const health = await (await fetch(`http://127.0.0.1:${server.port}/api/health`)).json();
     expect(health).toMatchObject({ ok: true, protocol: 1, devices: 1 });
+
+    // Pairing sheet: local only, shows the PIN and both QR codes.
+    const pair = await (await fetch(`http://127.0.0.1:${server.port}/pair`)).text();
+    expect(pair).toContain("1234");
+    expect(pair.match(/<svg/g)?.length).toBe(2);
   });
 });
