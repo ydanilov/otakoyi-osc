@@ -1,6 +1,9 @@
 import { isValidAddress } from "@osc/core";
 import { checkBrand } from "@osc/tokens";
 import { z } from "zod";
+import { resolvePresets } from "./presets";
+
+export * from "./presets";
 
 /**
  * Installation config — the "build" a client receives after login.
@@ -62,6 +65,8 @@ const curve = z.enum(["linear", "log", "exp"]);
 
 const base = {
   id,
+  /** Preset the control was built from (built-in or custom); its fields are merged before validation. */
+  preset: z.string().optional(),
   label: z.string().optional(),
   target: id.optional(),
   grid: Grid,
@@ -85,6 +90,10 @@ const ranged = {
   default: z.number().optional(),
   /** Integer instead of float on the wire. */
   int: z.boolean().default(false),
+  /** Double-tap returns the control to `default` (or its initial value). */
+  doubleTapReset: z.boolean().default(true),
+  /** Two-finger drag moves this many times slower for precise adjustment. */
+  fineFactor: z.number().min(0.01).max(1).default(0.2),
 };
 
 export const Button = z.object({
@@ -110,6 +119,11 @@ export const Fader = z.object({
   ...base,
   ...ranged,
   type: z.literal("fader"),
+  /**
+   * relative (default, safe): a touch never changes the value, only dragging moves it by the
+   * distance dragged. absolute: the value jumps to the finger — opt in for non-critical parameters.
+   */
+  response: z.enum(["relative", "absolute"]).default("relative"),
   orientation: z.enum(["vertical", "horizontal"]).default("vertical"),
   /** Draw fill from the centre (bipolar values like pan). */
   centered: z.boolean().default(false),
@@ -269,7 +283,16 @@ export const Pult = z.object({
   pages: z.array(Page).min(1),
 });
 
-export const InstallationConfig = z
+/** A custom preset saved by the studio in the builder and published with the config. */
+export const CustomPreset = z.object({
+  id,
+  type: z.string().min(1),
+  label: z.string().min(1),
+  description: z.string().optional(),
+  props: z.record(z.string(), z.unknown()),
+});
+
+const InstallationConfigBase = z
   .object({
     schemaVersion: z.literal(SCHEMA_VERSION),
     installation: z.object({
@@ -280,6 +303,7 @@ export const InstallationConfig = z
     }),
     targets: z.array(Target).min(1),
     theme: Theme.default({ mode: "dark" }),
+    presets: z.array(CustomPreset).default([]),
     pults: z.array(Pult).min(1),
   })
   .superRefine((cfg, ctx) => {
@@ -337,6 +361,14 @@ export const InstallationConfig = z
     });
   });
 
+/** Installation config with presets resolved first (see presets.ts). */
+export const InstallationConfig = z.preprocess((input, ctx) => {
+  const { value, issues } = resolvePresets(input);
+  for (const issue of issues)
+    ctx.issues.push({ code: "custom", message: issue.message, path: issue.path, input });
+  return value;
+}, InstallationConfigBase);
+
 export type Target = z.infer<typeof Target>;
 export type Theme = z.infer<typeof Theme>;
 export type Control = z.infer<typeof Control>;
@@ -346,8 +378,9 @@ export type ControlType = Control["type"];
 export type ControlOf<T extends ControlType> = Extract<Control, { type: T }>;
 export type Page = z.infer<typeof Page>;
 export type Pult = z.infer<typeof Pult>;
-export type InstallationConfig = z.infer<typeof InstallationConfig>;
-export type InstallationConfigInput = z.input<typeof InstallationConfig>;
+export type InstallationConfig = z.infer<typeof InstallationConfigBase>;
+export type CustomPreset = z.infer<typeof CustomPreset>;
+export type InstallationConfigInput = z.input<typeof InstallationConfigBase>;
 
 export type ParseResult =
   | { ok: true; config: InstallationConfig }
@@ -384,3 +417,18 @@ export function targetOf(
     (cfg.targets.length === 1 ? cfg.targets[0]!.id : undefined);
   return cfg.targets.find((t) => t.id === tid);
 }
+
+/**
+ * Value snapshot: a saved look (values of many controls), recalled with one tap.
+ * Reserved for a later release (ADR 009): stored by the bridge as installation state, never in the config.
+ */
+export const ValueSnapshot = z.object({
+  id: z.string().min(1),
+  pultId: z.string().min(1),
+  label: z.string().min(1),
+  values: z.record(z.string(), z.unknown()),
+  createdBy: z.enum(["client", "studio"]),
+  createdAt: z.string(),
+  configRevision: z.number().int().nonnegative(),
+});
+export type ValueSnapshot = z.infer<typeof ValueSnapshot>;
