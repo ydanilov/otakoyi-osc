@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import type { OscMessage } from "@osc/core";
+import { message, type OscMessage } from "@osc/core";
 import { coerceValue, PultStore, type ControlValue } from "@osc/controls";
 import {
   PROTOCOL_VERSION,
@@ -20,7 +20,7 @@ export interface Peer {
 
 export interface LogEntry {
   ts: string;
-  event: "connect" | "disconnect" | "set" | "lease" | "rejected";
+  event: "connect" | "disconnect" | "set" | "lease" | "rejected" | "pairing";
   device?: string | undefined;
   role?: string | undefined;
   [k: string]: unknown;
@@ -30,7 +30,20 @@ export interface BridgeIO {
   sendOsc(target: Target, messages: OscMessage[]): void;
   log(entry: LogEntry): void;
   now(): number;
+  /** Links the installation shows in pairing mode (the network address is known to the server). */
+  pairingLinks?(): { app: string; web: string; pin: string };
 }
+
+/** How long the pairing QR stays on the installation's output. */
+export const PAIRING_MS = 2 * 60 * 1000;
+
+/**
+ * System OSC between the bridge and the installation (not part of any pult):
+ * - bridge → installation  `/otakoyi/pair  show:int  secondsLeft:int  app:str  web:str  pin:str`
+ * - installation → bridge  `/otakoyi/pair/request` (e.g. Ctrl+Shift+P on the installation machine)
+ */
+export const OSC_PAIR = "/otakoyi/pair";
+export const OSC_PAIR_REQUEST = "/otakoyi/pair/request";
 
 export interface BridgeAuth {
   /** Installation PIN for clients on the local network. Unset = no PIN (dev only). */
@@ -108,6 +121,10 @@ export class Bridge {
       case "release":
         if (this.lease.release(who.device)) this.handOver(who.device);
         return;
+      case "pairing":
+        if (who.role !== "studio")
+          return this.error(peer, "no-lease", "Only the studio can show the pairing QR");
+        return this.setPairing(msg.show, who);
       case "set": {
         if (!this.lease.canSend(who.device)) {
           this.log("rejected", who, { reason: "no-lease", pult: msg.pult, id: msg.id });
@@ -135,7 +152,31 @@ export class Bridge {
   /** OSC that came back from the installation. */
   feedback(targetId: string, msg: OscMessage) {
     this.lastFeedback.set(targetId, this.io.now());
+    if (msg.address === OSC_PAIR_REQUEST)
+      return this.setPairing(!this.pairingUntil, { device: `target:${targetId}` });
     for (const store of this.stores.values()) store.receive(msg);
+  }
+
+  /** Pairing mode: the installation shows the QR (with the PIN) for PAIRING_MS, then hides it. */
+  pairingUntil: number | null = null;
+
+  setPairing(show: boolean, who?: Partial<Holder>) {
+    this.pairingUntil = show ? this.io.now() + PAIRING_MS : null;
+    this.log("pairing", who, { show });
+    this.sendPairing();
+    this.broadcast({ t: "pairing", until: this.pairingUntil });
+  }
+
+  private sendPairing() {
+    const links = this.io.pairingLinks?.();
+    const left = this.pairingUntil
+      ? Math.max(0, Math.ceil((this.pairingUntil - this.io.now()) / 1000))
+      : 0;
+    const msg =
+      this.pairingUntil && links
+        ? message(OSC_PAIR, 1, left, links.app, links.web, links.pin)
+        : message(OSC_PAIR, 0, 0, "", "", "");
+    for (const t of this.config.targets) this.io.sendOsc(t, [msg]);
   }
 
   status(): TargetStatus[] {
@@ -152,6 +193,10 @@ export class Bridge {
 
   /** Call about once a second: broadcasts target status when it changes. */
   tick() {
+    if (this.pairingUntil !== null) {
+      if (this.io.now() >= this.pairingUntil) this.setPairing(false);
+      else this.sendPairing(); // countdown + reaches an installation that restarted meanwhile
+    }
     const st = this.status();
     if (st.some((t) => this.online.get(t.id) !== t.online)) {
       for (const t of st) this.online.set(t.id, t.online);

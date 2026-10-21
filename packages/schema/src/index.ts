@@ -23,6 +23,23 @@ const addressTemplate = z
   .refine((a) => isValidAddress(a.replace(/\{[a-z]+\}/gi, "x")), "OSC address template is invalid");
 const oscValue = z.union([z.number(), z.string(), z.boolean(), z.null()]);
 
+/**
+ * How Otakoyi Runtime starts and watches the software behind a target (ADR 011). Optional: a target
+ * without it is just an OSC address the bridge talks to.
+ */
+export const TargetRuntime = z.object({
+  app: z.enum(["touchdesigner", "touchplayer", "command"]),
+  /** Project file relative to the runtime folder, e.g. "installation.toe". */
+  project: z.string().min(1).optional(),
+  /** Exact TouchDesigner build the project was made with, e.g. "2025.33070". */
+  version: z.string().optional(),
+  /** For app "command": executable and arguments. */
+  command: z.array(z.string()).optional(),
+  /** OSC address the project sends every second; silence = hung, restart. */
+  heartbeat: z.string().startsWith("/").optional(),
+  restartOnCrash: z.boolean().default(true),
+});
+
 export const Target = z.object({
   id,
   name: z.string().min(1),
@@ -32,6 +49,7 @@ export const Target = z.object({
   port: z.number().int().min(1).max(65535),
   fallbackHosts: z.array(z.string()).default([]),
   feedbackPort: z.number().int().min(1).max(65535).optional(),
+  runtime: TargetRuntime.optional(),
 });
 
 export const Theme = z

@@ -3,6 +3,10 @@
 # a value table, a live preview (brightness/hue/tint/mode) and simulated FPS + audio level.
 # Run from the Textport:  exec(open('<repo>/tools/touchdesigner/build_otakoyi_test.py').read())
 
+import os
+# Folder of this script (set HERE before exec if you run it from elsewhere).
+HERE = globals().get('HERE') or os.path.dirname(os.path.abspath(globals().get('__file__', '/Users/demo/td-mcp-server/otakoyi/x')))
+
 IN_PORT = 7000
 FB_HOST = '127.0.0.1'
 FB_PORT = 9000
@@ -29,6 +33,10 @@ cb = base.create(textDAT, 'osc_callbacks')
 cb.nodeX, cb.nodeY = -200, -150
 cb.text = '''
 def onReceiveOSC(dat, rowIndex, message, byteData, timeStamp, address, args, peer):
+    if address.startswith('/otakoyi/'):
+        # System messages from the bridge (pairing mode): never echoed, never shown as values.
+        parent().op('otakoyi_pairing/logic').module.handle(address, args)
+        return
     v = parent().op('values')
     shown = ' '.join(str(a) for a in args)
     if v.row(address) is None:
@@ -122,10 +130,19 @@ label.par.alignx = 'left'
 label.par.aligny = 'top'
 label.par.text.expr = "'\\n'.join('%s  %s' % (r[0].val, r[1].val) for r in op('values').rows()[1:])"
 
-comp = base.create(overTOP, 'out')
+comp = base.create(overTOP, 'show')
 comp.inputConnectors[0].connect(label)
 comp.inputConnectors[1].connect(prev)
 comp.nodeX, comp.nodeY = 650, -50
-comp.viewer = True
+
+# Pairing overlay (QR + PIN while the bridge is in pairing mode; Ctrl+Shift+P toggles it).
+exec(open(os.path.join(HERE, 'build_otakoyi_pairing.py'), encoding='utf-8').read(), globals())
+pair = build_pairing(base)
+pair.nodeX, pair.nodeY = 650, -250
+final = base.create(overTOP, 'out')
+final.inputConnectors[0].connect(pair.outputConnectors[0])
+final.inputConnectors[1].connect(comp)
+final.nodeX, final.nodeY = 850, -50
+final.viewer = True
 base.viewer = True
 print('OTAKOYI TEST READY: OSC in', IN_PORT, '-> feedback', FB_HOST, FB_PORT)

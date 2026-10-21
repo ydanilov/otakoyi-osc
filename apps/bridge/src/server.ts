@@ -5,8 +5,13 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 import { decodePacket, encodeMessage, messagesOf } from "@osc/core";
 import { PROTOCOL_VERSION } from "@osc/protocol";
 import type { InstallationConfig, Target } from "@osc/schema";
+import { Bonjour } from "bonjour-service";
 import { WebSocketServer, type WebSocket } from "ws";
 import { Bridge, type BridgeAuth, type LogEntry, type Peer } from "./bridge";
+import { pairingUrl, webPultUrl } from "@osc/protocol";
+import QRCode from "qrcode";
+import { pairingCard } from "./pairing-card";
+import { isLoopback, lanAddresses, pairingPage } from "./pairing-page";
 
 export interface ServerOptions {
   config: InstallationConfig;
@@ -22,6 +27,8 @@ export interface ServerOptions {
   quiet?: boolean;
   /** Log every OSC packet in and out (OTAKOYI_DEBUG=1). */
   debug?: boolean;
+  /** Advertise the bridge on the local network (mDNS `_otakoyi._tcp`). Default: when not local-only. */
+  mdns?: boolean;
 }
 
 const HELLO_TIMEOUT_MS = 5000;
@@ -50,7 +57,20 @@ export async function startServer(opts: ServerOptions) {
 
   // --- OSC out --------------------------------------------------------------------------------
   const out = createSocket("udp4");
+  let boundPort = opts.port;
+  const localOnly = opts.host === "127.0.0.1" || opts.host === "localhost";
+  /** What a phone scans: the first LAN address of this machine (or localhost when local-only). */
+  const links = () => {
+    const host = (localOnly ? undefined : lanAddresses()[0]) ?? "127.0.0.1";
+    const p = {
+      bridge: `ws://${host}:${boundPort}/ws`,
+      pin: opts.auth.clientPin,
+      name: opts.config.installation.name,
+    };
+    return { app: pairingUrl(p), web: webPultUrl(p), pin: opts.auth.clientPin ?? "" };
+  };
   const io = {
+    pairingLinks: links,
     now: () => Date.now(),
     sendOsc(target: Target, messages: { address: string; args: unknown[] }[]) {
       if (target.protocol !== "udp")
@@ -113,6 +133,44 @@ export async function startServer(opts: ServerOptions) {
         }),
       );
     }
+    if (url.pathname === "/pair.png") {
+      // Images for the installation's own pairing overlay (TouchDesigner loads them from localhost).
+      // ?card=1&w=1280&h=720 → full-frame card with the QR on the left; otherwise a bare QR.
+      if (!isLoopback(req.socket.remoteAddress)) return res.writeHead(403).end();
+      const l = links();
+      const content = url.searchParams.get("kind") === "web" ? l.web : l.app;
+      const png = url.searchParams.has("card")
+        ? pairingCard(
+            content,
+            Number(url.searchParams.get("w")) || 1280,
+            Number(url.searchParams.get("h")) || 720,
+          )
+        : await QRCode.toBuffer(content, {
+            type: "png",
+            width: Math.min(2048, Math.max(128, Number(url.searchParams.get("size")) || 720)),
+            margin: 2,
+            errorCorrectionLevel: "M",
+          });
+      res.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" });
+      return res.end(png);
+    }
+    if (url.pathname === "/pair") {
+      // Shows the PIN, so only on the installation's own screen.
+      if (!isLoopback(req.socket.remoteAddress))
+        return res.writeHead(403).end("Open /pair on the installation computer");
+      const html = await pairingPage({
+        name: opts.config.installation.name,
+        port: (http.address() as { port: number }).port,
+        pin: opts.auth.clientPin,
+        hosts: localOnly ? ["127.0.0.1"] : lanAddresses(),
+        localOnly,
+      });
+      res.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+      });
+      return res.end(html);
+    }
     if (!webRoot) return res.writeHead(404).end("No web pult configured");
     const rel = normalize(decodeURIComponent(url.pathname)).replace(/^([/\\])+/, "");
     let file = join(webRoot, rel);
@@ -164,13 +222,36 @@ export async function startServer(opts: ServerOptions) {
   const ticker = setInterval(() => bridge.tick(), 1000);
 
   await new Promise<void>((ok) => http.listen(opts.port, opts.host, ok));
-  say(`pults on http://${opts.host}:${opts.port}  (socket /ws${webRoot ? ", web pult /" : ""})`);
+  const port = (http.address() as { port: number }).port;
+  boundPort = port;
+  say(`pults on http://${opts.host}:${port}  (socket /ws${webRoot ? ", web pult /" : ""})`);
+  say(`pair a device: open http://127.0.0.1:${port}/pair on this computer`);
+
+  // --- mDNS: lets the app find the bridge without typing an address --------------------------
+  let bonjour: Bonjour | null = null;
+  if (opts.mdns ?? !localOnly) {
+    bonjour = new Bonjour();
+    bonjour.publish({
+      name: `${opts.config.installation.name} (${opts.config.installation.id})`,
+      type: "otakoyi",
+      port,
+      txt: { id: opts.config.installation.id, protocol: String(PROTOCOL_VERSION), path: "/ws" },
+    });
+    say(`advertised as _otakoyi._tcp on the local network`);
+  }
   for (const t of opts.config.targets) say(`OSC to ${t.name ?? t.id} at ${hostOf(t)}:${t.port}`);
 
   return {
     bridge,
-    port: (http.address() as { port: number }).port,
+    port,
     async close() {
+      if (bonjour)
+        await new Promise<void>((ok) =>
+          bonjour!.unpublishAll(() => {
+            bonjour!.destroy();
+            ok();
+          }),
+        );
       clearInterval(keepalive);
       clearInterval(ticker);
       for (const ws of wss.clients) ws.terminate();

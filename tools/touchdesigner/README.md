@@ -29,7 +29,21 @@ OTAKOYI_PIN=2468 pnpm bridge             # http://localhost:8080  (PIN 2468)
 Open http://localhost:8080 — the header turns **Online** when feedback from TD arrives.
 Set `OTAKOYI_DEBUG=1` to log every OSC packet in and out.
 
-## Known issue
+## Pairing overlay (`otakoyi_pairing.tox`)
 
-The simulated audio level sometimes repeats one value instead of moving (seen on macOS with the
-timeline paused). Real feedback (echoed values, FPS) is unaffected. To look at next.
+Reusable component for every installation project (ADR 012): while the bridge is in pairing mode the
+installation's own output shows a full-frame card — QR for the app, PIN, web pult address and a
+countdown. It is transparent otherwise.
+
+- **Start / stop pairing:** Ctrl+Shift+P on the installation machine (any keyboard layout; in the TD
+  editor use Perform mode or F12), or the studio from its pult. Closes by itself after 2 minutes.
+- **Why not always on:** the PIN on a public screen lets anyone on the Wi-Fi take control.
+- **Wiring:** forward `/otakoyi/*` from your OSC In callback to
+  `op('otakoyi_pairing/logic').module.handle(address, args)` (and don't echo them), then put the COMP's
+  output over your final output. The bridge draws the card (`/pair.png?card=1`), TD only adds the text.
+- Rebuild from source: `build_otakoyi_pairing.py` (`build_pairing(parentComp)`).
+
+## Telemetry
+
+Simulated audio level and FPS run on their own timer (`run()` on TDResources), so they keep moving
+with the timeline paused.

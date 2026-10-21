@@ -30,6 +30,8 @@ export const ClientMessage = z.discriminatedUnion("t", [
   /** Ask for control. The studio always gets it; a client gets it unless the studio holds it. */
   z.object({ t: z.literal("take") }),
   z.object({ t: z.literal("release") }),
+  /** Studio only: show / hide the pairing QR on the installation's own output (ADR 012). */
+  z.object({ t: z.literal("pairing"), show: z.boolean() }),
   z.object({ t: z.literal("ping"), at: z.number() }),
 ]);
 export type ClientMessage = z.infer<typeof ClientMessage>;
@@ -66,7 +68,9 @@ export type ServerMessage =
   | { t: "lease"; holder: Holder | null }
   | { t: "status"; targets: TargetStatus[] }
   | { t: "error"; code: ErrorCode; message: string }
-  | { t: "pong"; at: number };
+  | { t: "pong"; at: number }
+  /** Pairing QR shown on the installation until `until` (epoch ms), or hidden (null). */
+  | { t: "pairing"; until: number | null };
 
 export function parseClientMessage(raw: string): ClientMessage | null {
   try {
@@ -88,3 +92,4 @@ export function modeFor(
 }
 
 export * from "./client";
+export * from "./pairing";

@@ -14,6 +14,8 @@ Short, numbered, immutable. To change a decision, add a new ADR that supersedes 
 | 008 | Control presets: built-in library + custom studio presets in the config      | Accepted |
 | 009 | Value snapshots (client-saved looks) live in the bridge, not in the config   | Proposed |
 | 010 | Bridge protocol: WebSocket JSON, bridge validates, sends OSC, owns the lease | Accepted |
+| 011 | One program on site: Otakoyi Runtime = bridge + TD supervisor + project      | Accepted |
+| 012 | Pairing by QR on the local network (deep link + web pult), mDNS advertise    | Accepted |
 
 ---
 
@@ -136,3 +138,41 @@ serves the web pult on `/` and `/api/health`, and ships as one file (`pnpm --fil
 
 **Consequences.** One code path for every device; the phone never sends OSC itself when a bridge is
 present. Target "auto" (mDNS) and TCP targets are not implemented yet: "auto" means this machine.
+
+## 011 — One program on the installation machine: Otakoyi Runtime
+
+**Status:** Accepted · 2026-10-21 · not built yet (native packaging is a later phase)
+
+**Context.** A client must not run "the installation" and "the bridge" as two programs. TouchDesigner
+cannot export a standalone .exe/.app: a project (.toe) runs in TouchDesigner or TouchPlayer (perform
+mode, no editor), and the machine needs a TouchDesigner licence. Projects can be packed into the .toe
+with TD's virtual file system (VFS).
+
+**Decision.** The client gets one installer and sees one program, **Otakoyi Runtime** (macOS .pkg,
+Windows installer), which contains:
+
+- the bridge, compiled to a native binary (no Node on the machine);
+- the installation project (.toe, assets packed with VFS where possible);
+- a supervisor in the bridge process that starts TouchDesigner/TouchPlayer with the project in perform
+  mode, watches it (heartbeat over OSC, process alive), restarts it on a crash, and runs the schedule;
+- the pult web app and the pairing page (`/pair`).
+
+The installer installs the matching TouchDesigner build (silent install) and the licence key, registers
+the runtime as a service (launchd / Windows service) so it starts with the machine, and opens the
+pairing page once. The runtime reports TD status to the studio (telemetry) like any target.
+
+**Consequences.** The bridge grows a "process supervisor" module behind an interface (no TD specifics in
+the core). TD version and licence become part of the installation record. Code signing (Apple
+Developer ID, Windows code signing) is required before shipping to clients. Until then the studio
+installs TD and the bridge by hand.
+
+## 012 — Pairing by QR on the local network
+
+**Status:** Accepted · 2026-10-21
+
+**Decision.** The bridge serves `/pair` (only to its own machine, since it shows the PIN) with two QR
+codes per network address: the app deep link `otakoyi-control://connect?bridge=ws://…/ws&pin=…&name=…`
+and the web pult URL. Scanning with the phone camera opens the app, which stores the pairing (Keychain
+via SecureStore) and connects. The bridge also advertises `_otakoyi._tcp` over mDNS for in-app discovery
+later. Cloud login with a one-time magic link replaces the PIN when the cloud exists; a magic link can
+not survive an App Store install, so the first screen also accepts the QR.
