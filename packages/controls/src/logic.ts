@@ -112,12 +112,20 @@ export function relativeDrag(
   if (pointers !== state.pointers) st = { anchor: current, anchorDistance: distance, pointers };
   const fine = st.pointers >= FINE_POINTERS;
   const factor = fine ? fineFactor : 1;
-  const pos = Math.min(1, Math.max(0, st.anchor + ((distance - st.anchorDistance) / Math.max(1, length)) * factor));
+  const pos = Math.min(
+    1,
+    Math.max(0, st.anchor + ((distance - st.anchorDistance) / Math.max(1, length)) * factor),
+  );
   return { pos, state: st, fine };
 }
 
 /** Value a control returns to on double-tap. */
-export function resetValue(c: { default?: number | undefined; centered?: boolean; min: number; max: number }): number {
+export function resetValue(c: {
+  default?: number | undefined;
+  centered?: boolean;
+  min: number;
+  max: number;
+}): number {
   return c.default ?? (c.centered ? (c.min + c.max) / 2 : c.min);
 }
 
@@ -285,7 +293,7 @@ export function messagesFor(c: Control, value: ControlValue): OscMessage[] {
           ? value.pressed
           : Boolean(value);
       const args = pressed ? c.press : c.release;
-      return args ? [message(c.address, ...args)] : [];
+      return args && args.length ? [message(c.address, ...args)] : [];
     }
     case "toggle":
       return [message(c.address, ...(value ? c.on : c.off))];

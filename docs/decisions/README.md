@@ -10,6 +10,8 @@ Short, numbered, immutable. To change a decision, add a new ADR that supersedes 
 | 004 | Design system: React Native Reusables + NativeWind for chrome, Skia controls | Accepted |
 | 005 | Bridge is the hub: shared state, control lease, local web pult, OSC fan-out  | Accepted |
 | 006 | Pult never scrolls vertically; pages split into horizontally swiped screens  | Accepted |
+| 007 | Relative faders by default; fine mode and double-tap reset on every slider   | Accepted |
+| 008 | Control presets: built-in library + custom studio presets in the config      | Accepted |
 
 ---
 
@@ -68,3 +70,26 @@ phone is a fallback without sync or lease.
 **Decision.** Grid rows stretch to the screen height. A page that does not fit at the minimum row
 height (40 pt) is split into screens between bands of controls; screens swipe horizontally with tabs.
 Phones re-flow the tablet grid into half/full-width controls.
+
+## 007 — Relative faders by default
+
+**Status:** Accepted · 2026-10-21
+
+**Context.** Research (TouchOSC, Open Stage Control): absolute faders jump to the finger, so an
+accidental touch in a dark venue can flash or kill a wall.
+
+**Decision.** Faders default to `response: "relative"` — a touch never changes the value; dragging moves
+it 1:1 with the track. `absolute` is opt-in per control. Faders and knobs share: two-finger fine mode
+(`fineFactor`, ×0.2), shown as FINE; double-tap resets to `default` (`doubleTapReset`). Adding or lifting
+a finger re-anchors the drag, so the value never jumps.
+
+## 008 — Control presets
+
+**Status:** Accepted · 2026-10-21
+
+**Decision.** A control may reference `preset`. Built-in presets ship in `packages/schema/src/presets.ts`
+(ids `type/name`, e.g. `fader/brightness`). Custom presets are saved by the studio in the builder and
+published in the config's `presets`, so the app works offline. Preset fields are merged under the
+control's own fields before validation; explicit fields win. Unknown presets, type mismatches and
+custom ids that clash with built-ins fail validation. Clients do not create presets (only the studio
+edits pults).

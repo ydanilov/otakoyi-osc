@@ -122,7 +122,14 @@ export function Fader({ control: c, value, onChange, disabled }: ControlProps<"f
       }
       const distance = vertical ? -e.translationY : e.translationX;
       const wasFine = drag.value.pointers >= 2;
-      const r = relativeDrag(drag.value, pos.value, distance, e.numberOfPointers, length, fineFactor);
+      const r = relativeDrag(
+        drag.value,
+        pos.value,
+        distance,
+        e.numberOfPointers,
+        length,
+        fineFactor,
+      );
       drag.value = r.state;
       pos.value = r.pos;
       if (r.fine !== wasFine) scheduleOnRN(setFine, r.fine);

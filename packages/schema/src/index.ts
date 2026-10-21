@@ -1,6 +1,9 @@
 import { isValidAddress } from "@osc/core";
 import { checkBrand } from "@osc/tokens";
 import { z } from "zod";
+import { resolvePresets } from "./presets";
+
+export * from "./presets";
 
 /**
  * Installation config — the "build" a client receives after login.
@@ -62,6 +65,8 @@ const curve = z.enum(["linear", "log", "exp"]);
 
 const base = {
   id,
+  /** Preset the control was built from (built-in or custom); its fields are merged before validation. */
+  preset: z.string().optional(),
   label: z.string().optional(),
   target: id.optional(),
   grid: Grid,
@@ -278,7 +283,16 @@ export const Pult = z.object({
   pages: z.array(Page).min(1),
 });
 
-export const InstallationConfig = z
+/** A custom preset saved by the studio in the builder and published with the config. */
+export const CustomPreset = z.object({
+  id,
+  type: z.string().min(1),
+  label: z.string().min(1),
+  description: z.string().optional(),
+  props: z.record(z.string(), z.unknown()),
+});
+
+const InstallationConfigBase = z
   .object({
     schemaVersion: z.literal(SCHEMA_VERSION),
     installation: z.object({
@@ -289,6 +303,7 @@ export const InstallationConfig = z
     }),
     targets: z.array(Target).min(1),
     theme: Theme.default({ mode: "dark" }),
+    presets: z.array(CustomPreset).default([]),
     pults: z.array(Pult).min(1),
   })
   .superRefine((cfg, ctx) => {
@@ -346,6 +361,14 @@ export const InstallationConfig = z
     });
   });
 
+/** Installation config with presets resolved first (see presets.ts). */
+export const InstallationConfig = z.preprocess((input, ctx) => {
+  const { value, issues } = resolvePresets(input);
+  for (const issue of issues)
+    ctx.issues.push({ code: "custom", message: issue.message, path: issue.path, input });
+  return value;
+}, InstallationConfigBase);
+
 export type Target = z.infer<typeof Target>;
 export type Theme = z.infer<typeof Theme>;
 export type Control = z.infer<typeof Control>;
@@ -355,8 +378,9 @@ export type ControlType = Control["type"];
 export type ControlOf<T extends ControlType> = Extract<Control, { type: T }>;
 export type Page = z.infer<typeof Page>;
 export type Pult = z.infer<typeof Pult>;
-export type InstallationConfig = z.infer<typeof InstallationConfig>;
-export type InstallationConfigInput = z.input<typeof InstallationConfig>;
+export type InstallationConfig = z.infer<typeof InstallationConfigBase>;
+export type CustomPreset = z.infer<typeof CustomPreset>;
+export type InstallationConfigInput = z.input<typeof InstallationConfigBase>;
 
 export type ParseResult =
   | { ok: true; config: InstallationConfig }
