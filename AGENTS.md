@@ -79,7 +79,7 @@ packages/schema/        installation config schema + examples/demo-installation.
 packages/tokens/        base tokens, createTheme(brand), contrast checks, generated CSS/preset
 packages/controls/      control logic (pure TS)
 packages/ui/            design system: Reusables components, Skia controls, pult renderer
-docs/decisions/         ADRs — propose a new one instead of relitigating
+docs/decisions/         ADRs, one file each, current version only — edit in place
 tools/touchdesigner/     TouchDesigner test target + pairing overlay (.tox + build scripts)
 docs/integration.md     how an installation project plugs in (OSC contract, feedback, system OSC)
 docs/figma.md           Figma file, pages, components, conventions

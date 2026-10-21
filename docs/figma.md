@@ -29,7 +29,7 @@ One page per client (`Client / <installation-id>`), built only from library inst
 ## Style
 
 Neumorphic dark hardware: graphite-navy surfaces, neon lime as the only lit colour, LEDs and glow
-for state. Depth is meaningful (ADR-013 addendum):
+for state. Depth is meaningful (ADR-013):
 
 - **Raised** (`Neu/Raised`, `Neu/Raised SM`) — interactive elements, top-level cards and panels.
 - **Inset** (`Neu/Inset`, `Neu/Pressed`) — active / pressed states and beds under controls
