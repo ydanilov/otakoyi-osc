@@ -15,6 +15,7 @@ import { PromptStore } from "./prompts";
  *   POST   /api/prompts?pult=&control=        { label, text, on? }
  *   PATCH  /api/prompts/<id>                  { label?, text?, on? }
  *   DELETE /api/prompts/<id>
+ *   GET    /api/activity?limit=                recent activity (connect, set, lease, action, …)
  *
  * Auth: `x-otakoyi-secret` (installation PIN or studio key) and `x-otakoyi-device` (the device id
  * used on the socket). Anything that sends OSC needs the control lease (or the studio).
@@ -57,13 +58,21 @@ export function createApi(bridge: Bridge, dir: string, now: () => number = Date.
 
   async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promise<boolean> {
     const parts = url.pathname.split("/").filter(Boolean); // ["api", "images", id?, action?]
-    if (parts[0] !== "api" || (parts[1] !== "images" && parts[1] !== "prompts")) return false;
+    if (parts[0] !== "api" || !["images", "prompts", "activity"].includes(parts[1] ?? ""))
+      return false;
     const who = bridge.authorize(header(req, "x-otakoyi-secret"), header(req, "x-otakoyi-device"));
     if (!who) throw new HttpError(401, "Wrong PIN");
     const method = req.method ?? "GET";
     const needsLease = () => {
       if (!bridge.canControl(who)) throw new HttpError(409, "Another device is in control");
     };
+
+    if (parts[1] === "activity") {
+      // Activity feed for the Installation drawer (needs the PIN or the studio key).
+      if (method !== "GET") throw new HttpError(405, "Method not allowed");
+      const limit = Number(url.searchParams.get("limit")) || undefined;
+      return json(res, 200, bridge.activity(limit));
+    }
 
     if (parts[1] === "images") {
       const id = parts[2];

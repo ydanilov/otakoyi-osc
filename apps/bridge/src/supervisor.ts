@@ -10,6 +10,8 @@ export interface Supervisor {
   /** Start the target's software (e.g. TouchDesigner with the .toe in perform mode). */
   start(target: Target): Promise<void>;
   stop(target: Target): Promise<void>;
+  /** Stop and start again (the Restart action, or a hang). */
+  restart(target: Target): Promise<void>;
   /** Called by the bridge when the target's heartbeat address arrives. */
   heartbeat(targetId: string): void;
   status(targetId: string): "stopped" | "starting" | "running" | "crashed" | "hung";
@@ -19,6 +21,7 @@ export interface Supervisor {
 export const noSupervisor: Supervisor = {
   async start() {},
   async stop() {},
+  async restart() {},
   heartbeat() {},
   status: () => "running",
 };

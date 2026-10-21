@@ -5,7 +5,36 @@ import { z } from "zod";
  * JSON messages tagged by `t`. The bridge is the authority: it validates every message,
  * owns the control lease and the shared state, and is the only thing that sends OSC.
  */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
+/**
+ * Oldest protocol the bridge still accepts. v2 only adds messages and fields (actions, modes,
+ * activity), so v1 pults keep working: they never send the new messages and ignore what they
+ * don't know.
+ */
+export const MIN_PROTOCOL_VERSION = 1;
+
+/** Installation actions a pult can trigger (ADR-013 addendum, ADR-016). */
+export const ActionName = z.enum(["flash", "restart", "blackout"]);
+export type ActionName = z.infer<typeof ActionName>;
+/** Installation modes that stay on until switched off. */
+export const ModeName = z.enum(["idle", "pause"]);
+export type ModeName = z.infer<typeof ModeName>;
+
+/** Latched installation state, sent in `welcome` and `status`. */
+export interface InstallationModes {
+  blackout: boolean;
+  idle: boolean;
+  pause: boolean;
+}
+
+/** One line of the activity feed (drawer → Installation). */
+export interface ActivityEntry {
+  ts: string;
+  event: "connect" | "disconnect" | "set" | "lease" | "action" | "mode" | "pairing" | "rejected";
+  device?: string | undefined;
+  role?: string | undefined;
+  [k: string]: unknown;
+}
 
 export const Role = z.enum(["client", "studio"]);
 export type Role = z.infer<typeof Role>;
@@ -33,6 +62,14 @@ export const ClientMessage = z.discriminatedUnion("t", [
   /** Studio only: show / hide the pairing QR on the installation's own output (ADR 012). */
   z.object({ t: z.literal("pairing"), show: z.boolean() }),
   z.object({ t: z.literal("ping"), at: z.number() }),
+  /**
+   * v2. Trigger an installation action (lease holder or studio). `on` is required for blackout
+   * (latched); flash and restart are one-shot. The pult asks for hold-to-confirm before sending
+   * restart and blackout.
+   */
+  z.object({ t: z.literal("action"), name: ActionName, on: z.boolean().optional() }),
+  /** v2. Switch an installation mode on or off (lease holder or studio). */
+  z.object({ t: z.literal("mode"), mode: ModeName, on: z.boolean() }),
 ]);
 export type ClientMessage = z.infer<typeof ClientMessage>;
 
@@ -50,7 +87,14 @@ export interface TargetStatus {
 }
 
 export type ErrorCode =
-  "version" | "auth" | "bad-message" | "no-lease" | "unknown-control" | "bad-value";
+  | "version"
+  | "auth"
+  | "bad-message"
+  | "no-lease"
+  | "unknown-control"
+  | "bad-value"
+  /** v2: the installation does not support this action / mode. */
+  | "unsupported";
 
 export type ServerMessage =
   | {
@@ -62,11 +106,19 @@ export type ServerMessage =
       state: Record<string, Record<string, unknown>>;
       lease: Holder | null;
       targets: TargetStatus[];
+      /** v2: actions and modes this installation supports. */
+      actions?: string[];
+      /** v2: latched installation state. */
+      modes?: InstallationModes;
+      /** v2: the most recent activity, oldest first. */
+      activity?: ActivityEntry[];
     }
   /** `by` is the device that changed it, or null for feedback from the installation. */
   | { t: "value"; pult: string; id: string; value: unknown; by: string | null }
   | { t: "lease"; holder: Holder | null }
-  | { t: "status"; targets: TargetStatus[] }
+  | { t: "status"; targets: TargetStatus[]; modes?: InstallationModes }
+  /** v2: new activity since the last batch (sent at most once a second), oldest first. */
+  | { t: "activity"; entries: ActivityEntry[] }
   | { t: "error"; code: ErrorCode; message: string }
   | { t: "pong"; at: number }
   /** Pairing QR shown on the installation until `until` (epoch ms), or hidden (null). */

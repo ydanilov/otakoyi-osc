@@ -1,14 +1,15 @@
-import { createSocket, type Socket } from "node:dgram";
 import { appendFile, mkdir, readFile, stat } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import { decodePacket, encodeMessage, messagesOf } from "@osc/core";
 import { PROTOCOL_VERSION } from "@osc/protocol";
-import type { InstallationConfig, Target } from "@osc/schema";
+import type { InstallationConfig } from "@osc/schema";
 import { Bonjour } from "bonjour-service";
 import { WebSocketServer, type WebSocket } from "ws";
 import { createApi } from "./api";
-import { Bridge, type BridgeAuth, type LogEntry, type Peer } from "./bridge";
+import { Bridge, type BridgeAuth, type BridgeIO, type LogEntry, type Peer } from "./bridge";
+import type { Browse } from "./resolver";
+import type { Supervisor } from "./supervisor";
+import { bonjourBrowse, openTargets } from "./targets";
 import { pairingUrl, webPultUrl } from "@osc/protocol";
 import QRCode from "qrcode";
 import { pairingCard } from "./pairing-card";
@@ -33,8 +34,15 @@ export interface ServerOptions {
   quiet?: boolean;
   /** Log every OSC packet in and out (OTAKOYI_DEBUG=1). */
   debug?: boolean;
-  /** Advertise the bridge on the local network (mDNS `_otakoyi._tcp`). Default: when not local-only. */
+  /**
+   * Advertise the bridge on the local network (mDNS `_otakoyi._tcp`). Default: when not local-only.
+   * `false` also turns off discovery of `host: "auto"` targets (unless `browse` is given).
+   */
   mdns?: boolean;
+  /** Starts and watches the installation software (ADR-011). Default: none. */
+  supervisor?: Supervisor | undefined;
+  /** mDNS browse for `host: "auto"` targets; null disables discovery. Default: bonjour. */
+  browse?: Browse | null;
 }
 
 const HELLO_TIMEOUT_MS = 5000;
@@ -54,15 +62,10 @@ const MIME: Record<string, string> = {
   ".woff2": "font/woff2",
 };
 
-/** Resolve a target host. "auto" (mDNS discovery) is not implemented yet and means this machine. */
-const hostOf = (t: Target) => (!t.host || t.host === "auto" ? "127.0.0.1" : t.host);
-
 export async function startServer(opts: ServerOptions) {
   const say = (...a: unknown[]) => opts.quiet || console.log("[bridge]", ...a);
   await mkdir(opts.logDir, { recursive: true });
 
-  // --- OSC out --------------------------------------------------------------------------------
-  const out = createSocket("udp4");
   let boundPort = opts.port;
   const localOnly = opts.host === "127.0.0.1" || opts.host === "localhost";
   /** What a phone scans: the first LAN address of this machine (or localhost when local-only). */
@@ -75,18 +78,31 @@ export async function startServer(opts: ServerOptions) {
     };
     return { app: pairingUrl(p), web: webPultUrl(p), pin: opts.auth.clientPin ?? "" };
   };
-  const io = {
+
+  // --- OSC to and from the installation (UDP / TCP, auto hosts) ------------------------------
+  const needsBrowse = opts.config.targets.some((t) => t.host === "auto");
+  let browser: Bonjour | null = null;
+  const browse =
+    opts.browse !== undefined
+      ? opts.browse
+      : needsBrowse && opts.mdns !== false
+        ? bonjourBrowse((browser = new Bonjour()))
+        : null;
+  let feedbackTo: Bridge | null = null;
+  const transports = await openTargets({
+    targets: opts.config.targets,
+    onFeedback: (id, m) => feedbackTo?.feedback(id, m),
+    browse,
+    say,
+    debug: opts.debug,
+  });
+
+  const io: BridgeIO = {
     pairingLinks: links,
     now: () => Date.now(),
-    sendOsc(target: Target, messages: { address: string; args: unknown[] }[]) {
-      if (target.protocol !== "udp")
-        return say(`target ${target.id}: only UDP is supported for now`);
-      for (const m of messages) {
-        const bytes = encodeMessage(m as Parameters<typeof encodeMessage>[0]);
-        if (opts.debug) say("osc out", m.address, JSON.stringify(m.args));
-        out.send(bytes, target.port, hostOf(target));
-      }
-    },
+    supervisor: opts.supervisor,
+    sendOsc: (target, messages) => transports.send(target, messages),
+    targetOffline: (target) => void transports.offline(target),
     log(e: LogEntry) {
       const day = e.ts.slice(0, 10);
       appendFile(join(opts.logDir, `commands-${day}.jsonl`), JSON.stringify(e) + "\n").catch(
@@ -95,33 +111,12 @@ export async function startServer(opts: ServerOptions) {
     },
   };
   const bridge = new Bridge(opts.config, io, opts.auth);
+  feedbackTo = bridge;
   const dataDir = join(
     resolve(opts.dataDir ?? join(opts.logDir, "..", "data")),
     opts.config.installation.id,
   );
   const api = createApi(bridge, dataDir);
-
-  // --- OSC feedback in ------------------------------------------------------------------------
-  const feedbackSockets: Socket[] = [];
-  for (const t of opts.config.targets) {
-    if (!t.feedbackPort) continue;
-    const sock = createSocket({ type: "udp4", reuseAddr: true });
-    sock.on("message", (buf, from) => {
-      try {
-        for (const m of messagesOf(decodePacket(new Uint8Array(buf)))) {
-          if (opts.debug) say("osc in", from.address, m.address, JSON.stringify(m.args));
-          bridge.feedback(t.id, m);
-        }
-      } catch (e) {
-        // Malformed packet from the network: ignore it (log it when debugging).
-        if (opts.debug) say("bad packet", from.address, (e as Error).message, buf.toString("hex"));
-      }
-    });
-    sock.on("error", (e) => say(`feedback ${t.id}:${t.feedbackPort}`, e.message));
-    await new Promise<void>((ok) => sock.bind(t.feedbackPort, ok));
-    feedbackSockets.push(sock);
-    say(`feedback from ${t.name ?? t.id} on udp ${t.feedbackPort}`);
-  }
 
   // --- HTTP: health + web pult ----------------------------------------------------------------
   const webRoot = opts.webDir ? resolve(opts.webDir) : undefined;
@@ -139,7 +134,13 @@ export async function startServer(opts: ServerOptions) {
           ok: true,
           protocol: PROTOCOL_VERSION,
           installation: opts.config.installation,
-          targets: bridge.status(),
+          // Per target: online, last feedback (epoch ms and ISO), where it is reached.
+          targets: bridge.status().map((t) => ({
+            ...t,
+            lastSeen: t.lastFeedbackAt === null ? null : new Date(t.lastFeedbackAt).toISOString(),
+            ...transports.describe(t.id),
+          })),
+          modes: bridge.modes,
           devices: bridge.devices.length,
         }),
       );
@@ -251,7 +252,12 @@ export async function startServer(opts: ServerOptions) {
     });
     say(`advertised as _otakoyi._tcp on the local network`);
   }
-  for (const t of opts.config.targets) say(`OSC to ${t.name ?? t.id} at ${hostOf(t)}:${t.port}`);
+  for (const t of opts.config.targets) {
+    const r = transports.resolver.current(t);
+    say(
+      `OSC to ${t.name ?? t.id} at ${t.protocol} ${r.host}:${r.port}${t.host === "auto" ? " (auto)" : ""}`,
+    );
+  }
 
   return {
     bridge,
@@ -270,8 +276,8 @@ export async function startServer(opts: ServerOptions) {
       for (const ws of wss.clients) ws.terminate();
       await new Promise((ok) => wss.close(ok));
       await new Promise((ok) => http.close(ok));
-      for (const s of feedbackSockets) s.close();
-      out.close();
+      transports.close();
+      browser?.destroy();
     },
   };
 }
