@@ -124,6 +124,9 @@ export function checkBrand(brand: BrandInput): BrandIssue[] {
   return issues;
 }
 
+/** Minimum contrast of control lines (arcs, fills, LEDs) against the background. */
+export const SIGNAL_CONTRAST = 3;
+
 const round = (n: number) => Math.round(n * 100) / 100;
 
 /** Merge base tokens with a brand into the full semantic theme. Pure and deterministic. */
@@ -134,10 +137,22 @@ export function createTheme(brand: BrandInput = {}): Theme {
   const surface = brand.surface ?? n.surface;
   const primary = brand.primary ?? base.brandDefaults.primary;
   const accent = brand.accent ?? base.brandDefaults.accent;
-  const ink = [n.text, base.color.dark.background, base.color.light.background];
+  const ink = [
+    n.text,
+    base.color.dark.background,
+    base.color.light.background,
+    "#FFFFFF",
+    "#000000",
+  ];
   const onPrimary = brand.onPrimary ?? bestOn(primary, ink);
   const towardBg = mode === "dark" ? "#000000" : "#FFFFFF";
   const { $description: _d, ...status } = base.color.status;
+  // Lines, arcs and LEDs must read on the background. A pale brand colour (neon lime on a light
+  // theme) is darkened for those uses only; buttons keep the exact brand colour.
+  let signal = primary;
+  for (let i = 0; i < 20 && contrast(signal, background) < SIGNAL_CONTRAST; i++) {
+    signal = mix(signal, mode === "dark" ? "#FFFFFF" : "#000000", 0.08);
+  }
 
   return {
     mode,
@@ -159,12 +174,15 @@ export function createTheme(brand: BrandInput = {}): Theme {
       focus: accent,
     },
     control: {
-      track: mix(background, n.text, 0.08),
-      trackBorder: mix(background, n.text, 0.16),
-      fill: primary,
+      // Recessed beds (neumorphic "inset"): darker than the background in dark mode,
+      // a touch deeper than the background in light mode.
+      track: mode === "dark" ? mix(background, "#000000", 0.22) : mix(background, n.text, 0.07),
+      trackBorder:
+        mode === "dark" ? mix(background, "#000000", 0.36) : mix(background, n.text, 0.15),
+      fill: signal,
       fillPressed: mix(primary, towardBg, 0.18),
       thumb: n.text,
-      tick: mix(background, n.text, 0.3),
+      tick: mix(background, n.text, mode === "dark" ? 0.22 : 0.33),
       label: n.textMuted,
       valueText: n.text,
       disabledOpacity: 0.38,

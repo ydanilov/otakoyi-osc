@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contrast, mix, parseHex, toHex } from "./color";
-import { CONTRAST_TEXT, checkBrand, createTheme, themeToCssVars } from "./theme";
+import { CONTRAST_TEXT, SIGNAL_CONTRAST, checkBrand, createTheme, themeToCssVars } from "./theme";
 
 describe("color helpers", () => {
   it("round-trips hex", () => {
@@ -26,15 +26,15 @@ describe("createTheme", () => {
     for (const primary of ["#C6FF3D", "#1D4ED8", "#FF3366", "#111111", "#FFE600"]) {
       const t = createTheme({ primary, mode: "light" });
       expect(t.color.primary).toBe(primary);
-      expect(t.control.fill).toBe(primary);
+      expect(contrast(t.control.fill, t.color.background)).toBeGreaterThanOrEqual(SIGNAL_CONTRAST);
       expect(contrast(t.color.onPrimary, primary)).toBeGreaterThanOrEqual(CONTRAST_TEXT);
     }
   });
 
   it("never lets a brand override status colours", () => {
     const t = createTheme({ primary: "#EF4444", accent: "#22C55E" });
-    expect(t.status.critical).toBe("#EF4444");
-    expect(t.status.online).toBe("#22C55E");
+    expect(t.status.critical).toBe("#FF4D5E");
+    expect(t.status.online).toBe("#5CF27A");
     expect(Object.keys(t.status).sort()).toEqual([
       "critical",
       "offline",
@@ -45,8 +45,8 @@ describe("createTheme", () => {
   });
 
   it("switches neutrals with mode", () => {
-    expect(createTheme({ mode: "dark" }).color.background).toBe("#0B0B0C");
-    expect(createTheme({ mode: "light" }).color.background).toBe("#FAFAFA");
+    expect(createTheme({ mode: "dark" }).color.background).toBe("#22252C");
+    expect(createTheme({ mode: "light" }).color.background).toBe("#E4E8EE");
   });
 
   it("exposes shadcn-named CSS vars", () => {
