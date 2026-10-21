@@ -27,7 +27,7 @@ the app and for every client pult. QA checks both before a delivery.
   only, never the only way in: right edge → Installation (phone and tablet), left edge → Settings
   (phone only; on iPad the leading edge belongs to the system sidebar gesture).
 - **Settings**: iPhone → system sheet (large detent, grabber, Close × leading); iPad → form sheet
-  over a dimmed console. Contents: appearance, control preferences, pairing QR, what's new, help.
+  over a dimmed console. Contents: pairing QR, control preferences (haptics, keep awake, fine mode), what's new, help, forget this installation. No appearance switch — the theme mode ships in the config.
 - **Installation**: iPhone → system sheet (large detent); iPad → inspector panel on the trailing side
   (390 pt, Close ×, no dimming). Contents: name and status, pult switcher, quick actions (Flash,
   Restart, Blackout with hold-to-confirm), modes (Idle, optional Pause).
