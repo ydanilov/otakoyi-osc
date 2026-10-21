@@ -51,6 +51,8 @@ export interface Theme {
     viewOnlyOverlay: string;
   };
   status: Record<StatusName, string>;
+  /** Neumorphic shadow / highlight colours for the current mode (Figma `elevation/*`). See depth.ts. */
+  elevation: Record<keyof typeof base.elevation.dark, string>;
   space: typeof base.space;
   radius: typeof base.radius;
   stroke: typeof base.stroke;
@@ -189,6 +191,7 @@ export function createTheme(brand: BrandInput = {}): Theme {
       viewOnlyOverlay: withAlpha(background, 0.55),
     },
     status,
+    elevation: { ...base.elevation[mode] },
     space: base.space,
     radius: base.radius,
     stroke: base.stroke,

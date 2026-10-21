@@ -40,8 +40,21 @@ pnpm --filter @osc/mobile start       # Expo dev server
 pnpm --filter @osc/mobile build:web   # web pult → apps/mobile/dist
 OTAKOYI_PIN=2468 pnpm bridge           # bridge on :8080 (serves the web pult, OSC to the demo target)
 pnpm --filter @osc/bridge bundle      # bridge as one file → apps/bridge/dist/bridge.mjs
+pnpm storybook                        # component docs on :6006 (React Native Web + Vite)
+pnpm build-storybook                  # static Storybook → apps/storybook/storybook-static
+pnpm test-storybook                   # headless: every story × dark/light renders, play tests pass
 # Control gallery (every control × state × brand): open /gallery in the web pult or the app
 ```
+
+## Storybook — the component docs
+
+Storybook (`apps/storybook`) is the one home of component documentation; Figma keeps only a one-line
+description. **Every component in `packages/ui` has a story**: `<Component>.stories.tsx` next to the
+component, with `componentDocs()` (purpose, do/don't, anatomy, states, behaviour, accessibility,
+content limits, Figma component + variant → props) and a story per state/variant; `play` tests where
+interactive. Toolbar: theme, brand (Otakoyi + the two `/gallery` sample brands), phone/tablet
+viewport. Guidelines, Introduction and Changelog are MDX in `apps/storybook/docs`; add a Changelog
+entry with every design-system change.
 
 Run `pnpm verify` before every commit.
 
@@ -79,6 +92,9 @@ packages/schema/        installation config schema + examples/demo-installation.
 packages/tokens/        base tokens, createTheme(brand), contrast checks, generated CSS/preset
 packages/controls/      control logic (pure TS)
 packages/ui/            design system: Reusables components, Skia controls, pult renderer
+  src/ds/               depth (Surface, boxShadow), Phosphor icons, LED, pure DS logic (+ tests)
+  src/chrome|forms|containers|media|patterns/   DS components; stories next to each file
+apps/storybook/         Storybook config, MDX docs (Introduction, Guidelines, Changelog)
 docs/decisions/         ADRs, one file each, current version only — edit in place
 tools/touchdesigner/     TouchDesigner test target + pairing overlay (.tox + build scripts)
 docs/integration.md     how an installation project plugs in (OSC contract, feedback, system OSC)

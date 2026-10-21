@@ -1,0 +1,67 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Docs/Guidelines" />
+
+# Guidelines
+
+How the pieces fit on a screen. Component pages cover the details; these rules cover the whole.
+
+## Depth
+
+- **Inset** = active, pressed, or the bed under a control (fader track, input, tab bar, switch bed).
+- **Raised** = interactive elements and top-level cards and panels.
+- **Flat** = information nested inside a card: chips, stat tiles, icon wells, labels.
+- **Glow** only on lit values (LEDs, the active page dot, a live image, a changed stepper value) and
+  on buttons **while pressed**. Never on a resting button, never as decoration.
+- One level of nesting: a raised panel may contain flat info and inset beds, not another raised panel.
+
+## Two use cases, two form factors (ADR-013)
+
+|                | Lobby / permanent installation        | Live event                              |
+| -------------- | ------------------------------------- | --------------------------------------- |
+| Device         | usually a **phone**, portrait         | usually a **tablet**, landscape         |
+| Pult           | few controls: scenes, modes, steppers | dense VJ console: faders, knobs, groups |
+| Dialogs        | **bottom sheet**                      | **centred modal**                       |
+| Primary layout | phone (designed first)                | tablet (designed first)                 |
+
+Every delivery ships **both** layouts from one config. Components choose by window width, not by
+platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for the grid,
+`drawerWidth(width)` for drawers. Check both viewports in the toolbar.
+
+## The pult never scrolls (ADR-006)
+
+- Rows stretch to the screen height. A page that does not fit at the 40 pt minimum row height is
+  split into screens that swipe **horizontally**, with Screen Tabs (tablet) or Page Dots (phone).
+- Never wrap a pult page in a vertical ScrollView. A Scene List may scroll inside its own cell.
+
+## Header and drawers (ADR-013 addendum)
+
+- The pult screen shows only the controls and a minimal **Pult Header**: name or pult switcher,
+  Connection, and — when this device is not in control — the **View only — Take control** banner or
+  the **studio** banner. Take control is never inside a drawer.
+- Everything else lives in two swipe drawers, which **may scroll vertically**:
+  - **left edge → Settings**: appearance, control preferences, pairing QR, what's new, help, sign out;
+  - **right edge → Installation**: name and status, pult switcher, Quick Actions (Flash, Restart and
+    Blackout with hold-to-confirm), modes (Idle; Pause where supported), activity.
+- Edge swipes are invisible to VoiceOver: the header also offers buttons to open both drawers.
+
+## Status vs. brand
+
+- Status colours (online, warning, critical, offline, studio) mean the same on every pult and are
+  never replaced by a client brand.
+- The brand colours lit values (fills, arcs, LEDs that mean "on") and primary buttons.
+
+## Accessibility baseline
+
+- Hit targets ≥ 44 pt (smaller visuals get hit slop).
+- Every interactive element has a role and a label; icon-only buttons take `label`.
+- Continuous controls are `adjustable` (VoiceOver swipe up/down) with the value and unit.
+- Reduce Motion: loaders stop, switches and drawers jump instead of animating; controls never
+  animate decoratively.
+- Colour is never the only signal — LEDs come with words, rings with percentages.
+
+## Content
+
+- Sentence case; verbs on buttons (“Send to screen”), nouns on switches (“Idle mode”).
+- One line for labels; truncation with an ellipsis is the overflow rule unless a component says
+  it wraps. Each Docs page lists its limits.

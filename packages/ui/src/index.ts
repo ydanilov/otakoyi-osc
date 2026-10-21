@@ -1,4 +1,4 @@
-export { ThemeProvider, useTheme } from "./theme/ThemeProvider";
+export { ThemeLayer, ThemeProvider, useTheme } from "./theme/ThemeProvider";
 export { PultStore, type ControlMode, type Transport } from "./pult/store";
 export {
   PultPager,
@@ -47,3 +47,57 @@ export {
 } from "./controls/discrete";
 export { paginate, reflowForPhone, PHONE_BREAKPOINT, type Cell, type Screen } from "./pult/layout";
 export { PultSelect } from "./pult/PultSelect";
+
+// Design system (Figma library → code; mapping in docs/figma.md, docs in Storybook)
+export { Surface, useDepthStyle, usePressState, type Depth, type GlowTone } from "./ds/depth";
+export { Glyph, toneColor, type Tone } from "./ds/Glyph";
+export { Led } from "./ds/Led";
+export * from "./ds/icons";
+export * from "./ds/logic";
+export {
+  Button,
+  IconButton,
+  type ButtonProps,
+  type ButtonSize,
+  type ButtonVariant,
+} from "./chrome/Button";
+export {
+  Badge,
+  Chip,
+  ConnectionStatus,
+  Divider,
+  InfoCard,
+  Note,
+  PageDots,
+  StatTile,
+  StatusBanner,
+  type BadgeTone,
+  type BannerMode,
+  type ChipTone,
+} from "./chrome/Status";
+export { NavItem, ScreenTab, TabBar, TopBar } from "./chrome/Navigation";
+export { BrandMark, Wordmark } from "./chrome/Brand";
+export { Loader } from "./chrome/Loader";
+export { Scrim } from "./chrome/Scrim";
+export { TextField, ValueInput, type FieldState } from "./forms/Field";
+export { Select, type SelectOption, type SelectProps } from "./forms/Select";
+export { Stepper } from "./forms/Stepper";
+export { LedSwitch } from "./forms/LedSwitch";
+export { ListRow, type ListRowTrailing } from "./forms/ListRow";
+export {
+  ConsolePanel,
+  ListCard,
+  PultCard,
+  ReleaseCard,
+  ReleaseNote,
+  Section,
+} from "./containers/Cards";
+export { Dialog } from "./containers/Dialog";
+export { Drawer, DrawerEdge, type DrawerSide } from "./containers/Drawer";
+export { Viewfinder } from "./containers/Viewfinder";
+export { QuickAction } from "./media/QuickAction";
+export { MasterBar } from "./media/MasterBar";
+export { ActivityRow, type ActivityKind } from "./media/ActivityRow";
+export { ProgressRing } from "./media/ProgressRing";
+export { ImageTile, ImageUpload, type ImageTileState, type ImageUploadState } from "./media/Image";
+export * from "./patterns/Installation";
