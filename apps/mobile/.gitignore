@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# headless-browser screenshots of the web build (local sanity checks)
+e2e-shots/

@@ -58,7 +58,7 @@ The exact message each control type sends is defined in code:
 | `label`, `meter`        | nothing; they only **display** values you send back                   | FPS, audio level       |
 
 Schema v2 adds crossfade, relative and hue variants, thumbstick, button group, image, mic and
-prompt controls. Once merged, `messagesFor()` and `packages/schema/src` are the reference for them.
+prompt controls; `messagesFor()` and `packages/schema/src` are the reference for them.
 
 ## 2. Send feedback
 
@@ -80,19 +80,20 @@ bridge runs on the same machine.
 | Address (bridge → you)                                           | Meaning                                                                              | Status    |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------- |
 | `/otakoyi/pair show:int secondsLeft:int app:str web:str pin:str` | Show or hide the pairing card (QR + PIN) on the installation output                  | available |
-| `/otakoyi/flash`                                                 | Quick visual identify (e.g. a brief white flash) so staff know which screen is which | in review |
-| `/otakoyi/blackout 0\|1`                                         | Black output / restore                                                               | in review |
-| `/otakoyi/idle 0\|1`                                             | Idle mode: stop reacting to people (sensors, camera), keep the ambient loop          | in review |
-| `/otakoyi/pause 0\|1`                                            | Pause the show (optional; only if the installation lists the `pause` action)         | in review |
-| `/otakoyi/restart`                                               | Restart the show (the Runtime supervisor may restart the process instead)            | in review |
-| `/sys/ping`                                                      | Heartbeat probe; any feedback counts as an answer                                    | in review |
+| `/otakoyi/flash`                                                 | Quick visual identify (e.g. a brief white flash) so staff know which screen is which | available |
+| `/otakoyi/blackout 0\|1`                                         | Black output / restore                                                               | available |
+| `/otakoyi/idle 0\|1`                                             | Idle mode: stop reacting to people (sensors, camera), keep the ambient loop          | available |
+| `/otakoyi/pause 0\|1`                                            | Pause the show (optional; only if the installation lists the `pause` action)         | available |
+| `/otakoyi/restart`                                               | Restart the show (the Runtime supervisor may restart the process instead)            | available |
+| `/sys/ping`                                                      | Heartbeat probe; any feedback counts as an answer                                    | available |
 
 | Address (you → bridge)  | Meaning                                                              |
 | ----------------------- | -------------------------------------------------------------------- |
 | `/otakoyi/pair/request` | Start pairing mode, e.g. on Ctrl+Shift+P on the installation machine |
 
-Do not echo `/otakoyi/*` back to the bridge. "In review" means the bridge PR implementing these is
-open. Implement the handlers now: they are plain OSC and cost nothing if the bridge never sends them.
+Do not echo `/otakoyi/*` back to the bridge. The pult triggers these from its Installation panel
+(quick actions Flash / Restart / Blackout, modes Idle / Pause), and the panel shows your `/sys/fps`
+as the installation's FPS.
 
 ## 4. TouchDesigner specifics
 
@@ -123,6 +124,22 @@ The draft config is only for testing; the real one is exported from Figma. Start
 `packages/schema/examples/demo-installation.json`: set `targets[0].port` / `feedbackPort` and
 replace the controls with your parameters. `parseConfig()` in `packages/schema` validates it, and
 the bridge refuses an invalid config with the reason.
+
+**See the expected behaviour without hardware.** The app's demo mode ("Try the demo" on the
+Connect screen, also in the web pult) runs a simulated installation in-process (`packages/sim`):
+the same bridge core and protocol, with a pretend installation that does what yours should — it
+echoes every value on its own address, sends `/sys/fps` (~60) once a second and an audio level ten
+times a second, handles `/otakoyi/*`, and confirms prompts by echoing their text.
+
+**Brand assets and the loading screen** (set by the studio, ADR-004). After pairing, the app shows
+a client-branded loading screen while it connects: `theme.splash` (full-screen image) with
+`theme.logo` on it. Both are an http(s) URL or a path relative to the config's asset bundle; the
+bridge serves the bundle from `assets/` next to the config file at `/assets/<path>` (images only,
+`--assets` overrides the folder). Without `splash` the screen uses the plain background.
+
+```json
+"theme": { "mode": "dark", "primary": "#8DFF2E", "logo": "logo.png", "splash": "lobby.jpg" }
+```
 
 ## 6. Write the OSC contract
 
@@ -169,6 +186,7 @@ Do **not**:
 | Config schema                      | `packages/schema/src/index.ts`, `examples/`      |
 | Wire format per control            | `packages/controls/src/logic.ts` (`messagesFor`) |
 | Pult ↔ bridge protocol (WebSocket) | `packages/protocol/src/index.ts`                 |
-| Bridge system OSC, lease, logging  | `apps/bridge/src/bridge.ts`                      |
+| Bridge system OSC, lease, logging  | `packages/bridge-core/src/bridge.ts`             |
+| Simulated installation (demo)      | `packages/sim/src/simulator.ts`                  |
 | Figma file and conventions         | `docs/figma.md`                                  |
 | Working on this repo itself        | `AGENTS.md`                                      |

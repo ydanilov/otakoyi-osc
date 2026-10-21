@@ -71,6 +71,8 @@ describe("Session over a transport (here: the in-app simulator)", () => {
       expect.arrayContaining(["action", "mode"]),
     );
     expect(sim.preview().blackout).toBe(true);
+    // The welcome's entries are not repeated when the bridge's next batch arrives.
+    expect(s.state.activity.filter((e) => e.event === "connect")).toHaveLength(1);
   });
 
   it("marks the connection lost when an open connection drops, and clears it on reconnect", async () => {

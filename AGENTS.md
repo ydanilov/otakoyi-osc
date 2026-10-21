@@ -28,7 +28,9 @@ checkpoints. Plan and business rules: Claude Doc "OSC Controller — план р
 | Control logic | `packages/controls` — value mapping, throttling, messages per control           |
 | Web pult      | The same app exported for web (`pnpm --filter @osc/mobile build:web`)           |
 | Bridge        | `apps/bridge` (Node): WebSocket for pults, UDP OSC, lease, log; `@osc/protocol` |
-| Tests         | Vitest                                                                          |
+| Bridge core   | `packages/bridge-core`: state, lease, actions, activity, presets — no Node APIs |
+| Demo          | `packages/sim`: the bridge core in-process + a pretend installation (ADR-012)   |
+| Tests         | Vitest; the web build driven in headless Chromium (Playwright) for the flows    |
 
 ## Commands
 
@@ -38,10 +40,19 @@ pnpm tokens          # regenerate packages/tokens/generated/*
 pnpm verify          # tokens check, format, types, unit tests
 pnpm --filter @osc/mobile start       # Expo dev server
 pnpm --filter @osc/mobile build:web   # web pult → apps/mobile/dist
+pnpm --filter @osc/mobile test        # app logic: session, loading, navigation, installation panel
+pnpm --filter @osc/sim test           # simulated installation (demo mode)
 OTAKOYI_PIN=2468 pnpm bridge           # bridge on :8080 (serves the web pult, OSC to the demo target)
 pnpm --filter @osc/bridge bundle      # bridge as one file → apps/bridge/dist/bridge.mjs
 # Control gallery (every control × state × brand): open /gallery in the web pult or the app
+# Demo without hardware: open the web pult (or the app) → Connect → "Try the demo"
 ```
+
+App flow (ADR-012, ADR-013): **Connect** (scan pairing QR / enter address and PIN / try the demo) →
+client-branded **loading** screen → **pult**. No accounts and no login. Settings, Installation and
+dialogs are sheets (iPad: Installation is a trailing inspector). The app talks to a real bridge or to
+the in-app simulator through the same `TransportFactory` (`@osc/protocol`) and HTTP API shape
+(`BridgeHttp`); `apps/mobile/src/lib/session.ts` holds what the bridge said.
 
 Run `pnpm verify` before every commit.
 
@@ -52,8 +63,9 @@ Run `pnpm verify` before every commit.
    `bg-status-online`). Never hardcode hex in components.
 2. **Brand ≠ status.** A client brand overrides `primary`, `accent`, neutrals, font and logo only.
    Status colours (online, warning, critical, offline, studio) are never brandable.
-3. **The pult never scrolls vertically.** (The swipe drawers may: settings from the left edge, installation actions from the right edge.) Rows fill the screen height; pages that do not fit are split
-   into screens that swipe horizontally (`paginate` in `packages/ui/src/pult/layout.ts`).
+3. **The pult never scrolls vertically.** (Sheets may: Settings, Installation, Activity.) Rows fill
+   the screen height; pages that do not fit are split into screens that swipe horizontally
+   (`paginate` in `packages/ui/src/pult/layout.ts`).
 4. **Config, not code, defines a pult** — and the config is exported from Figma (ADR-014). New pults ship as config revisions, never as app releases.
    A new control type = schema entry + logic + component + tests, in one PR.
 5. **Platform code behind interfaces.** UDP/TCP, discovery and keep-awake live behind TS interfaces;
@@ -74,6 +86,13 @@ Run `pnpm verify` before every commit.
 
 ```
 apps/mobile/            Expo app (iOS now, Android later) + web pult build
+  src/app/              routes: connect, manual, scan, loading, pult, settings, installation, dialog
+  src/lib/              session, pairing storage, loading / navigation / installation logic (tested)
+  src/components/ds/    local stand-ins for design-system components (TODO(ds) until they land)
+apps/bridge/            the bridge program: sockets, UDP/TCP OSC, files, pairing page, runtime
+packages/bridge-core/   the bridge's core (Bridge, Lease, PromptStore) — shared with packages/sim
+packages/sim/           simulated installation for demo mode: transport, HTTP API, preview model
+packages/protocol/      pult ↔ bridge protocol, transports, HTTP client, pairing links
 packages/osc-core/      OSC codec
 packages/schema/        installation config schema + examples/demo-installation.json
 packages/tokens/        base tokens, createTheme(brand), contrast checks, generated CSS/preset

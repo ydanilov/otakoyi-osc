@@ -34,6 +34,13 @@ export const ECHO_MS = 30;
 /** Telemetry rates (docs/integration.md): FPS at 1 Hz, the audio level at 10 Hz. */
 export const FPS_INTERVAL_MS = 1000;
 export const AUDIO_INTERVAL_MS = 100;
+/** Prompt presets the demo starts with. */
+export const DEMO_PROMPTS = [
+  "Aurora over a frozen lake",
+  "Neon rain in a narrow street",
+  "Deep sea bioluminescence",
+] as const;
+
 /** Address of the simulated audio level (the demo's meter listens on it). */
 export const AUDIO_ADDRESS = "/wall/audio/level";
 
@@ -171,6 +178,21 @@ export class Simulator {
     for (const t of this.pending) clearTimeout(t);
     this.timers = [];
     this.pending.clear();
+  }
+
+  /**
+   * A few prompt presets on every prompt control, so the demo has something to switch on,
+   * long-press, reorder and delete. Call once, before the first pult connects.
+   */
+  async seedPrompts(texts: readonly string[] = DEMO_PROMPTS): Promise<void> {
+    for (const store of this.bridge.stores.values())
+      for (const c of store.controls())
+        if (c.type === "prompt" && !(await this.prompts.list(store.pult.id, c.id)).length)
+          for (const text of texts)
+            await this.prompts.create(store.pult.id, c.id, c, {
+              label: text.split(" ").slice(0, 2).join(" "),
+              text,
+            });
   }
 
   // --- transport: the protocol, without a socket ------------------------------------------------

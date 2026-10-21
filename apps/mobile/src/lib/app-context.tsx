@@ -109,7 +109,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
       async startDemo() {
         const device = await deviceId(prefsStorage);
-        const { session: s, sim: simulator } = createDemoSession(device);
+        const { session: s, sim: simulator } = await createDemoSession(device);
         setSavedBrand(undefined);
         replace(s, simulator);
       },

@@ -237,9 +237,14 @@ export class Session {
       case "status":
         this.patch({ targets: msg.targets, ...(msg.modes ? { modes: msg.modes } : {}) });
         return;
-      case "activity":
-        this.patch({ activity: [...this.s.activity, ...msg.entries].slice(-ACTIVITY_KEEP) });
+      case "activity": {
+        // The welcome already carries entries that are still in the bridge's next batch.
+        const seen = new Set(this.s.activity.map(activityKey));
+        const fresh = msg.entries.filter((e) => !seen.has(activityKey(e)));
+        if (fresh.length)
+          this.patch({ activity: [...this.s.activity, ...fresh].slice(-ACTIVITY_KEEP) });
         return;
+      }
       case "error":
         // Lease / value errors are momentary; auth and version stop the connection.
         if (msg.code === "auth" || msg.code === "version")
@@ -257,6 +262,8 @@ export class Session {
     }
   }
 }
+
+const activityKey = (e: ActivityEntry) => `${e.ts}|${e.event}|${e.device ?? ""}`;
 
 /** Is the installation answering (any target online)? */
 export function installationOnline(s: Pick<SessionState, "connection" | "targets">): boolean {

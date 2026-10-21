@@ -3,7 +3,7 @@ import { promptValue } from "@osc/controls";
 import type { BridgeConnection, ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
 import demo from "../../schema/examples/demo-installation.json";
-import { AUDIO_ADDRESS, ECHO_MS, Simulator } from "./simulator";
+import { AUDIO_ADDRESS, DEMO_PROMPTS, ECHO_MS, Simulator } from "./simulator";
 
 const parsed = parseConfig(demo);
 if (!parsed.ok) throw new Error("demo config");
@@ -129,6 +129,14 @@ describe("simulated installation (demo mode)", () => {
     const states = inbox.filter((m) => m.t === "prompt").map((m) => m.state);
     expect(states).toEqual(["applying", "applied"]);
     expect(sim.preview().prompt).toBe("aurora");
+  });
+
+  it("seeds a few prompt presets for the demo, once", async () => {
+    await sim.seedPrompts();
+    await sim.seedPrompts();
+    const list = await sim.http("phone").prompts.list("live", "prompt");
+    expect(list.map((p) => p.text)).toEqual([...DEMO_PROMPTS]);
+    expect(list[0]!.label).toBe("Aurora over");
   });
 
   it("refuses a pult that is not in control, like the real bridge", async () => {

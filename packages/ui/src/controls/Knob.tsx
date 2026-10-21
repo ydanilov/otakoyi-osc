@@ -155,6 +155,8 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
       "worklet";
       dragging.value = true;
       drag.value = startDrag(pos.value, e.numberOfPointers);
+      // Both fingers landed together: fine mode from the start.
+      if (e.numberOfPointers >= FINE_POINTERS) scheduleOnRN(setFine, true);
     },
     onUpdate: (e) => {
       "worklet";

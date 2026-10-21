@@ -18,8 +18,11 @@ export const DEMO_ASSETS: Readonly<Record<string, number>> = {
  * protocol as a real one (`@osc/sim`), with the demo config. App Review and prospective clients
  * use it; nothing leaves the device.
  */
-export function createDemoSession(device: string): { session: Session; sim: Simulator } {
+export async function createDemoSession(
+  device: string,
+): Promise<{ session: Session; sim: Simulator }> {
   const sim = new Simulator({ config: demoConfig });
+  await sim.seedPrompts();
   sim.start();
   const session = new Session({
     kind: "demo",

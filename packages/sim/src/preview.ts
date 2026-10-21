@@ -113,7 +113,9 @@ export function previewBlobs(p: PreviewParams, phase: number): PreviewBlob[] {
         if (mx === tr) th = ((tg - tb) / (mx - mn)) % 6;
         else if (mx === tg) th = (tb - tr) / (mx - mn) + 2;
         else th = (tr - tg) / (mx - mn) + 4;
-        h = h * 0.4 + th * 60 * 0.6;
+        // Shortest way round the wheel, a third of the way: tinted, not monochrome.
+        const d = ((((th * 60 - h) % 360) + 540) % 360) - 180;
+        h = h + d * 0.35;
         s = 0.7 + 0.3 * ((mx - mn) / mx);
       }
     }

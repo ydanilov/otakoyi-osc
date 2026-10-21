@@ -27,13 +27,15 @@ the app and for every client pult. QA checks both before a delivery.
   only, never the only way in: right edge → Installation (phone and tablet), left edge → Settings
   (phone only; on iPad the leading edge belongs to the system sidebar gesture).
 - **Settings**: iPhone → system sheet (large detent, grabber, Close × leading); iPad → form sheet
-  over a dimmed console. Contents: pairing QR, control preferences (haptics, keep awake, fine mode), what's new, help, forget this installation. No appearance switch — the theme mode ships in the config.
+  over a dimmed console. Contents: pairing QR, control preferences (haptics, keep awake; fine mode is always two fingers), what's new, help, forget this installation. No appearance switch — the theme mode ships in the config.
 - **Installation**: iPhone → system sheet (large detent); iPad → inspector panel on the trailing side
-  (390 pt, Close ×, no dimming). Contents: name and status, pult switcher, quick actions (Flash,
-  Restart, Blackout with hold-to-confirm), modes (Idle, optional Pause).
+  (390 pt, Close ×, no dimming). Contents: name and status with stats (state, FPS, devices, uptime), pult switcher, quick
+  actions (Flash, Restart, Blackout with hold-to-confirm), modes (Idle, optional Pause) and an
+  Activity row that pushes the activity list.
 - **Dialogs** are content inside the system sheet (iPhone medium detent) or form sheet (iPad); the
   system provides grabber, Close and material. Cancel / Close leading, one prominent action trailing.
-- **Menus**: long-press = system context menu with a preview; destructive item last, in red. Choices
+- **Menus**: long-press = system context menu with a preview; destructive item last, in red. (iOS:
+  the SwiftUI menu through `@expo/ui`; the web pult and Android draw the same menu in-app.) Choices
   from a button = pop-up button (one of many) or pull-down menu (commands, 3+ items).
 - **No confirmation for undoable actions**: deleting a prompt deletes immediately and shows an Undo
   toast. Confirmation only for actions that cannot be undone (action sheet on iPhone, popover on iPad).

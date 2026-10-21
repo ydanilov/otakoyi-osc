@@ -75,7 +75,10 @@ image, pairing, rejected); a burst of `set`s on one control by one device within
 
 ## Consequences
 
-- Pults need UI for the drawer (actions, modes, activity); the protocol and data are ready.
+- The app's Installation panel (ADR-013) uses all of it: quick actions, modes, the activity feed,
+  and `/api/health` for its stats (`devices`, `uptimeS`, `fps` — the last `/sys/fps`).
+- The core (`Bridge`, `Lease`, `PromptStore`) lives in `packages/bridge-core` without Node APIs, so
+  the demo installation (`packages/sim`, ADR-012) runs the same code in the app.
 - TouchDesigner projects should answer `/sys/ping` (or send anything) and handle `/otakoyi/*`;
   `tools/touchdesigner` shows how.
 - Code signing, installers and the TD silent install stay with the packaging phase.

@@ -12,6 +12,7 @@ import {
   createThrottle,
   crossfadeMix,
   crossfadePosition,
+  FINE_POINTERS,
   crossfadeShares,
   fineBadge,
   formatValue,
@@ -155,7 +156,10 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     onActivate: (e) => {
       "worklet";
       dragging.value = true;
-      if (!absolute) drag.value = startDrag(pos.value, e.numberOfPointers);
+      if (absolute) return;
+      drag.value = startDrag(pos.value, e.numberOfPointers);
+      // Both fingers landed together: fine mode from the start.
+      if (e.numberOfPointers >= FINE_POINTERS) scheduleOnRN(setFine, true);
     },
     onUpdate: (e) => {
       "worklet";
@@ -273,6 +277,17 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
                   strokeWidth={t.stroke.hairline}
                   opacity={0.9}
                 />
+                {/* The lit edge: a neon bloom at the thumb, strongest while touched. */}
+                <Rect
+                  x={thumbX}
+                  y={thumbY}
+                  width={vertical ? w : thumb}
+                  height={vertical ? thumb : h}
+                  color={t.control.fill}
+                  opacity={glow}
+                >
+                  <BlurMask blur={GLOW_BLUR * 2} style="normal" />
+                </Rect>
                 <Rect
                   x={thumbX}
                   y={thumbY}

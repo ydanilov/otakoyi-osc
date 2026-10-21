@@ -22,10 +22,13 @@ export default function Loading() {
   const brand = useBrand();
   const s = useSessionState();
   const [now, setNow] = React.useState(Date.now());
+  // The minimum time counts from when this screen is on screen (or from a retry).
+  const [shownAt] = React.useState(Date.now());
+  const startedAt = Math.max(app.startedAt, shownAt);
   const name = brand.name || app.session?.displayName || "the installation";
   const phase = loadingPhase({
     state: s,
-    startedAt: app.startedAt,
+    startedAt,
     now,
     name,
     demo: app.session?.kind === "demo",
@@ -33,11 +36,11 @@ export default function Loading() {
 
   // Re-evaluate when the minimum time or the "unreachable" timeout passes.
   React.useEffect(() => {
-    const wait = nextLoadingTick(app.startedAt, Date.now());
+    const wait = nextLoadingTick(startedAt, Date.now());
     if (wait === null) return;
     const t = setTimeout(() => setNow(Date.now()), wait + 10);
     return () => clearTimeout(t);
-  }, [app.startedAt, now, s]);
+  }, [startedAt, now, s]);
 
   React.useEffect(() => {
     if (!app.session) router.replace("/connect");
