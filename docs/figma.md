@@ -42,3 +42,8 @@ Fader, XY Pad and Meter resize: the body fills the component and the shapes scal
 - Component and variant names follow the code (`controlRegistry` types, ADRs).
 - Colours only through Theme variables; a new colour starts in `tokens.json`, then here.
 - The control drawing in code (Skia) is the source of truth for geometry; Figma mirrors it.
+
+## Gallery in code
+
+`/gallery` in the app and web pult renders every control type in Initial / Active / View-only state under
+four themes (Otakoyi dark/light, two sample client brands). Use it to compare code with this library.

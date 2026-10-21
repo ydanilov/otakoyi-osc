@@ -33,6 +33,7 @@ pnpm --filter @osc/mobile start       # Expo dev server
 pnpm --filter @osc/mobile build:web   # web pult → apps/mobile/dist
 OTAKOYI_PIN=2468 pnpm bridge           # bridge on :8080 (serves the web pult, OSC to the demo target)
 pnpm --filter @osc/bridge bundle      # bridge as one file → apps/bridge/dist/bridge.mjs
+# Control gallery (every control × state × brand): open /gallery in the web pult or the app
 ```
 
 Run `pnpm verify` before every commit.
