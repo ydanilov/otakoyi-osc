@@ -17,6 +17,7 @@
   "dependencies": {
     "@osc/controls": "workspace:*",
     "@osc/core": "workspace:*",
+    "@osc/protocol": "workspace:*",
     "@osc/schema": "workspace:*",
     "@osc/tokens": "workspace:*",
     "@rn-primitives/alert-dialog": "^1.5.2",

@@ -93,3 +93,4 @@ export function modeFor(
 
 export * from "./client";
 export * from "./pairing";
+export * from "./http";

@@ -1,4 +1,4 @@
-import { formatValue, hexToRgb } from "@osc/controls";
+import { formatValue, hexToRgb, isGroupValue, toggleInGroup } from "@osc/controls";
 import type { UnsupportedControl } from "@osc/schema";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -70,7 +70,64 @@ export function ButtonControl({ control: c, value, onChange, disabled }: Control
   );
 }
 
-export function ToggleControl({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
+/** Status LED: lit (control signal colour) or dark (inset bed). */
+export function Led({ on, className }: { on: boolean; className?: string }) {
+  return (
+    <View
+      className={cn("h-2 w-2 rounded-full", on ? "bg-control-fill" : "bg-control-track", className)}
+    />
+  );
+}
+
+export function ToggleControl(props: ControlProps<"toggle">) {
+  return props.control.style === "switch" ? (
+    <SwitchToggle {...props} />
+  ) : (
+    <ButtonToggle {...props} />
+  );
+}
+
+/** Hardware-style latching switch with ON and OFF LEDs (toggle `style: "switch"`). */
+function SwitchToggle({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
+  const on = value === true;
+  return (
+    <ControlFrame label={c.label} disabled={disabled}>
+      <Pressable
+        disabled={disabled}
+        onPress={() => onChange(!on)}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: on, disabled: !!disabled }}
+        accessibilityLabel={c.label ?? c.id}
+        className="bg-card border-border min-h-touch flex-1 flex-row items-center gap-3 rounded-md border px-3"
+      >
+        <View className="bg-muted h-8 w-14 justify-center rounded-full p-1">
+          <View
+            className={cn(
+              "h-6 w-6 rounded-full",
+              on ? "bg-primary translate-x-6" : "bg-secondary translate-x-0",
+            )}
+          />
+        </View>
+        <View className="gap-1">
+          <View className="flex-row items-center gap-2">
+            <Led on={on} />
+            <Text className={cn("text-xs", on ? "text-foreground" : "text-muted-foreground")}>
+              ON
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Led on={!on} />
+            <Text className={cn("text-xs", on ? "text-muted-foreground" : "text-foreground")}>
+              OFF
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    </ControlFrame>
+  );
+}
+
+function ButtonToggle({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
   const on = value === true;
   return (
     <ControlFrame disabled={disabled}>
@@ -211,6 +268,51 @@ export function SceneList({ control: c, value, onChange, disabled }: ControlProp
           );
         })}
       </ScrollView>
+    </ControlFrame>
+  );
+}
+
+/** Multi-select latching buttons with an LED strip; each button toggles on its own. */
+export function ButtonGroup({
+  control: c,
+  value,
+  onChange,
+  disabled,
+}: ControlProps<"buttonGroup">) {
+  const lit = new Set(isGroupValue(value) ? value.on : c.default);
+  return (
+    <ControlFrame label={c.label} disabled={disabled}>
+      <View className="flex-1 flex-row gap-2">
+        {c.buttons.map((b) => {
+          const on = lit.has(b.id);
+          return (
+            <Pad
+              key={b.id}
+              active={on}
+              disabled={disabled}
+              className="min-h-0 gap-1 px-1"
+              onPress={() => onChange(toggleInGroup(c, value, b.id))}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: on, disabled: !!disabled }}
+              accessibilityLabel={b.label}
+            >
+              <Led on={on} className={on ? "bg-primary-foreground" : undefined} />
+              <PadLabel active={on}>{b.label}</PadLabel>
+              {b.caption && (
+                <Text
+                  className={cn(
+                    "font-mono text-xs",
+                    on ? "text-primary-foreground/80" : "text-muted-foreground",
+                  )}
+                  numberOfLines={1}
+                >
+                  {b.caption}
+                </Text>
+              )}
+            </Pad>
+          );
+        })}
+      </View>
     </ControlFrame>
   );
 }

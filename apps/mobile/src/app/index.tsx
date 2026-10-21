@@ -1,6 +1,7 @@
 import type { PultStore } from "@osc/controls";
 import type { InstallationConfig } from "@osc/schema";
 import {
+  ControlServicesProvider,
   PultHeader,
   PultPager,
   PultProvider,
@@ -9,6 +10,7 @@ import {
   ThemeProvider,
   useControlMode,
   type Connection,
+  type ControlServices,
 } from "@osc/ui";
 import { Button } from "@osc/ui/components/ui/button";
 import { Input } from "@osc/ui/components/ui/input";
@@ -18,7 +20,8 @@ import * as React from "react";
 import type { Pairing } from "@osc/protocol";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { findBridge, useBridge } from "@/lib/bridge";
+import { deviceId, findBridge, useBridge } from "@/lib/bridge";
+import { bridgeServices, demoServices } from "@/lib/services";
 import { clearPairing, loadPairing, savePairing } from "@/lib/pairing";
 import { createDemoTransport, demoConfig } from "@/lib/demo";
 
@@ -87,6 +90,10 @@ export default function PultScreen() {
 function BridgePult({ pairing, onForget }: { pairing: Pairing; onForget: () => void }) {
   const [pin, setPin] = React.useState<string | undefined>(pairing.pin);
   const session = useBridge(pairing.bridge, pin);
+  const services = React.useMemo(
+    () => bridgeServices(pairing.bridge, deviceId(), pin),
+    [pairing.bridge, pin],
+  );
   // Can't reach the bridge for a while (wrong network, bridge off): offer a way out.
   const [stuck, setStuck] = React.useState(false);
   React.useEffect(() => {
@@ -139,6 +146,7 @@ function BridgePult({ pairing, onForget }: { pairing: Pairing; onForget: () => v
       stores={session.stores}
       connection={connection}
       onRequestControl={session.take}
+      services={services}
     />
   );
 }
@@ -151,10 +159,12 @@ function DemoPult() {
     [transport],
   );
   React.useEffect(() => transport.start(), [transport]);
+  const services = React.useMemo(demoServices, []);
   return (
     <PultView
       config={demoConfig}
       stores={stores}
+      services={services}
       connection="online"
       onStore={(s) => (storeRef.current = s)}
       onRequestControl={() => storeRef.current?.setMode("control")}
@@ -169,7 +179,9 @@ function PultView({
   connection,
   onRequestControl,
   onStore,
+  services,
 }: {
+  services: Omit<ControlServices, "pult">;
   config: InstallationConfig;
   stores: Map<string, PultStore>;
   connection: Connection;
@@ -180,19 +192,22 @@ function PultView({
   const pult = config.pults.find((p) => p.id === pultId) ?? config.pults[0]!;
   const store = stores.get(pult.id)!;
   React.useEffect(() => onStore?.(store), [store, onStore]);
+  const pultServices = React.useMemo(() => ({ ...services, pult: pult.id }), [services, pult.id]);
 
   return (
     <ThemeProvider brand={config.theme}>
       <PultProvider store={store}>
-        <SafeAreaView className="flex-1" edges={["top", "left", "right", "bottom"]}>
-          <Header
-            name={config.installation.name}
-            connection={connection}
-            onRequestControl={onRequestControl}
-            switcher={<PultSelect pults={config.pults} value={pult.id} onChange={setPultId} />}
-          />
-          <PultPager key={pult.id} pages={pult.pages} />
-        </SafeAreaView>
+        <ControlServicesProvider value={pultServices}>
+          <SafeAreaView className="flex-1" edges={["top", "left", "right", "bottom"]}>
+            <Header
+              name={config.installation.name}
+              connection={connection}
+              onRequestControl={onRequestControl}
+              switcher={<PultSelect pults={config.pults} value={pult.id} onChange={setPultId} />}
+            />
+            <PultPager key={pult.id} pages={pult.pages} />
+          </SafeAreaView>
+        </ControlServicesProvider>
       </PultProvider>
     </ThemeProvider>
   );
