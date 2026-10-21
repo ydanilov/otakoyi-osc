@@ -28,8 +28,8 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "One pult of the installation in the pult switcher (one login can hold several pults).",
-          use: ["The Installation drawer and the post-login pult choice."],
+            "One pult of the installation in the pult switcher (one installation can hold several pults).",
+          use: ["The Installation surface (pult switcher)."],
           avoid: ["Switching screens inside a pult — Tab Bar."],
           do: ["Describe what the pult is for and what is on it."],
           dont: ["Don't mark more than one card Primary per form factor."],

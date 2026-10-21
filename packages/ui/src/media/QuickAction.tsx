@@ -13,7 +13,7 @@ const SIZE = 64;
 const RING = 3;
 
 /**
- * Figma `Quick Action`: round raised action with a caption, for the Installation drawer
+ * Figma `Quick Action`: round raised action with a caption, for the Installation surface
  * (Flash, Idle, Restart, Blackout). `holdMs` makes it hold-to-confirm: a ring fills while held and
  * the action fires only when it completes; releasing early cancels. Critical actions use the
  * critical tone and should always use hold.

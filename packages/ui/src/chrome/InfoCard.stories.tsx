@@ -21,7 +21,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose: "A raised tip that deserves a glance: what to do when something is missing.",
-          use: ["Guidance on login, pairing and empty states."],
+          use: ["Guidance on pairing, connecting and empty states."],
           avoid: [
             "Errors that block the user — use the field error or a Dialog.",
             "One-line help — use Note.",

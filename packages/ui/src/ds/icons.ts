@@ -48,3 +48,7 @@ export { MoonIcon } from "phosphor-react-native/src/icons/Moon";
 export { CircleHalfIcon } from "phosphor-react-native/src/icons/CircleHalf";
 export { KeyIcon } from "phosphor-react-native/src/icons/Key";
 export { ImagesIcon } from "phosphor-react-native/src/icons/Images";
+export { CameraIcon } from "phosphor-react-native/src/icons/Camera";
+export { FolderSimpleIcon } from "phosphor-react-native/src/icons/FolderSimple";
+export { CopyIcon } from "phosphor-react-native/src/icons/Copy";
+export { PencilSimpleIcon } from "phosphor-react-native/src/icons/PencilSimple";

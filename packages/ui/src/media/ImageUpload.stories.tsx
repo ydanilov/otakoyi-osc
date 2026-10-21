@@ -3,11 +3,11 @@ import { View } from "react-native";
 import { expect, fn, userEvent } from "storybook/test";
 import { SAMPLE_WALL } from "../stories/images";
 import { componentDocs } from "../stories/docs";
-import { ImageUpload } from "./Image";
+import { ImageUploadView } from "./Image";
 
 const meta = {
   title: "Media & actions/Image Upload",
-  component: ImageUpload,
+  component: ImageUploadView,
   args: {
     state: "selected",
     source: SAMPLE_WALL,
@@ -84,7 +84,7 @@ const meta = {
       },
     },
   },
-} satisfies Meta<typeof ImageUpload>;
+} satisfies Meta<typeof ImageUploadView>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

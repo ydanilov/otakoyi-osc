@@ -14,7 +14,7 @@ export type ListRowTrailing = "chevron" | "value" | "switch" | "none" | "destruc
  * - `chevron`: navigates (optional value shown before the chevron);
  * - `value`: read-only value;
  * - `switch`: LED switch, the whole row toggles;
- * - `destructive`: critical text and icon (Sign out, Remove);
+ * - `destructive`: critical text and icon (Forget this installation, Remove);
  * - `none`: title only.
  */
 export function ListRow({

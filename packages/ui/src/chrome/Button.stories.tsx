@@ -19,7 +19,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "App-chrome action: dialogs, banners, drawers, settings. Not a pult control — pult buttons are `ButtonControl` (Pad).",
+            "App-chrome action: dialogs, banners, sheets, settings. Not a pult control — pult buttons are `ButtonControl` (Pad).",
           use: [
             "Primary: the one main action of a screen or dialog (Done, Take control, Send to screen).",
             "Secondary: the other actions next to it (Hide QR, Choose another).",
@@ -88,7 +88,9 @@ export const Primary: Story = {
 export const PrimaryPressed: Story = { args: { pressed: true } };
 export const Secondary: Story = { args: { variant: "secondary", label: "Hide QR" } };
 export const Ghost: Story = { args: { variant: "ghost", label: "Cancel" } };
-export const Destructive: Story = { args: { variant: "destructive", label: "Sign out" } };
+export const Destructive: Story = {
+  args: { variant: "destructive", label: "Forget this installation" },
+};
 export const WithIcon: Story = { args: { icon: LightningIcon, label: "Flash" } };
 export const Disabled: Story = {
   args: { disabled: true },

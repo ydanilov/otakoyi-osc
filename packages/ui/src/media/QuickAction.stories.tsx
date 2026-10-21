@@ -17,7 +17,8 @@ const meta = {
     docs: {
       description: {
         component: componentDocs({
-          purpose: "Installation-level action in the right drawer: Flash, Idle, Restart, Blackout.",
+          purpose:
+            "Installation-level action on the Installation surface: Flash, Idle, Restart, Blackout.",
           use: ["One-shot installation commands that are not part of the pult config."],
           avoid: ["Pult controls (they are config-driven).", "Navigation."],
           do: ["Give every critical action `holdMs` (hold-to-confirm), e.g. 1500 ms."],

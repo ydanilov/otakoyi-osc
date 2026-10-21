@@ -27,7 +27,6 @@ const config: StorybookConfig = {
         "@rn-primitives",
         "@shopify/react-native-skia",
         "phosphor-react-native",
-        "expo-blur",
         "expo-modules-core",
       ],
       pluginReactOptions: {

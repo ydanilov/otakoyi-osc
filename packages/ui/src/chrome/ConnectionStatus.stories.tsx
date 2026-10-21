@@ -16,7 +16,7 @@ const meta = {
           purpose:
             "Connection to the installation's bridge, shown in the Pult Header on every pult screen.",
           use: [
-            "Top-right of the Pult Header; in the Installation drawer next to the installation name.",
+            "Top-right of the Pult Header; on the Installation surface next to the installation name.",
           ],
           avoid: ["Per-control status — controls show view-only through their disabled state."],
           do: ["Keep it visible at all times while a pult is open."],

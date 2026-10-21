@@ -25,7 +25,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 function Demo() {
-  const [v, setV] = React.useState("lobby-wall");
-  return <Input value={v} onChangeText={setV} accessibilityLabel="Login" style={{ width: 280 }} />;
+  const [v, setV] = React.useState("192.168.1.20");
+  return (
+    <Input value={v} onChangeText={setV} accessibilityLabel="Address" style={{ width: 280 }} />
+  );
 }
 export const Default: Story = { render: () => <Demo /> };

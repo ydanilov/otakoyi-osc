@@ -17,7 +17,8 @@ const meta = {
     docs: {
       description: {
         component: componentDocs({
-          purpose: "Round icon-only button for chrome: open a drawer, go back, close, mute.",
+          purpose:
+            "Round icon-only button for chrome: open Settings / Installation, go back, close, mute.",
           use: ["The meaning is obvious from a standard icon (gear, back, close, power)."],
           avoid: [
             "Actions that need a word to be understood — use Button.",
@@ -25,7 +26,7 @@ const meta = {
           ],
           do: ["Always pass `label` — it is the only name VoiceOver reads."],
           dont: [
-            "Don't use `active` for a momentary press — active is a latched state (e.g. the drawer that is open).",
+            "Don't use `active` for a momentary press — active is a latched state (e.g. Installation while its inspector is open).",
           ],
           anatomy: [
             "Round body: raised at rest, inset when active or pressed",

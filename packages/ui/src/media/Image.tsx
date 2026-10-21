@@ -5,7 +5,7 @@ import { Text } from "../components/ui/text";
 import { Surface, useDepthStyle } from "../ds/depth";
 import { Glyph } from "../ds/Glyph";
 import { ArrowClockwiseIcon, CloudArrowUpIcon, CropIcon, PlusIcon } from "../ds/icons";
-import { Led } from "../ds/Led";
+import { StatusLed } from "../ds/Led";
 import { uploadLabel } from "../ds/logic";
 import { cn } from "../lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
@@ -21,7 +21,7 @@ function OverlayChip({
 }) {
   return (
     <View className="bg-background/80 absolute left-2 top-2 flex-row items-center gap-1.5 rounded-full px-2 py-0.5">
-      <Led tone={tone} size={6} />
+      <StatusLed tone={tone} size={6} />
       <Text className="text-foreground font-mono text-xs uppercase" numberOfLines={1}>
         {label}
       </Text>
@@ -140,7 +140,7 @@ const STATUS: Partial<
  * (Empty → Selected → Uploading → Processing → Live, or Error; Disabled while view-only).
  * UI only: every action is a callback; the upload itself lives with the image control.
  */
-export function ImageUpload({
+export function ImageUploadView({
   state,
   source,
   title = "Wall image",

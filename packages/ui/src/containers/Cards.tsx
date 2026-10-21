@@ -6,7 +6,7 @@ import { Text } from "../components/ui/text";
 import { Surface } from "../ds/depth";
 import { Glyph } from "../ds/Glyph";
 import type { PhosphorIcon } from "../ds/icons";
-import { Led } from "../ds/Led";
+import { StatusLed } from "../ds/Led";
 import { cn } from "../lib/utils";
 
 /** Figma `List Card`: raised card of List Rows separated by hairlines. Slot: rows as children. */
@@ -95,7 +95,7 @@ export function ReleaseNote({ children, latest }: { children: string; latest?: b
   return (
     <View className="flex-row items-start gap-2">
       <View className="pt-1.5">
-        <Led tone="signal" lit={!!latest} size={6} />
+        <StatusLed tone="signal" lit={!!latest} size={6} />
       </View>
       <Text className="text-foreground flex-1 text-sm">{children}</Text>
     </View>

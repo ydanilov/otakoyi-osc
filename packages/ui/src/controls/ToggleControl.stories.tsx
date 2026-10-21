@@ -5,10 +5,20 @@ import { ControlHarness } from "../stories/ControlHarness";
 import { makeControl } from "../stories/controls";
 import { componentDocs, OSC_SOURCE } from "../stories/docs";
 
-function ToggleStory({ on, disabled, label }: { on: boolean; disabled: boolean; label: string }) {
+function ToggleStory({
+  on,
+  disabled,
+  label,
+  style = "button",
+}: {
+  on: boolean;
+  disabled: boolean;
+  label: string;
+  style?: "button" | "switch";
+}) {
   const control = React.useMemo(
-    () => makeControl({ type: "toggle", id: "strobe", address: "/fx/strobe", label }),
-    [label],
+    () => makeControl({ type: "toggle", id: "strobe", address: "/fx/strobe", label, style }),
+    [label, style],
   );
   return (
     <ControlHarness control={control} value={on} disabled={disabled} width={150} height={88} />
@@ -18,7 +28,8 @@ function ToggleStory({ on, disabled, label }: { on: boolean; disabled: boolean; 
 const meta = {
   title: "Controls/Toggle",
   component: ToggleStory,
-  args: { on: false, disabled: false, label: "Strobe" },
+  args: { on: false, disabled: false, label: "Strobe", style: "button" },
+  argTypes: { style: { control: "inline-radio", options: ["button", "switch"] } },
   parameters: {
     docs: {
       description: {
@@ -28,7 +39,10 @@ const meta = {
           avoid: ["App settings — Switch (LedSwitch).", "Momentary triggers — Button (Pad)."],
           do: ["Label the thing, not the action (“Strobe”, not “Turn strobe on”)."],
           dont: ["Don't use two toggles for mutually exclusive options — Segmented."],
-          anatomy: ["Pad (lit fill when on)", "Label", "ON / OFF caption"],
+          anatomy: [
+            "style button: pad (lit fill when on), label, ON / OFF caption",
+            "style switch: hardware switch with ON and OFF LEDs (same messages)",
+          ],
           behaviour: [
             `Sends \`on\` args when switched on and \`off\` args when switched off — ${OSC_SOURCE}.`,
             "Feedback updates the state.",
@@ -60,4 +74,5 @@ export const Off: Story = {
   },
 };
 export const On: Story = { args: { on: true } };
+export const SwitchStyle: Story = { args: { style: "switch", on: true } };
 export const Disabled: Story = { args: { disabled: true } };

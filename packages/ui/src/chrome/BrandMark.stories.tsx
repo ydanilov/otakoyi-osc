@@ -13,10 +13,10 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The Otakoyi knob mark: splash, login, About. A raised dial with a lit arc over the 240° knob travel.",
+            "The Otakoyi knob mark: Connect screen and About. A raised dial with a lit arc over the 240° knob travel.",
           use: ["App-level branding before an installation is loaded."],
           avoid: ["Client pults — the client's logo comes from the config theme."],
-          do: ["Use LG on splash/login, MD in About, SM in headers."],
+          do: ["Use MD on Connect, LG in About, SM in headers."],
           dont: ["Don't recolour by hand; it follows the brand signal like the knobs do."],
           anatomy: [
             "Track arc (control track)",

@@ -7,7 +7,7 @@ import { toneColor, type Tone } from "./Glyph";
  * Status LED. Lit LEDs glow in their tone (a lit value, so glow is allowed); unlit LEDs are a dim
  * recessed dot. Status tones are never brandable.
  */
-export function Led({
+export function StatusLed({
   tone = "signal",
   lit = true,
   size = 8,

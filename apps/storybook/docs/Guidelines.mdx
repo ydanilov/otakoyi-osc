@@ -21,12 +21,14 @@ How the pieces fit on a screen. Component pages cover the details; these rules c
 | -------------- | ------------------------------------- | --------------------------------------- |
 | Device         | usually a **phone**, portrait         | usually a **tablet**, landscape         |
 | Pult           | few controls: scenes, modes, steppers | dense VJ console: faders, knobs, groups |
-| Dialogs        | **bottom sheet**                      | **centred modal**                       |
+| Settings       | system sheet (large detent)           | form sheet over a dimmed console        |
+| Installation   | system sheet (large detent)           | 390 pt trailing inspector, no dimming   |
+| Dialogs        | content in a sheet (medium detent)    | content in a form sheet                 |
 | Primary layout | phone (designed first)                | tablet (designed first)                 |
 
 Every delivery ships **both** layouts from one config. Components choose by window width, not by
 platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for the grid,
-`drawerWidth(width)` for drawers. Check both viewports in the toolbar.
+`presentationFor(surface, width)` for Settings, Installation and dialogs. Check both viewports in the toolbar.
 
 ## The pult never scrolls (ADR-006)
 
@@ -34,16 +36,41 @@ platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for
   split into screens that swipe **horizontally**, with Screen Tabs (tablet) or Page Dots (phone).
 - Never wrap a pult page in a vertical ScrollView. A Scene List may scroll inside its own cell.
 
-## Header and drawers (ADR-013 addendum)
+## Navigation (ADR-013, Apple HIG)
 
-- The pult screen shows only the controls and a minimal **Pult Header**: name or pult switcher,
-  Connection, and — when this device is not in control — the **View only — Take control** banner or
-  the **studio** banner. Take control is never inside a drawer.
-- Everything else lives in two swipe drawers, which **may scroll vertically**:
-  - **left edge → Settings**: appearance, control preferences, pairing QR, what's new, help, sign out;
-  - **right edge → Installation**: name and status, pult switcher, Quick Actions (Flash, Restart and
-    Blackout with hold-to-confirm), modes (Idle; Pause where supported), activity.
-- Edge swipes are invisible to VoiceOver: the header also offers buttons to open both drawers.
+- The pult screen shows only the controls and a minimal **Pult Header**: **Settings** button
+  (leading), Connection, **Installation** button (trailing) — and, when this device is not in
+  control, the **View only — Take control** or **studio** banner. Take control is never in a sheet.
+- **Settings** (control preferences, pairing QR, what's new, help, _Forget this installation_):
+  iPhone → system sheet, large detent; iPad → form sheet over a dimmed console.
+- **Installation** (name and status, pult switcher, Quick Actions — Flash, Restart and Blackout with
+  hold — modes, activity): iPhone → system sheet; iPad → 390 pt trailing **Inspector** with Close ×,
+  no dimming.
+- **Edge swipes are shortcuts only**: right edge → Installation (phone and tablet), left edge →
+  Settings (phone only). They are invisible to VoiceOver; the header buttons are the way in.
+- **Dialogs are content** inside the system sheet (iPhone, medium detent) or form sheet (iPad). The
+  system brings grabber, Close and material. Cancel leading, one prominent action trailing.
+- Sheets and the inspector may scroll; the pult never does. The scrim only dims — no blur.
+- Present sheets natively: expo-router `Stack.Screen` `options={presentationFor(surface, width).options}`
+  (`presentation: "formSheet"`, `sheetAllowedDetents`).
+
+## Menus and undo
+
+- Long-press an element → **Context Menu** with a preview; destructive item last, in red.
+- Commands from a button (3+) → **Pull-down Menu** (e.g. image source: Take Photo / Photo Library /
+  Choose File / Uploads). One value of many → **Select** (pop-up button).
+- **No confirmation for undoable actions**: delete at once, show a **Toast** with Undo for 5 s.
+  Confirm only what cannot be undone.
+
+## Connect and launch (ADR-012, no client login)
+
+- First screen: **Connect** — Scan pairing QR · Enter address and PIN (form in a sheet) · Try the demo.
+- After launch with a saved pairing: the **client loading** screen — Backdrop (installation image +
+  legibility gradient), Client Logo and a loader. Connection problems are inline (Retry / Forget),
+  never an alert at startup. The system launch screen is a plain background.
+- Branding is the studio's delivery (ADR-004): the app has **no appearance switch and no brand or
+  theme editor**; the theme mode comes from the config's `theme.mode`. (Storybook's theme and brand
+  switchers are a dev tool.)
 
 ## Status vs. brand
 
@@ -56,7 +83,7 @@ platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for
 - Hit targets ≥ 44 pt (smaller visuals get hit slop).
 - Every interactive element has a role and a label; icon-only buttons take `label`.
 - Continuous controls are `adjustable` (VoiceOver swipe up/down) with the value and unit.
-- Reduce Motion: loaders stop, switches and drawers jump instead of animating; controls never
+- Reduce Motion: loaders stop, switches and the inspector jump instead of animating; controls never
   animate decoratively.
 - Colour is never the only signal — LEDs come with words, rings with percentages.
 

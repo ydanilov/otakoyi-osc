@@ -42,7 +42,7 @@ const meta = {
           ],
           behaviour: ["Static container; falsy children are skipped."],
           a11y: ["Rows keep their own roles; the card adds none."],
-          content: ["Up to ~8 rows; longer lists belong on their own page (drawers may scroll)."],
+          content: ["Up to ~8 rows; longer lists belong on their own page (sheets may scroll)."],
           figma: { component: "List Card", node: "47:101", variants: [["slot", "children"]] },
         }),
       },

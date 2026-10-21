@@ -31,7 +31,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose: "Slot container: an uppercase caption over a group, usually a List Card.",
-          use: ["Grouping in drawers and settings (Installation, Modes, Appearance)."],
+          use: ["Grouping in the Settings and Installation sheets (Installation, Modes, Help)."],
           avoid: ["Inside a Console Panel — the panel has its own caption."],
           do: ["Use nouns for captions."],
           dont: ["Don't nest sections."],

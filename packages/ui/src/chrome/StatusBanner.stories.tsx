@@ -28,9 +28,9 @@ const meta = {
           ],
           avoid: ["Connection problems — the Connection pill covers those."],
           do: [
-            "Show on every pult screen while the state lasts (Take control is not in a drawer).",
+            "Show on every pult screen while the state lasts (Take control is never inside a sheet).",
           ],
-          dont: ["Don't hide the banner behind a drawer or dialog."],
+          dont: ["Don't hide the banner behind a sheet or dialog."],
           anatomy: [
             "View: inset bed + text + Primary SM button",
             "Studio: solid studio-colour bar + text",

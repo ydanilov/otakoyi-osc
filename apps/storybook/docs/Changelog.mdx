@@ -7,6 +7,31 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-22 — navigation per Apple HIG, no client login (ADR-012, ADR-013, ADR-004)
+
+**Changed**
+
+- Pult Header: leading **Settings** and trailing **Installation** icon buttons.
+- Settings / Installation: system sheets (`presentationFor`), iPad Installation **Inspector**
+  (390 pt, no dimming). Edge swipes are shortcuts (`EdgeSwipe`; left edge phone only).
+- **Dialog** is content only (no background, grabber, scrim or home indicator); it sits in the
+  native sheet / form sheet.
+- **Scrim** dims only (no blur); `expo-blur` removed.
+- Copy: “Sign out” → “Forget this installation”; no appearance switch or brand editor in the app.
+
+**Added**
+
+- **Toast** (text + optional action, 5 s), **Context Menu** (long-press with preview) and
+  **Pull-down Menu** (image source picker) — native SwiftUI menus on iOS via `@expo/ui`.
+- Connect: **Connect Options**, **Connect Form** (address + PIN, `manualPairing`), **Backdrop**,
+  **Client Logo**, **Client Loading** screen.
+- Stories for the new control types (ADR-015): Fader relative/crossfade, Knob relative/hue,
+  Thumbstick, Button Group, Image, Mic, Prompt, switch-style Toggle, control LED.
+
+**Removed**
+
+- Custom swipe drawers (`Drawer`, `DrawerEdge`).
+
 ## 2026-10-22 — design-system components and Storybook
 
 **Added**
@@ -22,7 +47,7 @@ Figma components or variants explicitly (they are exporter API, ADR-014).
 - Forms: Input (`TextField`), Value Input, Select (native SwiftUI menu on iOS via `@expo/ui`),
   Stepper, List Row, Switch (`LedSwitch`).
 - Containers: List Card, Section, Console Panel, Dialog (sheet / modal by width), Release Note,
-  Release Card, Pult Card, Drawer + DrawerEdge, Viewfinder.
+  Release Card, Pult Card, Viewfinder.
 - Media & actions: Quick Action (with hold), Master Bar, Activity Row, Image Tile, Image Upload,
   Progress Ring (UI only).
 - Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log,
@@ -33,8 +58,3 @@ Figma components or variants explicitly (they are exporter API, ADR-014).
 
 - `PultHeader` uses `ConnectionStatus` and `StatusBanner` (neumorphic inset banner, solid studio bar).
 - `ThemeProvider` exposes `ThemeLayer` to re-apply the brand inside RN `Modal`s.
-
-**Pending (feat/new-controls)**
-
-- Stories for crossfade, relative / hue knobs, thumbstick, button group, image, mic and prompt
-  controls once that branch lands.

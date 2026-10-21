@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  dialogPresentation,
-  drawerStaysOpen,
-  drawerWidth,
+  INSPECTOR_WIDTH,
+  TOAST_MS,
+  edgeSwipeEnabled,
   edgeSwipeOpens,
+  formFactor,
+  manualPairing,
+  orderMenuItems,
+  presentationFor,
   formatStepped,
   holdFraction,
   parseValueInput,
@@ -59,22 +63,59 @@ describe("value input", () => {
   });
 });
 
-describe("dialogs and drawers", () => {
-  it("uses a bottom sheet on phones and a centred modal on tablets", () => {
-    expect(dialogPresentation(390)).toBe("sheet");
-    expect(dialogPresentation(1180)).toBe("modal");
+describe("navigation (ADR-013, HIG)", () => {
+  it("splits phone and tablet at the pult breakpoint", () => {
+    expect(formFactor(390)).toBe("phone");
+    expect(formFactor(820)).toBe("tablet");
   });
-  it("sizes drawers to the window", () => {
-    expect(drawerWidth(390)).toBe(332);
-    expect(drawerWidth(1180)).toBe(380);
+  it("presents Settings as a large sheet on iPhone and a form sheet on iPad", () => {
+    expect(presentationFor("settings", 390)).toEqual({
+      kind: "sheet",
+      options: {
+        presentation: "formSheet",
+        sheetAllowedDetents: [1],
+        sheetGrabberVisible: true,
+        sheetInitialDetentIndex: 0,
+      },
+    });
+    expect(presentationFor("settings", 1180)).toMatchObject({
+      kind: "sheet",
+      options: { sheetAllowedDetents: [1], sheetGrabberVisible: false },
+    });
   });
-  it("closes a drawer after a flick or a third of its width", () => {
-    expect(drawerStaysOpen(50, 0, 330)).toBe(true);
-    expect(drawerStaysOpen(120, 0, 330)).toBe(false);
-    expect(drawerStaysOpen(10, 900, 330)).toBe(false);
-    expect(drawerStaysOpen(200, -900, 330)).toBe(true);
-    expect(edgeSwipeOpens(40, 800, 330)).toBe(true);
-    expect(edgeSwipeOpens(40, 0, 330)).toBe(false);
+  it("presents Installation as a sheet on iPhone and a 390 pt inspector on iPad", () => {
+    expect(presentationFor("installation", 390).kind).toBe("sheet");
+    expect(presentationFor("installation", 1180)).toEqual({
+      kind: "inspector",
+      width: INSPECTOR_WIDTH,
+    });
+  });
+  it("opens dialogs at the medium detent on iPhone", () => {
+    expect(presentationFor("dialog", 390)).toMatchObject({
+      options: { sheetAllowedDetents: [0.5, 1] },
+    });
+    expect(presentationFor("dialog", 1180)).toMatchObject({
+      options: { sheetAllowedDetents: [1] },
+    });
+  });
+  it("allows the left edge swipe only on phones", () => {
+    expect(edgeSwipeEnabled("right", 390)).toBe(true);
+    expect(edgeSwipeEnabled("right", 1180)).toBe(true);
+    expect(edgeSwipeEnabled("left", 390)).toBe(true);
+    expect(edgeSwipeEnabled("left", 1180)).toBe(false);
+    expect(edgeSwipeOpens(40, 800, 390)).toBe(true);
+    expect(edgeSwipeOpens(40, 0, 390)).toBe(false);
+    expect(edgeSwipeOpens(120, 0, 390)).toBe(true);
+  });
+});
+
+describe("menus and toasts", () => {
+  it("puts destructive items last and keeps the rest in order", () => {
+    const items = [{ id: "delete", destructive: true }, { id: "edit" }, { id: "dup" }];
+    expect(orderMenuItems(items).map((i) => i.id)).toEqual(["edit", "dup", "delete"]);
+  });
+  it("keeps a toast for five seconds", () => {
+    expect(TOAST_MS).toBe(5000);
   });
 });
 
@@ -114,5 +155,26 @@ describe("componentDocs", () => {
     expect(md).toContain("node-id=10-19");
     expect(md).toContain('| `Variant=Primary` | `variant="primary"` |');
     expect(md).not.toContain("### Anatomy");
+  });
+});
+
+describe("manual pairing", () => {
+  it("builds the bridge URL from an IP, host or full URL", () => {
+    expect(manualPairing("192.168.1.20", "2468")).toEqual({
+      ok: true,
+      pairing: { bridge: "ws://192.168.1.20:8080/ws", pin: "2468" },
+    });
+    expect(manualPairing(" studio.local:9000 ", "2468")).toMatchObject({
+      pairing: { bridge: "ws://studio.local:9000/ws" },
+    });
+    expect(manualPairing("wss://hall.example/ws", "123456")).toMatchObject({
+      pairing: { bridge: "wss://hall.example/ws" },
+    });
+  });
+  it("points at the field that is wrong", () => {
+    expect(manualPairing("", "2468")).toMatchObject({ ok: false, field: "address" });
+    expect(manualPairing("not an address!", "2468")).toMatchObject({ ok: false, field: "address" });
+    expect(manualPairing("192.168.1.20", "12")).toMatchObject({ ok: false, field: "pin" });
+    expect(manualPairing("192.168.1.20", "abcd")).toMatchObject({ ok: false, field: "pin" });
   });
 });

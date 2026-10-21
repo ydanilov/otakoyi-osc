@@ -13,7 +13,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose: "“otakoyi CONTROLS” set in the brand font, next to or under the Brand Mark.",
-          use: ["Login and splash (LG); drawer footer and About (SM)."],
+          use: ["Connect screen (LG); Settings footer and About (SM)."],
           avoid: ["Client pults."],
           do: ["Pair with the Brand Mark on first-run screens."],
           dont: ["Don't retype the wordmark as plain text elsewhere."],

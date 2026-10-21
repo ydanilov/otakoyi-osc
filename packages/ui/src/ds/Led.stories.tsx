@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import { View } from "react-native";
 import { componentDocs } from "../stories/docs";
-import { Led } from "./Led";
+import { StatusLed } from "./Led";
 
 const meta = {
   title: "Foundations/LED",
-  component: Led,
+  component: StatusLed,
   args: { tone: "signal", lit: true, size: 8 },
   argTypes: {
     tone: {
@@ -34,7 +34,7 @@ const meta = {
       },
     },
   },
-} satisfies Meta<typeof Led>;
+} satisfies Meta<typeof StatusLed>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -46,7 +46,7 @@ export const Tones: Story = {
     <View style={{ flexDirection: "row", gap: 20 }}>
       {(["signal", "accent", "online", "warning", "critical", "studio", "offline"] as const).map(
         (t) => (
-          <Led key={t} tone={t} size={10} />
+          <StatusLed key={t} tone={t} size={10} />
         ),
       )}
     </View>

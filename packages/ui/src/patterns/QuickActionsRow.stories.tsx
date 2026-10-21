@@ -21,7 +21,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose: "The installation's quick actions in one Console Panel, evenly spread.",
-          use: ["Top of the Installation (right) drawer."],
+          use: ["Top of the Installation surface (iPhone sheet, iPad inspector)."],
           avoid: ["More than 4 actions — they stop fitting a phone row."],
           do: ["Keep the order Flash · (Idle) · Restart · Blackout across installations."],
           dont: ["Don't add pult controls here."],

@@ -35,10 +35,10 @@ const meta = {
         component: componentDocs({
           purpose:
             "What happened on the installation: control hand-overs, restarts, errors, studio sessions.",
-          use: ["Installation drawer → Activity."],
+          use: ["Installation surface → Activity."],
           avoid: ["Debug logs — the studio has the bridge log."],
           do: ["Newest first; filter by range."],
-          dont: ["Don't page inside the pult; the drawer scrolls."],
+          dont: ["Don't page inside the pult; the Installation sheet / inspector scrolls."],
           anatomy: [
             "Console Panel “Activity”",
             "Tab Bar Today / Week / All",

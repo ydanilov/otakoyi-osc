@@ -4,9 +4,9 @@ type Input<T extends ControlType> = { type: T; id: string } & Record<string, unk
 
 /**
  * Builds a fully defaulted control for a story through the real zod schema, so stories always see
- * what the app sees after a config is parsed. The grid placement is irrelevant in isolation.
+ * what the app sees after a config is parsed (layout lives per form factor, not on the control).
  * If the schema changes shape (e.g. per-form-factor layouts), this is the one place to update.
  */
 export function makeControl<T extends ControlType>(input: Input<T>): ControlOf<T> {
-  return Control.parse({ grid: { x: 0, y: 0, w: 1, h: 1 }, ...input }) as ControlOf<T>;
+  return Control.parse(input) as ControlOf<T>;
 }

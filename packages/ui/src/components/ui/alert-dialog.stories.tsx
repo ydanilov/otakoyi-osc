@@ -42,14 +42,14 @@ export const Default: Story = {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive">
-          <Text>Sign out</Text>
+          <Text>Forget</Text>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Sign out?</AlertDialogTitle>
+          <AlertDialogTitle>Forget this installation?</AlertDialogTitle>
           <AlertDialogDescription>
-            You will need the installation login again.
+            You will need to scan its pairing QR again.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -57,7 +57,7 @@ export const Default: Story = {
             <Text>Cancel</Text>
           </AlertDialogCancel>
           <AlertDialogAction>
-            <Text>Sign out</Text>
+            <Text>Forget</Text>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

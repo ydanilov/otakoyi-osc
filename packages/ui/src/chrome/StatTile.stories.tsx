@@ -13,7 +13,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose: "A labelled number inside a card: connected devices, FPS, uptime.",
-          use: ["Read-only figures in the Installation drawer or settings."],
+          use: ["Read-only figures on the Installation surface or in Settings."],
           avoid: ["Live control values on the pult — use the Label control.", "Anything tappable."],
           do: ["Group 2–4 tiles in a row inside one card."],
           dont: ["Don't give tiles depth — they are flat information nested in a card."],

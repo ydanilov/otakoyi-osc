@@ -23,7 +23,7 @@ const meta = {
         component: primitiveDocs({
           name: "Dialog",
           purpose: "shadcn dialog on `@rn-primitives/dialog` (portal to PortalHost).",
-          prefer: "the DS `Dialog` (sheet on phone, modal on tablet, blurred scrim)",
+          prefer: "the DS `Dialog` content inside the native sheet / form sheet",
           a11y: ["Focus-trapped modal; close button labelled Close."],
         }),
       },

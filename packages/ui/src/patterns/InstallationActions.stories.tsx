@@ -25,11 +25,11 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Body of the Installation drawer: quick actions (Flash, Restart, Blackout with hold) and modes (Idle, Pause).",
-          use: ["Right drawer, under the installation name and status."],
+            "Body of the Installation surface (iPhone sheet, iPad inspector): quick actions (Flash, Restart, Blackout with hold) and modes (Idle, Pause).",
+          use: ["Installation sheet / inspector, under the installation name and status."],
           avoid: ["The pult screen itself."],
           do: ["Hide Pause for installations that cannot pause (pass `modes`)."],
-          dont: ["Don't add free settings here — Settings drawer."],
+          dont: ["Don't add free settings here — Settings sheet."],
           anatomy: ["Quick Actions Row", "Section “Modes” → List Card → switch List Rows"],
           behaviour: [
             "Actions → `onAction(id)`; modes → `onModeChange(id, on)`. Sending is the screen's job (bridge).",

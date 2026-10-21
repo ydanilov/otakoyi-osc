@@ -58,18 +58,32 @@ let errors = [];
 page.on("pageerror", (e) => errors.push(String(e).split("\n")[0]));
 page.on("console", (m) => m.type() === "error" && errors.push(m.text().split("\n")[0]));
 
-// Record Storybook's preview events: `storyRendered` fires after `play` has finished;
-// `playFunctionThrewException` / `storyThrewException` / `storyErrored` mean a failure.
+// Record what the preview emits: `storyFinished` (with a status) comes after render, `play` and
+// afterEach; errors arrive as playFunctionThrewException / unhandledErrorsWhilePlaying /
+// storyThrewException / storyErrored.
 await page.addInitScript(() => {
   window.__sbEvents = [];
-  const names = ["storyRendered", "playFunctionThrewException", "storyThrewException", "storyErrored"];
+  const bad = [
+    "playFunctionThrewException",
+    "unhandledErrorsWhilePlaying",
+    "storyThrewException",
+    "storyErrored",
+  ];
   const attach = setInterval(() => {
     const channel = window.__STORYBOOK_ADDONS_CHANNEL__;
     if (!channel) return;
     clearInterval(attach);
-    for (const n of names)
-      channel.on(n, (e) => window.__sbEvents.push({ n, msg: e?.message ?? e?.title ?? "" }));
-  }, 5);
+    const emit = channel.emit.bind(channel);
+    channel.emit = (n, ...args) => {
+      const e = args[0];
+      if (n === "storyFinished") window.__sbEvents.push({ n, msg: e?.status ?? "" });
+      else if (bad.includes(n)) {
+        const first = Array.isArray(e) ? e[0] : e;
+        window.__sbEvents.push({ n, msg: String(first?.message ?? first?.title ?? "") });
+      }
+      return emit(n, ...args);
+    };
+  }, 1);
 });
 
 const failures = [];
@@ -78,12 +92,14 @@ for (const s of stories) {
     errors = [];
     await page.goto(`${base}/iframe.html?id=${s.id}&viewMode=story&globals=theme:${theme}`);
     await page
-      .waitForFunction(() => window.__sbEvents.length > 0, null, { timeout: 30000 })
+      .waitForFunction(() => window.__sbEvents.some((e) => e.n === "storyFinished"), null, {
+        timeout: 30000,
+      })
       .catch(() => errors.push("timeout: story did not finish rendering / play"));
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(200);
     const shown = await page.evaluate(() => {
-      const bad = window.__sbEvents.filter((e) => e.n !== "storyRendered");
-      return bad.length ? bad.map((e) => `${e.n}: ${e.msg}`).join(" | ") : null;
+      const bad = window.__sbEvents.filter((e) => e.n !== "storyFinished" || e.msg === "error");
+      return bad.length ? bad.map((e) => `${e.n}: ${e.msg}`.slice(0, 300)).join(" | ") : null;
     });
     if (shots) await page.screenshot({ path: join(shots, `${s.id}-${theme}.png`) });
     const errs = errors.filter((e) => !/favicon|Download the React DevTools/.test(e));

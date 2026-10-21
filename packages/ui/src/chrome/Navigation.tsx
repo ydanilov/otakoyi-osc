@@ -71,7 +71,7 @@ export function TabBar<T extends string>({
   );
 }
 
-/** Figma `Top Bar`: back button + title for drawer sub-pages and settings screens. */
+/** Figma `Top Bar`: back button + title for sub-pages inside the Settings / Installation sheets. */
 export function TopBar({
   title,
   onBack,
@@ -96,7 +96,7 @@ export function TopBar({
   );
 }
 
-/** Figma `Nav Item`: a row in a drawer menu. Active = inset bed + lit icon. */
+/** Figma `Nav Item`: a row in the Settings menu. Active = inset bed + lit icon. */
 export function NavItem({
   icon,
   label,

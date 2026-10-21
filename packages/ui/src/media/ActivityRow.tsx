@@ -2,7 +2,7 @@ import { View } from "react-native";
 import { Text } from "../components/ui/text";
 import { Glyph } from "../ds/Glyph";
 import { ArrowClockwiseIcon, BroadcastIcon, LockSimpleIcon, WifiSlashIcon } from "../ds/icons";
-import { Led } from "../ds/Led";
+import { StatusLed } from "../ds/Led";
 
 export type ActivityKind = "control" | "restart" | "error" | "studio";
 
@@ -34,7 +34,7 @@ export function ActivityRow({
       accessible
       accessibilityLabel={`${k.name}: ${text}, ${time}`}
     >
-      <Led tone={k.tone} size={7} />
+      <StatusLed tone={k.tone} size={7} />
       <Glyph icon={k.icon} tone="muted" size={16} />
       <Text className="text-foreground flex-1 text-sm" numberOfLines={2}>
         {text}

@@ -3,7 +3,7 @@ import { Pressable, View } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from "react-native-reanimated";
 import { Text } from "../components/ui/text";
 import { Surface, useDepthStyle } from "../ds/depth";
-import { Led } from "../ds/Led";
+import { StatusLed } from "../ds/Led";
 import { useTheme } from "../theme/ThemeProvider";
 
 const TRACK_W = 64;
@@ -56,7 +56,7 @@ export function LedSwitch({
           {label}
         </Text>
       )}
-      <Led tone="critical" lit={!value && !disabled} size={6} />
+      <StatusLed tone="critical" lit={!value && !disabled} size={6} />
       <Surface depth="inset" radius="full" style={{ width: TRACK_W, height: TRACK_H }}>
         <Animated.View
           // Reanimated views are not NativeWind-interop'd: layout and colour go in `style`.
@@ -86,7 +86,7 @@ export function LedSwitch({
           />
         </Animated.View>
       </Surface>
-      <Led tone="signal" lit={value && !disabled} size={6} />
+      <StatusLed tone="signal" lit={value && !disabled} size={6} />
     </Pressable>
   );
 }

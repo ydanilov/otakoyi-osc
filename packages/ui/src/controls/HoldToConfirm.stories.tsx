@@ -44,7 +44,9 @@ const meta = {
           purpose:
             "A pult command that must not fire by accident: blackout, shutdown, reset. Schema type `holdToConfirm`.",
           use: ["Destructive or show-stopping commands on the pult."],
-          avoid: ["Installation-level actions in the drawer — Quick Action with hold."],
+          avoid: [
+            "Installation-level actions on the Installation surface — Quick Action with hold.",
+          ],
           do: ["Keep `holdMs` 1–2 s; longer feels broken."],
           dont: ["Don't use it for routine actions; it slows the operator."],
           anatomy: [

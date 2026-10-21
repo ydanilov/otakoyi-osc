@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import * as React from "react";
 import { View } from "react-native";
 import { expect, userEvent } from "storybook/test";
-import { KeyIcon, UserIcon } from "../ds/icons";
+import { KeyIcon, MonitorIcon } from "../ds/icons";
 import { componentDocs } from "../stories/docs";
 import { TextField } from "./Field";
 
@@ -11,7 +11,7 @@ function Demo(
     initial?: string;
   },
 ) {
-  const [v, setV] = React.useState(props.initial ?? "lobby-wall");
+  const [v, setV] = React.useState(props.initial ?? "192.168.1.20");
   return (
     <View style={{ width: 326 }}>
       <TextField {...props} value={v} onChangeText={setV} />
@@ -22,21 +22,21 @@ function Demo(
 const meta = {
   title: "Forms/Input",
   component: Demo,
-  args: { label: "Login", icon: UserIcon, autoCapitalize: "none" },
+  args: { label: "Address", icon: MonitorIcon, autoCapitalize: "none" },
   argTypes: { icon: { control: false } },
   parameters: {
     docs: {
       description: {
         component: componentDocs({
           purpose:
-            "Free-text field for login and pairing (installation login, password, bridge address). Exported as `TextField`.",
-          use: ["Login, password, manual bridge address."],
+            "Free-text field for pairing (bridge address and PIN, ADR-012 — there is no login). Exported as `TextField`.",
+          use: ["Address and PIN in the Connect form."],
           avoid: [
             "Numbers with a unit — use Value Input.",
             "Anything on the pult — the pult has no free-text fields (no editor in the client app).",
           ],
           do: [
-            "Show the error under the field in plain words (“Wrong login or password”).",
+            "Show the error under the field in plain words (“Wrong PIN”).",
             "Use `secureTextEntry` for passwords and the right `textContentType`.",
           ],
           dont: ["Don't use placeholder text as the label."],
@@ -76,16 +76,16 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   play: async ({ canvas }) => {
-    const input = await canvas.findByLabelText("Login");
+    const input = await canvas.findByLabelText("Address");
     await userEvent.clear(input);
-    await userEvent.type(input, "conference-hall");
-    await expect(input).toHaveValue("conference-hall");
+    await userEvent.type(input, "studio.local:8080");
+    await expect(input).toHaveValue("studio.local:8080");
   },
 };
 export const Focus: Story = { args: { focused: true } };
-export const Error: Story = { args: { error: "Wrong login or password" } };
+export const Error: Story = { args: { error: "That doesn't look like an address" } };
 export const Disabled: Story = { args: { disabled: true } };
 export const Password: Story = {
-  args: { label: "Password", icon: KeyIcon, secureTextEntry: true, initial: "secret" },
+  args: { label: "PIN", icon: KeyIcon, secureTextEntry: true, initial: "2468" },
 };
-export const Empty: Story = { args: { initial: "", placeholder: "installation-login" } };
+export const Empty: Story = { args: { initial: "", placeholder: "192.168.1.20" } };

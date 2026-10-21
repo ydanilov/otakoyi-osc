@@ -27,7 +27,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Switches between the pults of one installation login (lobby, conference hall, VJ console) from the header.",
+            "Switches between the pults of one installation (lobby, conference hall, VJ console) from the header.",
           use: ["Pult Header `switcher` slot when the installation has 2+ pults."],
           avoid: ["Single-pult installations — it renders nothing."],
           do: ["Name pults by place or role."],

@@ -22,7 +22,7 @@ const NO_OUTLINE = { outlineWidth: 0 } as const;
 
 /**
  * Figma `Input`: label + recessed text field (+ optional leading icon) + error line.
- * Used for login and pairing; the pult itself never has free-text fields.
+ * Used for “Enter address and PIN” (pairing); the pult itself never has free-text fields.
  */
 export function TextField({
   label,

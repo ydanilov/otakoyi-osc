@@ -46,7 +46,6 @@
   "peerDependencies": {
     "@expo/ui": "*",
     "@shopify/react-native-skia": "*",
-    "expo-blur": "*",
     "lucide-react-native": "*",
     "nativewind": "*",
     "react": "*",

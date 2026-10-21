@@ -35,7 +35,9 @@ const meta = {
         component: componentDocs({
           purpose:
             "The pult body: renders a config's pages from the control registry. Pages never scroll; they split into horizontally swiped screens (ADR-006).",
-          use: ["The pult screen, under the Pult Header, with the two drawers over it."],
+          use: [
+            "The pult screen, under the Pult Header, with Settings / Installation presented over it.",
+          ],
           avoid: ["Anything that is not a config page."],
           do: ["Review the phone viewport too — the grid re-flows for phones."],
           dont: ["Don't wrap it in a ScrollView."],

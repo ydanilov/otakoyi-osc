@@ -62,33 +62,80 @@ export function parseValueInput(
   return { ok: true, value: v, clamped: v !== n };
 }
 
-export type DialogPresentation = "sheet" | "modal";
+export type FormFactor = "phone" | "tablet";
 
-/** Phone → bottom sheet, tablet → centred modal (ADR-013), chosen by window width. */
-export function dialogPresentation(windowWidth: number): DialogPresentation {
-  return windowWidth < PHONE_BREAKPOINT ? "sheet" : "modal";
+/** Phone below the 600 pt breakpoint, tablet from it (the same split the pult grid uses). */
+export function formFactor(windowWidth: number): FormFactor {
+  return windowWidth < PHONE_BREAKPOINT ? "phone" : "tablet";
 }
 
-/** Width of a swipe drawer: 85 % of the window on phones, at most 380 pt. */
-export function drawerWidth(windowWidth: number): number {
-  return Math.round(Math.min(380, windowWidth * 0.85));
+/** What opens over the pult (ADR-013, Apple HIG). */
+export type OverlaySurface = "settings" | "installation" | "dialog";
+
+/**
+ * Native stack options for a sheet route (expo-router `Stack.Screen options`, SDK 58
+ * `presentation: "formSheet"`). On iPhone a form sheet is a system sheet with detents; on iPad it
+ * is the centred form sheet over a dimmed console.
+ */
+export interface SheetOptions {
+  presentation: "formSheet";
+  sheetAllowedDetents: number[];
+  sheetGrabberVisible: boolean;
+  sheetInitialDetentIndex: number;
+}
+
+export type Presentation =
+  | { kind: "sheet"; options: SheetOptions }
+  /** iPad Installation: a 390 pt trailing inspector panel inside the pult screen, no dimming. */
+  | { kind: "inspector"; width: number };
+
+/** Width of the iPad Installation inspector (HIG inspector width). */
+export const INSPECTOR_WIDTH = 390;
+
+/**
+ * How Settings, Installation and dialogs are presented (ADR-013, HIG):
+ * - Settings: iPhone system sheet, large detent; iPad form sheet.
+ * - Installation: iPhone system sheet, large detent; iPad trailing inspector (no dimming).
+ * - Dialog: iPhone sheet at the medium detent (can grow to large); iPad form sheet.
+ */
+export function presentationFor(surface: OverlaySurface, windowWidth: number): Presentation {
+  const phone = formFactor(windowWidth) === "phone";
+  if (surface === "installation" && !phone) return { kind: "inspector", width: INSPECTOR_WIDTH };
+  const detents = surface === "dialog" && phone ? [0.5, 1] : [1];
+  return {
+    kind: "sheet",
+    options: {
+      presentation: "formSheet",
+      sheetAllowedDetents: detents,
+      sheetGrabberVisible: phone,
+      sheetInitialDetentIndex: 0,
+    },
+  };
 }
 
 /**
- * Whether a drawer drag ends open. `travel` is how far the panel moved toward closed (pt, ≥ 0),
- * `velocity` the release speed toward closed (pt/s). A flick or more than a third of the width closes.
+ * Edge swipes are shortcuts only (the header buttons are the way in): the trailing (right) edge
+ * opens Installation on phone and tablet; the leading (left) edge opens Settings on phones only —
+ * on iPad the leading edge belongs to the system.
  */
-export function drawerStaysOpen(travel: number, velocity: number, width: number): boolean {
-  "worklet";
-  if (velocity > 600) return false;
-  if (velocity < -600) return true;
-  return travel < width / 3;
+export function edgeSwipeEnabled(side: "left" | "right", windowWidth: number): boolean {
+  return side === "right" || formFactor(windowWidth) === "phone";
 }
 
-/** Edge swipe that opens a drawer: far enough or fast enough toward the screen centre. */
-export function edgeSwipeOpens(distance: number, velocity: number, width: number): boolean {
+/** Edge swipe that opens a surface: far enough (a quarter of the window) or fast enough. */
+export function edgeSwipeOpens(distance: number, velocity: number, windowWidth: number): boolean {
   "worklet";
-  return velocity > 600 || distance > width / 3;
+  return velocity > 600 || distance > windowWidth / 4;
+}
+
+/** How long a toast stays (ms) before it dismisses itself — long enough to reach Undo. */
+export const TOAST_MS = 5000;
+
+/** Menu order rule (HIG): destructive items go last, everything else keeps its order. */
+export function orderMenuItems<T extends { destructive?: boolean | undefined }>(
+  items: readonly T[],
+): T[] {
+  return [...items.filter((i) => !i.destructive), ...items.filter((i) => i.destructive)];
 }
 
 /** Hold-to-confirm progress 0…1 (Quick Action in hold mode). */
@@ -108,4 +155,33 @@ export function uploadLabel(progress: number, totalBytes?: number): string {
 export function trackPosition(x: number, width: number): number {
   "worklet";
   return width <= 0 ? 0 : clamp(x / width, 0, 1);
+}
+
+/** Default port of the bridge on the installation machine. */
+export const BRIDGE_PORT = 8080;
+
+export type ManualPairing =
+  | { ok: true; pairing: { bridge: string; pin: string } }
+  | { ok: false; field: "address" | "pin"; message: string };
+
+/**
+ * "Enter address and PIN" (ADR-012 fallback): both are printed under the pairing QR. Accepts
+ * `192.168.1.20`, `192.168.1.20:8080`, `studio.local`, or a full `ws://…/ws` URL; the PIN is digits.
+ * Returns the same pairing the QR deep link carries.
+ */
+export function manualPairing(address: string, pin: string): ManualPairing {
+  const a = address.trim();
+  const p = pin.trim();
+  if (!a) return { ok: false, field: "address", message: "Enter the address shown under the QR" };
+  let bridge: string;
+  if (/^wss?:\/\//i.test(a)) bridge = a;
+  else {
+    const m = /^([a-z0-9.-]+|\[[0-9a-f:]+\])(?::(\d{1,5}))?\/?$/i.exec(a);
+    if (!m) return { ok: false, field: "address", message: "That doesn't look like an address" };
+    bridge = `ws://${m[1]}:${m[2] ?? BRIDGE_PORT}/ws`;
+  }
+  if (!/^wss?:\/\/[^\s/]+(\/[^\s]*)?$/i.test(bridge) || bridge.length > 256)
+    return { ok: false, field: "address", message: "That doesn't look like an address" };
+  if (!/^\d{4,8}$/.test(p)) return { ok: false, field: "pin", message: "The PIN is 4–8 digits" };
+  return { ok: true, pairing: { bridge, pin: p } };
 }

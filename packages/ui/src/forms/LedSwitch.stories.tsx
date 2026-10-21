@@ -27,7 +27,7 @@ const meta = {
           purpose:
             "On/off for settings and installation modes, drawn as a hardware switch with two LEDs. Exported as `LedSwitch`.",
           use: [
-            "Settings and modes in drawers (Idle mode, Haptics, Show logo).",
+            "Settings and installation modes (Idle mode, Haptics).",
             'Inside List Rows (`trailing="switch"`).',
           ],
           avoid: [

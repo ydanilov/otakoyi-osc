@@ -42,8 +42,10 @@ for state. Depth is meaningful (ADR-013):
 - **Glow** (`Glow/*`) — lit values, LEDs, and buttons only while pressed. Never on resting buttons.
 
 Effect colours are bound to `elevation/*` variables, so shadows and highlights switch with the
-theme mode. Pult screens never scroll; the left (Settings) and right (Installation) drawers may.
-Phone dialogs are bottom sheets; tablet dialogs are centred modals. The scrim blurs the background.
+theme mode. Pult screens never scroll. Navigation follows the Apple HIG (ADR-013): Settings and
+Installation open from header buttons (edge swipes are shortcuts) as system sheets on iPhone; on iPad
+Settings is a form sheet and Installation a 390 pt trailing inspector. Dialogs are content inside the
+system sheet / form sheet. The scrim only dims (no blur).
 
 ## Variables
 
@@ -81,46 +83,48 @@ Docs for every component (purpose, states, behaviour, accessibility, content lim
 live in Storybook (`pnpm storybook`); Figma keeps a one-line description. Component and variant names
 are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 
-| Figma component (variants)                                                                            | Code                                                   | File                                       |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------ |
-| `Neu/*`, `Glow/*` effect styles                                                                       | `Surface depth glow`, `boxShadow()`                    | `ds/depth.tsx`, `@osc/tokens` depth.ts     |
-| `Icon/<name>`                                                                                         | `<Name>Icon` + `Glyph`                                 | `ds/icons.ts`, `ds/Glyph.tsx`              |
-| Button (Variant × State)                                                                              | `Button variant pressed disabled`                      | `chrome/Button.tsx`                        |
-| Icon Button (State=Default / Active)                                                                  | `IconButton active`                                    | `chrome/Button.tsx`                        |
-| Badge                                                                                                 | `Badge tone`                                           | `chrome/Status.tsx`                        |
-| Connection (State=Online / Connecting / Offline)                                                      | `ConnectionStatus state`                               | `chrome/Status.tsx`                        |
-| Pult Header (Mode=Control / View / Studio)                                                            | `PultHeader mode` (+ `StatusBanner`)                   | `pult/PultHeader.tsx`                      |
-| Pult Select                                                                                           | `PultSelect`                                           | `pult/PultSelect.tsx`                      |
-| Screen Tab (State), Tab Bar                                                                           | `ScreenTab active`, `TabBar`                           | `chrome/Navigation.tsx`                    |
-| Top Bar · Nav Item (State)                                                                            | `TopBar` · `NavItem active`                            | `chrome/Navigation.tsx`                    |
-| Brand Mark (Size) · Wordmark (Size)                                                                   | `BrandMark size` · `Wordmark size`                     | `chrome/Brand.tsx`                         |
-| Stat Tile (Size) · Note · Info Card · Chip (Tone) · Divider (Type)                                    | `StatTile` · `Note` · `InfoCard` · `Chip` · `Divider`  | `chrome/Status.tsx`                        |
-| Page Dots (Count)                                                                                     | `PageDots count active`                                | `chrome/Status.tsx`                        |
-| Loader (Tone) · Scrim                                                                                 | `Loader tone` · `Scrim`                                | `chrome/Loader.tsx`, `chrome/Scrim.tsx`    |
-| Master Bar (State=Default / Muted)                                                                    | `MasterBar muted`                                      | `media/MasterBar.tsx`                      |
-| Input (State)                                                                                         | `TextField focused error disabled`                     | `forms/Field.tsx`                          |
-| Value Input (State)                                                                                   | `ValueInput` (+ `parseValueInput`)                     | `forms/Field.tsx`, `ds/logic.ts`           |
-| Select (State=Default / Open / Disabled)                                                              | `Select` (iOS: `@expo/ui` Picker)                      | `forms/Select.tsx`, `forms/Select.ios.tsx` |
-| List Row (Trailing=Chevron / Value / Switch / None / Destructive)                                     | `ListRow trailing`                                     | `forms/ListRow.tsx`                        |
-| Switch (State=Off / On / Disabled)                                                                    | `LedSwitch value disabled`                             | `forms/LedSwitch.tsx`                      |
-| Stepper (State=Default / Changed / Disabled)                                                          | `Stepper defaultValue` (+ `stepValue`)                 | `forms/Stepper.tsx`, `ds/logic.ts`         |
-| Activity Row (Kind)                                                                                   | `ActivityRow kind`                                     | `media/ActivityRow.tsx`                    |
-| Quick Action (State, incl. Hold)                                                                      | `QuickAction holdMs pressed disabled`                  | `media/QuickAction.tsx`                    |
-| Image Tile (State) · Image Upload (State) — UI only                                                   | `ImageTile state` · `ImageUpload state`                | `media/Image.tsx`                          |
-| List Card · Section · Console Panel (slots)                                                           | `ListCard` · `Section` · `ConsolePanel`                | `containers/Cards.tsx`                     |
-| Release Note (Latest) · Release Card · Pult Card (Primary)                                            | `ReleaseNote` · `ReleaseCard` · `PultCard`             | `containers/Cards.tsx`                     |
-| Dialog (Container=Modal / Sheet)                                                                      | `Dialog` (by width, or `presentation`)                 | `containers/Dialog.tsx`                    |
-| Settings / Installation drawers                                                                       | `Drawer side`, `DrawerEdge`                            | `containers/Drawer.tsx`                    |
-| Viewfinder (Size)                                                                                     | `Viewfinder size`                                      | `containers/Viewfinder.tsx`                |
-| Fader · Knob · XY Pad · Meter · Hold to Confirm                                                       | `Fader` · `Knob` · `XYPad` · `Meter` · `HoldToConfirm` | `controls/*.tsx`                           |
-| Toggle · Pad · Segmented · Button Grid · Scene List · Label · Color Picker · Unsupported              | `discrete.tsx` exports                                 | `controls/discrete.tsx`                    |
-| Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log, Stepper Group | same names                                             | `patterns/Installation.tsx`                |
+| Figma component (variants)                                                                            | Code                                                                          | File                                                                  |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `Neu/*`, `Glow/*` effect styles                                                                       | `Surface depth glow`, `boxShadow()`                                           | `ds/depth.tsx`, `@osc/tokens` depth.ts                                |
+| `Icon/<name>`                                                                                         | `<Name>Icon` + `Glyph`                                                        | `ds/icons.ts`, `ds/Glyph.tsx`                                         |
+| Button (Variant × State)                                                                              | `Button variant pressed disabled`                                             | `chrome/Button.tsx`                                                   |
+| Icon Button (State=Default / Active)                                                                  | `IconButton active`                                                           | `chrome/Button.tsx`                                                   |
+| Badge                                                                                                 | `Badge tone`                                                                  | `chrome/Status.tsx`                                                   |
+| Connection (State=Online / Connecting / Offline)                                                      | `ConnectionStatus state`                                                      | `chrome/Status.tsx`                                                   |
+| Pult Header (Mode=Control / View / Studio)                                                            | `PultHeader mode` (+ `StatusBanner`)                                          | `pult/PultHeader.tsx`                                                 |
+| Pult Select                                                                                           | `PultSelect`                                                                  | `pult/PultSelect.tsx`                                                 |
+| Screen Tab (State), Tab Bar                                                                           | `ScreenTab active`, `TabBar`                                                  | `chrome/Navigation.tsx`                                               |
+| Top Bar · Nav Item (State)                                                                            | `TopBar` · `NavItem active`                                                   | `chrome/Navigation.tsx`                                               |
+| Brand Mark (Size) · Wordmark (Size)                                                                   | `BrandMark size` · `Wordmark size`                                            | `chrome/Brand.tsx`                                                    |
+| Stat Tile (Size) · Note · Info Card · Chip (Tone) · Divider (Type)                                    | `StatTile` · `Note` · `InfoCard` · `Chip` · `Divider`                         | `chrome/Status.tsx`                                                   |
+| Page Dots (Count)                                                                                     | `PageDots count active`                                                       | `chrome/Status.tsx`                                                   |
+| Loader (Tone) · Scrim (dim only) · Toast                                                              | `Loader tone` · `Scrim` · `Toast`                                             | `chrome/Loader.tsx`, `chrome/Scrim.tsx`, `chrome/Toast.tsx`           |
+| Master Bar (State=Default / Muted)                                                                    | `MasterBar muted`                                                             | `media/MasterBar.tsx`                                                 |
+| Input (State)                                                                                         | `TextField focused error disabled`                                            | `forms/Field.tsx`                                                     |
+| Value Input (State)                                                                                   | `ValueInput` (+ `parseValueInput`)                                            | `forms/Field.tsx`, `ds/logic.ts`                                      |
+| Select (State=Default / Open / Disabled)                                                              | `Select` (iOS: `@expo/ui` Picker)                                             | `forms/Select.tsx`, `forms/Select.ios.tsx`                            |
+| List Row (Trailing=Chevron / Value / Switch / None / Destructive)                                     | `ListRow trailing`                                                            | `forms/ListRow.tsx`                                                   |
+| Switch (State=Off / On / Disabled)                                                                    | `LedSwitch value disabled`                                                    | `forms/LedSwitch.tsx`                                                 |
+| Stepper (State=Default / Changed / Disabled)                                                          | `Stepper defaultValue` (+ `stepValue`)                                        | `forms/Stepper.tsx`, `ds/logic.ts`                                    |
+| Activity Row (Kind)                                                                                   | `ActivityRow kind`                                                            | `media/ActivityRow.tsx`                                               |
+| Quick Action (State, incl. Hold)                                                                      | `QuickAction holdMs pressed disabled`                                         | `media/QuickAction.tsx`                                               |
+| Image Tile (State) · Image Upload (State) — UI view                                                   | `ImageTile state` · `ImageUploadView state`                                   | `media/Image.tsx`                                                     |
+| List Card · Section · Console Panel (slots)                                                           | `ListCard` · `Section` · `ConsolePanel`                                       | `containers/Cards.tsx`                                                |
+| Release Note (Latest) · Release Card · Pult Card (Primary)                                            | `ReleaseNote` · `ReleaseCard` · `PultCard`                                    | `containers/Cards.tsx`                                                |
+| Dialog (Container=Modal / Sheet) — content only                                                       | `Dialog` inside the sheet / form sheet (`presentationFor`)                    | `containers/Dialog.tsx`, `ds/logic.ts`                                |
+| Settings / Installation surfaces (sheet, form sheet, inspector)                                       | `presentationFor`, `Inspector`, `EdgeSwipe`                                   | `ds/logic.ts`, `containers/Inspector.tsx`, `containers/EdgeSwipe.tsx` |
+| Context menu (long-press, preview) · image source pull-down                                           | `ContextMenu` · `PullDownMenu` (iOS: `@expo/ui`)                              | `menus/*`                                                             |
+| Backdrop · Client Logo · Connect / Client loading screens                                             | `Backdrop` · `ClientLogo` · `ConnectOptions`, `ConnectForm`, `BrandedLoading` | `connect/*`                                                           |
+| Viewfinder (Size)                                                                                     | `Viewfinder size`                                                             | `containers/Viewfinder.tsx`                                           |
+| Fader · Knob · XY Pad · Meter · Hold to Confirm                                                       | `Fader` · `Knob` · `XYPad` · `Meter` · `HoldToConfirm`                        | `controls/*.tsx`                                                      |
+| Toggle · Pad · Segmented · Button Grid · Scene List · Label · Color Picker · Unsupported              | `discrete.tsx` exports                                                        | `controls/discrete.tsx`                                               |
+| Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log, Stepper Group | same names                                                                    | `patterns/Installation.tsx`                                           |
 
-Not in code on purpose: Status Bar and Home Indicator (device chrome in mockups). Coming with
-`feat/new-controls`: Fader Mode=Crossfade, Knob Mode=Relative/Color, Thumbstick, Group Button /
-Button Group, Mic, Prompt Preset / Field, image sheets and Uploads Library. Control compositions
-on the Patterns page (Fader Bank, Knob Group, Camera Control, Scene Bar…) are built from config by
-the pult renderer, not as components.
+New control types (ADR-015) — Fader Mode=Relative/Crossfade, Knob Mode=Relative/Color,
+Thumbstick, Button Group, Image, Mic, Prompt — live in `controls/*` (`Jog.tsx`, `Thumbstick.tsx`,
+`media.tsx`, `Prompt.tsx`, `discrete.tsx`) and have stories. Not in code on purpose: Status Bar and
+Home Indicator (device chrome in mockups). Control compositions on the Patterns page (Fader Bank,
+Knob Group, Camera Control, Scene Bar…) are built from config by the pult renderer.
 
 ## Rules
 

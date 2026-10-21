@@ -12,7 +12,9 @@ function KnobStory({
   unit,
   min,
   max,
+  mode,
 }: {
+  mode: "absolute" | "relative" | "hue";
   value: number;
   disabled: boolean;
   label: string;
@@ -32,8 +34,9 @@ function KnobStory({
         unit,
         min,
         max,
+        mode,
       }),
-    [label, centered, unit, min, max],
+    [label, centered, unit, min, max, mode],
   );
   return (
     <ControlHarness control={control} value={value} disabled={disabled} width={180} height={180} />
@@ -43,8 +46,20 @@ function KnobStory({
 const meta = {
   title: "Controls/Knob",
   component: KnobStory,
-  args: { label: "Gain", value: 0.4, disabled: false, centered: false, unit: "", min: 0, max: 1 },
-  argTypes: { value: { control: { type: "range", min: 0, max: 1, step: 0.01 } } },
+  args: {
+    mode: "absolute",
+    label: "Gain",
+    value: 0.4,
+    disabled: false,
+    centered: false,
+    unit: "",
+    min: 0,
+    max: 1,
+  },
+  argTypes: {
+    mode: { control: "inline-radio", options: ["absolute", "relative", "hue"] },
+    value: { control: { type: "range", min: 0, max: 1, step: 0.01 } },
+  },
   parameters: {
     docs: {
       description: {
@@ -67,7 +82,7 @@ const meta = {
             `Sends \`address\` with one float (int with \`int: true\`) per change — ${OSC_SOURCE}. Throttled like the Fader.`,
             "Relative only: dragging up/right increases by distance (220 px per full sweep); a touch never moves it.",
             "Fine mode with two fingers (×`fineFactor`); double-tap resets to `default`.",
-            "Relative-encoder and hue knobs (Figma Mode=Relative, Mode=Color) and the 240° travel are new control behaviour on feat/new-controls; stories follow there.",
+            "`mode` (ADR-015): absolute (default) over `travel` degrees (240° in the Figma library); relative = endless encoder sending `{ delta }`; hue = colour wheel sending degrees 0–360 and wrapping.",
           ],
           a11y: [
             "Role `adjustable`, value with unit; VoiceOver swipe steps.",
@@ -79,8 +94,8 @@ const meta = {
             node: "11:112",
             variants: [
               ["Mode=Absolute", "default"],
-              ["Mode=Relative", "endless / relative (feat/new-controls)"],
-              ["Mode=Color", "hue knob (feat/new-controls)"],
+              ["Mode=Relative", 'mode: "relative"'],
+              ["Mode=Color", 'mode: "hue"'],
               ["Orientation=Vertical | Horizontal", "label placement in the cell"],
               ["State=Fine", "two-finger drag (runtime)"],
               ["State=Disabled", "disabled"],
@@ -101,5 +116,9 @@ export const Centered: Story = {
 };
 export const WithUnit: Story = {
   args: { label: "Hue shift", unit: "°", min: 0, max: 360, value: 45 },
+};
+export const Relative: Story = { args: { mode: "relative", label: "Scrub" } };
+export const Hue: Story = {
+  args: { mode: "hue", label: "Hue", value: 200, min: 0, max: 360, unit: "°" },
 };
 export const Disabled: Story = { args: { disabled: true } };

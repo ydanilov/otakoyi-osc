@@ -4,7 +4,7 @@ import { Text } from "../components/ui/text";
 import { Surface } from "../ds/depth";
 import { Glyph, onStatus } from "../ds/Glyph";
 import { InfoIcon } from "../ds/icons";
-import { Led } from "../ds/Led";
+import { StatusLed } from "../ds/Led";
 import { cn } from "../lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
 import { Button } from "./Button";
@@ -27,7 +27,7 @@ export function ConnectionStatus({ state }: { state: Connection }) {
       accessibilityRole="text"
       accessibilityLabel={`Connection: ${c.label}`}
     >
-      <Led tone={c.tone} lit={state !== "offline"} />
+      <StatusLed tone={c.tone} lit={state !== "offline"} />
       <Text className="text-muted-foreground text-xs">{c.label}</Text>
     </View>
   );
@@ -77,7 +77,7 @@ export function Chip({ label, tone = "primary" }: { label: string; tone?: ChipTo
       accessibilityRole="text"
       accessibilityLabel={label}
     >
-      <Led tone={CHIP_LED[tone]} lit={tone !== "muted"} size={6} />
+      <StatusLed tone={CHIP_LED[tone]} lit={tone !== "muted"} size={6} />
       <Text className="text-foreground font-mono text-xs" numberOfLines={1}>
         {label}
       </Text>

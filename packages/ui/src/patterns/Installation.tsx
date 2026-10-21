@@ -76,7 +76,7 @@ export const DEFAULT_MODES: ModeItem[] = [
 ];
 
 /**
- * Pattern `Installation Actions`: the body of the right (Installation) drawer — quick actions
+ * Pattern `Installation Actions`: the body of the Installation surface (iPhone sheet, iPad inspector) — quick actions
  * on top, mode switches below.
  */
 export function InstallationActions({
@@ -120,7 +120,7 @@ export interface InstallationItem {
   status: string;
 }
 
-/** Pattern `Installation Switcher`: installations this login can open, plus "Add an installation". */
+/** Pattern `Installation Switcher`: installations this device is paired with, plus "Add an installation". */
 export function InstallationSwitcher({
   installations,
   onSelect,

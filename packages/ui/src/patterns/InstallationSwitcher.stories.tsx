@@ -29,9 +29,7 @@ const meta = {
         component: componentDocs({
           purpose:
             "Installations this device has paired with, plus “Add an installation” (QR pairing, ADR-012).",
-          use: [
-            "Settings drawer and the first screen after login when several installations exist.",
-          ],
+          use: ["Settings sheet, when this device is paired with several installations."],
           avoid: ["Switching pults inside one installation — Pult Card."],
           do: ["Mark the open installation “current”."],
           dont: ["Don't hide offline installations; show the status."],

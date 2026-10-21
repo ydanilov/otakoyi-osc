@@ -34,7 +34,7 @@ const meta = {
           purpose:
             "One row of a List Card: a setting, a destination, a read-only value or a sign-out.",
           use: ["Settings and installation lists inside a List Card."],
-          avoid: ["Menus in a drawer root — Nav Item.", "Pult controls."],
+          avoid: ["The Settings menu — Nav Item.", "Pult controls."],
           do: ["Put Destructive rows last, in their own card."],
           dont: ["Don't mix trailing types arbitrarily in one card — group by kind."],
           anatomy: [
@@ -103,7 +103,12 @@ export const Switch: Story = {
 };
 export const None: Story = { args: { trailing: "none", value: undefined } };
 export const Destructive: Story = {
-  args: { trailing: "destructive", title: "Sign out", icon: SignOutIcon, value: undefined },
+  args: {
+    trailing: "destructive",
+    title: "Forget this installation",
+    icon: SignOutIcon,
+    value: undefined,
+  },
 };
 export const AllTrailing: Story = {
   render: () => (
@@ -124,7 +129,12 @@ export const AllTrailing: Story = {
         onCheckedChange={() => {}}
       />
       <ListRow title="Title" icon={GearSixIcon} trailing="none" />
-      <ListRow title="Sign out" icon={SignOutIcon} trailing="destructive" onPress={() => {}} />
+      <ListRow
+        title="Forget this installation"
+        icon={SignOutIcon}
+        trailing="destructive"
+        onPress={() => {}}
+      />
     </>
   ),
 };

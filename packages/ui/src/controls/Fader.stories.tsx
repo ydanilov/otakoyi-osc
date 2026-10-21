@@ -7,6 +7,7 @@ import { componentDocs, OSC_SOURCE } from "../stories/docs";
 
 type Args = {
   label: string;
+  mode: "absolute" | "relative" | "crossfade";
   orientation: "vertical" | "horizontal";
   response: "relative" | "absolute";
   centered: boolean;
@@ -18,8 +19,15 @@ type Args = {
 
 function FaderStory({ value, disabled, ...c }: Args) {
   const control = React.useMemo(
-    () => makeControl({ type: "fader", id: "master", address: "/master", ...c }),
-    [c.label, c.orientation, c.response, c.centered, c.unit, c.int], // eslint-disable-line react-hooks/exhaustive-deps
+    () =>
+      makeControl({
+        type: "fader",
+        id: "master",
+        address: "/master",
+        ...c,
+        ...(c.mode === "crossfade" ? { labels: { a: "Day", b: "Night" } } : {}),
+      }),
+    [c.label, c.mode, c.orientation, c.response, c.centered, c.unit, c.int], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const vertical = c.orientation === "vertical";
   return (
@@ -38,6 +46,7 @@ const meta = {
   component: FaderStory,
   args: {
     label: "Master",
+    mode: "absolute",
     orientation: "vertical",
     response: "relative",
     centered: false,
@@ -47,6 +56,7 @@ const meta = {
     disabled: false,
   },
   argTypes: {
+    mode: { control: "inline-radio", options: ["absolute", "relative", "crossfade"] },
     orientation: { control: "inline-radio", options: ["vertical", "horizontal"] },
     response: { control: "inline-radio", options: ["relative", "absolute"] },
     value: { control: { type: "range", min: 0, max: 1, step: 0.01 } },
@@ -78,7 +88,8 @@ const meta = {
           ],
           behaviour: [
             `Sends \`address\` with one float (int when \`int: true\`) per change — ${OSC_SOURCE}. Throttled to \`throttleHz\` (60); the last value is always sent on release; \`sendOn: "release"\` sends only on release.`,
-            "Relative (default, ADR-007): a touch changes nothing; dragging moves the value by the distance dragged, 1:1 with the track. Absolute: the value jumps to the finger.",
+            "`mode` (ADR-015): absolute (default) sends a value; relative is an endless jog wheel that sends the change since the last message (`{ delta }`, no position, no reset); crossfade is a bipolar A/B mix with a centre detent and end labels.",
+            "Touch response (ADR-007), absolute and crossfade: relative (default) — a touch changes nothing; dragging moves the value by the distance dragged, 1:1 with the track. Absolute: the value jumps to the finger.",
             "Fine mode: drag with two fingers — ×`fineFactor` (0.2) slower; FINE badge and focus-coloured border.",
             "Double-tap returns to `default` (`doubleTapReset`, on by default).",
             "Feedback from the installation moves the fader unless a finger is on it. `centered` fills from the middle.",
@@ -93,14 +104,14 @@ const meta = {
             component: "Fader",
             node: "11:79",
             variants: [
-              ["Mode=Absolute", 'response: "absolute"'],
-              ["Mode=Relative", 'response: "relative"'],
+              ["Mode=Absolute", 'mode: "absolute" (touch: response relative | absolute)'],
               ["Orientation=Vertical | Horizontal", 'orientation: "vertical" | "horizontal"'],
               ["State=Default", "—"],
               ["State=Fine", "two-finger drag (runtime)"],
               ["State=Off", "value = min"],
               ["State=Disabled", "disabled (view only / offline)"],
-              ["Mode=Crossfade", "new control type — feat/new-controls (story follows)"],
+              ["Mode=Relative (jog wheel)", 'mode: "relative" — sends { delta }'],
+              ["Mode=Crossfade", 'mode: "crossfade" + labels { a, b } + detent'],
             ],
           },
         }),
@@ -121,6 +132,12 @@ export const Horizontal: Story = { args: { orientation: "horizontal", label: "Sp
 export const Absolute: Story = { args: { response: "absolute" } };
 export const Centered: Story = {
   args: { centered: true, label: "Pan", value: 0.5, orientation: "horizontal" },
+};
+export const RelativeJog: Story = {
+  args: { mode: "relative", orientation: "horizontal", label: "Scrub" },
+};
+export const Crossfade: Story = {
+  args: { mode: "crossfade", orientation: "horizontal", label: "Mix", value: 0.5 },
 };
 export const Off: Story = { args: { value: 0 } };
 export const Disabled: Story = { args: { disabled: true } };

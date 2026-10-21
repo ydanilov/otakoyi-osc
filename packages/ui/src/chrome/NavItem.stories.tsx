@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import { View } from "react-native";
 import { fn } from "storybook/test";
-import { CircleHalfIcon, LifebuoyIcon, MonitorIcon, QrCodeIcon } from "../ds/icons";
+import { SlidersHorizontalIcon, LifebuoyIcon, MonitorIcon, QrCodeIcon } from "../ds/icons";
 import { componentDocs } from "../stories/docs";
 import { NavItem } from "./Navigation";
 
@@ -22,8 +22,8 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "A destination in a drawer menu (Settings: Appearance, Pairing, What's new, Help).",
-          use: ["Vertical menus in the swipe drawers."],
+            "A destination in the Settings menu (Control preferences, Pairing QR, What's new, Help).",
+          use: ["The Settings sheet's menu."],
           avoid: ["Settings with a value or switch — use List Row."],
           do: ["Mark the page that is open with `active`."],
           dont: ["Don't use glow; active is inset + lit icon."],
@@ -53,7 +53,7 @@ export const Active: Story = { args: { active: true } };
 export const Menu: Story = {
   render: () => (
     <View style={{ gap: 4 }}>
-      <NavItem icon={CircleHalfIcon} label="Appearance" active />
+      <NavItem icon={SlidersHorizontalIcon} label="Control preferences" active />
       <NavItem icon={QrCodeIcon} label="Pair a device" />
       <NavItem icon={LifebuoyIcon} label="Help" />
     </View>

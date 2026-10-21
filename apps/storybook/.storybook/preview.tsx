@@ -94,6 +94,8 @@ const preview: Preview = {
           "Forms",
           "Containers",
           "Media & actions",
+          "Menus",
+          "Connect",
           "Controls",
           "Pult",
           "Patterns",

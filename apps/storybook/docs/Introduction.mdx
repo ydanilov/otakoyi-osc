@@ -13,8 +13,9 @@ mapping live on each component's **Docs** page here.
 - **Figma:** [OSC](https://www.figma.com/design/D2HHS8lt7PxZqxibv9PlOQ/OSC) — page _Components_
   (library) and page _Patterns_ (compositions).
 - **Toolbar:** switch **Theme** (dark / light), **Brand** (Otakoyi and the two sample client brands
-  used by `/gallery`) and **Viewport** (phone 390 × 844, tablet 1180 × 820). Dialogs pick sheet vs.
-  modal from the viewport width.
+  used by `/gallery`) and **Viewport** (phone 390 × 844, tablet 1180 × 820). Overlays pick sheet vs.
+  form sheet from the viewport width (`presentationFor`). Theme and brand switching is a review
+  tool only — in the app, branding and `theme.mode` come from the config (ADR-004).
 
 Read [Guidelines](?path=/docs/docs-guidelines--docs) before designing a screen.
 
@@ -58,7 +59,7 @@ _Figma variant → props_. Example — `Button`:
 | `Button` · `Variant=Primary`                     | `<Button variant="primary" />`         |
 | `Button` · `State=Pressed`                       | runtime press (or `pressed` in review) |
 | `Button` · `State=Disabled`                      | `disabled`                             |
-| `Dialog` · `Container=Sheet` / `Container=Modal` | width-based, or `presentation`         |
+| `Dialog` · `Container=Sheet` / `Container=Modal` | content in `presentationFor("dialog")` |
 | `List Row` · `Trailing=Switch`                   | `<ListRow trailing="switch" />`        |
 
 The full component → file table is in `docs/figma.md`.

@@ -51,7 +51,7 @@ export { PultSelect } from "./pult/PultSelect";
 // Design system (Figma library → code; mapping in docs/figma.md, docs in Storybook)
 export { Surface, useDepthStyle, usePressState, type Depth, type GlowTone } from "./ds/depth";
 export { Glyph, toneColor, type Tone } from "./ds/Glyph";
-export { Led } from "./ds/Led";
+export { StatusLed } from "./ds/Led";
 export * from "./ds/icons";
 export * from "./ds/logic";
 export {
@@ -79,6 +79,7 @@ export { NavItem, ScreenTab, TabBar, TopBar } from "./chrome/Navigation";
 export { BrandMark, Wordmark } from "./chrome/Brand";
 export { Loader } from "./chrome/Loader";
 export { Scrim } from "./chrome/Scrim";
+export { Toast } from "./chrome/Toast";
 export { TextField, ValueInput, type FieldState } from "./forms/Field";
 export { Select, type SelectOption, type SelectProps } from "./forms/Select";
 export { Stepper } from "./forms/Stepper";
@@ -93,11 +94,22 @@ export {
   Section,
 } from "./containers/Cards";
 export { Dialog } from "./containers/Dialog";
-export { Drawer, DrawerEdge, type DrawerSide } from "./containers/Drawer";
+export { Inspector } from "./containers/Inspector";
+export { EdgeSwipe } from "./containers/EdgeSwipe";
+export { PullDownMenu } from "./menus/PullDownMenu";
+export { ContextMenu } from "./menus/ContextMenu";
+export type { MenuItem } from "./menus/menu-types";
+export { Backdrop, ClientLogo } from "./connect/Brand";
+export { BrandedLoading, ConnectForm, ConnectOptions } from "./connect/Connect";
 export { Viewfinder } from "./containers/Viewfinder";
 export { QuickAction } from "./media/QuickAction";
 export { MasterBar } from "./media/MasterBar";
 export { ActivityRow, type ActivityKind } from "./media/ActivityRow";
 export { ProgressRing } from "./media/ProgressRing";
-export { ImageTile, ImageUpload, type ImageTileState, type ImageUploadState } from "./media/Image";
+export {
+  ImageTile,
+  ImageUploadView,
+  type ImageTileState,
+  type ImageUploadState,
+} from "./media/Image";
 export * from "./patterns/Installation";

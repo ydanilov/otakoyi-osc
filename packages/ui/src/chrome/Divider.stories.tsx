@@ -19,7 +19,7 @@ const meta = {
         component: componentDocs({
           purpose: "Hairline between groups; with a label it separates alternatives (“or”).",
           use: [
-            "Between the QR scanner and manual login (Type=Label).",
+            "Between the QR scanner and “Enter address and PIN” (Type=Label).",
             "Inside dense lists when a gap is not enough.",
           ],
           avoid: [

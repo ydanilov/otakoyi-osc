@@ -5,10 +5,13 @@ import { View } from "react-native";
 import { Text } from "../components/ui/text";
 import { controlRegistry } from "../controls/registry";
 import type { ControlProps } from "../controls/types";
+import { ControlServicesProvider } from "../platform/services";
+import { storyServices } from "./services";
 
 /**
  * Renders a control from the registry with local state, sized like a grid cell, and prints the
  * OSC messages `messagesFor()` would send for the current value — so a story shows behaviour too.
+ * Image, mic and prompt controls get in-memory story services (`storyServices`).
  */
 export function ControlHarness({
   control,
@@ -43,19 +46,22 @@ export function ControlHarness({
         : "(nothing)",
     );
   };
+  const services = React.useMemo(storyServices, []);
   return (
-    <View style={{ gap: 12 }}>
-      <View style={{ width, height }}>
-        <Component control={control as never} value={v} onChange={onChange} disabled={disabled} />
+    <ControlServicesProvider value={services}>
+      <View style={{ gap: 12 }}>
+        <View style={{ width, height }}>
+          <Component control={control as never} value={v} onChange={onChange} disabled={disabled} />
+        </View>
+        {showOsc && (
+          <Text
+            className="text-muted-foreground font-mono text-xs"
+            accessibilityLabel="Last OSC message"
+          >
+            OSC → {sent}
+          </Text>
+        )}
       </View>
-      {showOsc && (
-        <Text
-          className="text-muted-foreground font-mono text-xs"
-          accessibilityLabel="Last OSC message"
-        >
-          OSC → {sent}
-        </Text>
-      )}
-    </View>
+    </ControlServicesProvider>
   );
 }

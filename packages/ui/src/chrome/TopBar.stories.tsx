@@ -21,11 +21,11 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Title row of a sub-page inside a drawer or the settings flow, with a back button.",
-          use: ["Second-level pages: Appearance, Pairing, What's new, Help."],
+            "Title row of a sub-page inside the Settings or Installation sheet, with a back button.",
+          use: ["Second-level pages: Control preferences, Pairing QR, What's new, Help."],
           avoid: [
             "The pult screen — it uses the Pult Header.",
-            "Drawer roots — the Drawer has its own title row.",
+            "Sheet roots — the system sheet / Inspector has its own title and Close.",
           ],
           do: ["Use the page name as the title, not the action."],
           dont: ["Don't put more than one trailing action."],
