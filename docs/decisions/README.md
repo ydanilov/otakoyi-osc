@@ -205,9 +205,11 @@ the app and for every client pult. QA checks both before a delivery.
 - The pult screen shows only the controls and a minimal header (connection status, view-only /
   studio banners). Everything else lives in two swipe drawers, which may scroll vertically:
   - **left edge → Settings**: appearance, control preferences, pairing QR, what's new, help, sign out;
-  - **right edge → Installation**: installation name and status, pult switcher, who is in control +
-    **Request control**, quick actions (Flash, Restart and Blackout with hold-to-confirm), modes
-    (Idle — stop reacting to people; Pause — optional per installation).
+  - **right edge → Installation**: installation name and status, pult switcher, quick actions
+    (Flash, Restart and Blackout with hold-to-confirm), modes (Idle — stop reacting to people;
+    Pause — optional per installation).
+- **Take control** is not in a drawer: while a device is view-only, every pult screen shows the
+  "View only — Take control" banner in the header.
 - Depth in the UI is meaningful: **inset** = active/pressed state or the bed under a control
   (tracks, toggle beds, inputs, tab bars); **raised** = interactive elements and top-level cards and
   panels; **flat** = information nested inside a card (chips, stat tiles, icon wells). Neon glow
