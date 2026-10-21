@@ -2,22 +2,22 @@
 
 Short, numbered, immutable. To change a decision, add a new ADR that supersedes the old one.
 
-| #   | Decision                                                                                         | Status   |
-| --- | ------------------------------------------------------------------------------------------------ | -------- |
-| 001 | One app in the store; a client "build" is a config revision, not a binary                        | Accepted |
-| 002 | Expo / React Native + TypeScript monorepo                                                        | Accepted |
-| 003 | iOS first; Android kept compiling behind platform interfaces                                     | Accepted |
-| 004 | Design system: React Native Reusables + NativeWind for chrome, Skia controls                     | Accepted |
-| 005 | Bridge is the hub: shared state, control lease, local web pult, OSC fan-out                      | Accepted |
-| 006 | Pult never scrolls vertically; pages split into horizontally swiped screens                      | Accepted |
-| 007 | Relative faders by default; fine mode and double-tap reset on every slider                       | Accepted |
-| 008 | Control presets: built-in library + custom studio presets in the config                          | Accepted |
-| 009 | Value snapshots (client-saved looks) live in the bridge, not in the config                       | Proposed |
-| 010 | Bridge protocol: WebSocket JSON, bridge validates, sends OSC, owns the lease                     | Accepted |
-| 011 | One program on site: Otakoyi Runtime = bridge + TD supervisor + project                          | Accepted |
-| 012 | Pairing by QR on the local network (deep link + web pult), mDNS advertise                        | Accepted |
-| 013 | Two use cases — lobby controller and live-event VJ pult; every pult ships phone + tablet layouts | Accepted |
-| 014 | Figma is the source of truth for each client pult; an exporter turns it into the config          | Proposed |
+| #   | Decision                                                                                          | Status   |
+| --- | ------------------------------------------------------------------------------------------------- | -------- |
+| 001 | One app in the store; a client "build" is a config revision, not a binary                         | Accepted |
+| 002 | Expo / React Native + TypeScript monorepo                                                         | Accepted |
+| 003 | iOS first; Android kept compiling behind platform interfaces                                      | Accepted |
+| 004 | Design system: React Native Reusables + NativeWind for chrome, Skia controls                      | Accepted |
+| 005 | Bridge is the hub: shared state, control lease, local web pult, OSC fan-out                       | Accepted |
+| 006 | Pult never scrolls vertically; pages split into horizontally swiped screens                       | Accepted |
+| 007 | Relative faders by default; fine mode and double-tap reset on every slider                        | Accepted |
+| 008 | Control presets: built-in library + custom studio presets in the config                           | Accepted |
+| 009 | Value snapshots (client-saved looks) live in the bridge, not in the config                        | Proposed |
+| 010 | Bridge protocol: WebSocket JSON, bridge validates, sends OSC, owns the lease                      | Accepted |
+| 011 | One program on site: Otakoyi Runtime = bridge + TD supervisor + project                           | Accepted |
+| 012 | Pairing by QR on the local network (deep link + web pult), mDNS advertise                         | Accepted |
+| 013 | Two use cases — lobby controller and live-event VJ pult; every pult ships phone + tablet layouts  | Accepted |
+| 014 | Figma is the builder: each client pult is designed in Figma, an exporter turns it into the config | Accepted |
 
 ---
 
@@ -37,7 +37,7 @@ release; older apps show an “Update the app” placeholder for unknown types a
 **Status:** Accepted · 2026-10-21
 
 **Decision.** Expo SDK 58 with a development build (custom native modules), EAS Build for iOS (no Mac
-needed), pnpm + Turborepo monorepo shared with the bridge and the builder.
+needed), pnpm + Turborepo monorepo shared with the bridge and the Figma exporter.
 
 **Consequences.** Same language as the studio site; web pult from the same code via react-native-web.
 Native UDP/TCP needs an Expo module.
@@ -94,7 +94,7 @@ a finger re-anchors the drag, so the value never jumps.
 **Status:** Accepted · 2026-10-21
 
 **Decision.** A control may reference `preset`. Built-in presets ship in `packages/schema/src/presets.ts`
-(ids `type/name`, e.g. `fader/brightness`). Custom presets are saved by the studio in the builder and
+(ids `type/name`, e.g. `fader/brightness`). Custom presets are defined by the studio (Figma / exporter, ADR-014) and
 published in the config's `presets`, so the app works offline. Preset fields are merged under the
 control's own fields before validation; explicit fields win. Unknown presets, type mismatches and
 custom ids that clash with built-ins fail validation. Clients do not create presets (only the studio
@@ -216,9 +216,9 @@ the app and for every client pult. QA checks both before a delivery.
   panels; **flat** = information nested inside a card (chips, stat tiles, icon wells). Neon glow
   appears only on lit values and on press — never on resting buttons.
 
-## 014 — Figma is the source of truth for client pults
+## 014 — Figma is the builder
 
-**Status:** Proposed · 2026-10-21
+**Status:** Accepted · 2026-10-21 (no separate web builder — decided the same day)
 
 **Context.** Every client gets a fully designed pult: which controls, in what order and size, every
 label and caption, phone and tablet layouts (ADR-013). Designing that in Figma and then re-entering
@@ -253,7 +253,13 @@ Exporter (`tools/figma-export`, Node + Figma REST API):
 
 - Schema v2: a page holds controls once and a layout per form factor (`layout.phone`,
   `layout.tablet` with grid placements). v1 configs migrate by copying `grid` into both layouts.
-- The builder becomes a validator / publisher and OSC inspector, not a layout editor.
+- **There is no separate builder app.** The roadmap's "pult builder" phase becomes the exporter
+  plus the Otakoyi Inspector plugin. Publishing = exporter output reviewed in a PR and uploaded to
+  the bridge (later the cloud). Brand checks, schema validation and the OSC test-send that the
+  builder would have done move to the exporter CLI and the inspector plugin.
+- The installation side declares what it accepts in an **OSC contract**
+  (`otakoyi/osc-contract.json` in the installation repo, format in `docs/osc-contract.schema.json`,
+  guide in `docs/integration.md`). The exporter fails on a control whose address is not in it.
 - Library component names and variant values are now API: renaming one is a breaking change and
   needs an exporter mapping update in the same PR.
 - A client's unique visual (not in the library) is added to the library first, then used.

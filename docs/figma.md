@@ -2,14 +2,29 @@
 
 File: **OSC** — https://www.figma.com/design/D2HHS8lt7PxZqxibv9PlOQ/OSC
 
-| Page       | What                                                                                  | Code          |
-| ---------- | ------------------------------------------------------------------------------------- | ------------- |
-| Research   | UI/UX research board + screenshots by category                                        | —             |
-| References | Visual references (Neumorphic Dark Knobs is the lead one)                             | —             |
-| Components | Design-system library: tokens, effects, icons, chrome, controls, slot containers      | `packages/ui` |
-| Patterns   | Reusable compositions: Fader Bank, Knob Group, Camera Control, Installation Actions…  | `packages/ui` |
-| Screens    | Every app screen for phone (lobby controller) and tablet (live VJ pult) + flow, proto | `apps/mobile` |
-| Archive    | Pre-redesign pult examples — do not use                                               | —             |
+Figma is the builder (ADR-014): there is no separate pult-builder app.
+
+| Page                 | What                                                                                                  | Code                   |
+| -------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
+| Cover                | File cover                                                                                            | —                      |
+| Foundations          | Colour, elevation & glow, typography, rules                                                           | `packages/tokens`      |
+| Components           | Design-system library in sections: icons, app chrome, forms & lists, controls, media, containers      | `packages/ui`          |
+| Patterns             | Compositions: Channel Strip, Fader Bank, Knob Group, Mix, Prompt Presets, Installation Actions…       | `packages/ui`          |
+| iOS 27 · System      | System parts from the iOS and iPadOS 27 library: status bar, home indicator, sheets, keyboards, menus | native                 |
+| Client · Phase One   | First client build: every app screen for phone and tablet, prototype flow                             | config + `apps/mobile` |
+| Research, References | Mobbin research board and visual references (Neumorphic Dark Knobs is the lead one)                   | —                      |
+
+## Client pages are the pult builder
+
+One page per client (`Client / <installation-id>`), built only from library instances. The exporter
+(`tools/figma-export`, planned) reads the page and writes the installation config:
+
+- frame per pult page and form factor: `<pult-id> / <phone|tablet> / <page-id>`, left to right in swipe order;
+- layer name of a control instance = control `id`; component + variants = control type and mode;
+- instance text properties = copy (labels, options, scene names);
+- OSC address, range, curve, target, preset, lock = shared plugin data (`otakoyi`), edited with the
+  Otakoyi Inspector plugin; every address must exist in the installation's OSC contract
+  (`docs/integration.md`).
 
 ## Style
 
@@ -40,6 +55,8 @@ colour in light mode — same rule as `createTheme()` (`SIGNAL_CONTRAST = 3`). B
 brand colour. **Status colours live only in Base and are never aliased to Brand.**
 
 ## Components
+
+Forms: Input, Value Input (label + recessed value with unit; Default / Focus / Error / Disabled; iOS number pad), Select (native iOS 27 popup button + pull-down menu; Default / Open / Disabled), Stepper, List Row, Switch.
 
 Chrome: Button (Primary / Secondary / Ghost / Destructive × Default / Pressed / Disabled), Icon
 Button, Badge, Connection, Pult Select, Screen Tab, Tab Bar, Pult Header, Input, List Row, Switch,

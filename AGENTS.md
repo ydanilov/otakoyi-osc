@@ -9,6 +9,9 @@ Two use cases (ADR-013): in a **lobby / permanent installation** the pult is a s
 controller (usually a phone); at a **live event** it is a VJ console for that installation (usually a
 tablet). Every delivery ships **both phone and tablet layouts**.
 
+**Integrating an installation (TouchDesigner etc.) rather than working on this repo?** Read
+[docs/integration.md](docs/integration.md) instead.
+
 Read this file before every task. Humans own direction and approval; agents do the work between
 checkpoints. Plan and business rules: Claude Doc "OSC Controller — план робіт і документація".
 
@@ -51,13 +54,13 @@ Run `pnpm verify` before every commit.
    Status colours (online, warning, critical, offline, studio) are never brandable.
 3. **The pult never scrolls vertically.** (The swipe drawers may: settings from the left edge, installation actions from the right edge.) Rows fill the screen height; pages that do not fit are split
    into screens that swipe horizontally (`paginate` in `packages/ui/src/pult/layout.ts`).
-4. **Config, not code, defines a pult** — and the config is exported from Figma (ADR-014, proposed). New pults ship as config revisions, never as app releases.
+4. **Config, not code, defines a pult** — and the config is exported from Figma (ADR-014). New pults ship as config revisions, never as app releases.
    A new control type = schema entry + logic + component + tests, in one PR.
 5. **Platform code behind interfaces.** UDP/TCP, discovery and keep-awake live behind TS interfaces;
    no `Platform.OS` checks in business logic. Android must keep compiling even though it is not shipped.
 6. **Logic is unit-tested.** Anything that decides what is sent (mapping, throttling, messages,
    layout) lives in pure TS and has tests. Components only draw and forward gestures.
-7. **No editor in the client app.** Only the studio edits pults, in the builder.
+7. **No editor in the client app, no builder app.** Only the studio edits pults, in Figma (ADR-014).
 8. **Expo changes every SDK.** Read the versioned docs before touching Expo or RN APIs; install native
    packages with `npx expo install`. See `apps/mobile/AGENTS.md`.
 
@@ -77,5 +80,7 @@ packages/tokens/        base tokens, createTheme(brand), contrast checks, genera
 packages/controls/      control logic (pure TS)
 packages/ui/            design system: Reusables components, Skia controls, pult renderer
 docs/decisions/         ADRs — propose a new one instead of relitigating
-td/                     TouchDesigner test project
+tools/touchdesigner/     TouchDesigner test target + pairing overlay (.tox + build scripts)
+docs/integration.md     how an installation project plugs in (OSC contract, feedback, system OSC)
+docs/figma.md           Figma file, pages, components, conventions
 ```
