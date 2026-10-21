@@ -1,9 +1,19 @@
-import { Canvas, Group, Rect, RoundedRect, rect, rrect } from "@shopify/react-native-skia";
+import {
+  BlurMask,
+  Canvas,
+  Group,
+  Path,
+  Rect,
+  RoundedRect,
+  rect,
+  rrect,
+} from "@shopify/react-native-skia";
 import {
   createThrottle,
   crossfadeMix,
   crossfadePosition,
   crossfadeShares,
+  fineBadge,
   formatValue,
   positionToValue,
   relativeDrag,
@@ -25,6 +35,7 @@ import {
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
+import { GLOW_BLUR, animateGlow, trackTicksPath, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import { JogFader } from "./Jog";
 import type { ControlProps } from "./types";
@@ -40,7 +51,9 @@ const RELATIVE_SLOP = 4;
  * - `response: "relative"` (default): a touch changes nothing; dragging moves the value by the
  *   distance dragged, 1:1 with the track. Safe against accidental touches in a dark venue.
  * - `response: "absolute"`: the value jumps to the finger — opt-in per control.
- * - Two fingers: fine mode (`fineFactor`, ×0.2 by default), shown as FINE next to the value.
+ * - Two fingers: fine mode (`fineFactor`, ×0.2 by default): the badge shows the coefficient
+ *   (`×0.2`) and the tick marks spread apart around the thumb.
+ * - Glow: full while the finger is on it (active), softer at rest (`@osc/controls` states).
  * - Double-tap: back to the default value (`doubleTapReset`).
  * The gesture runs on the UI thread and the canvas reads a shared value, so drawing never waits for
  * React. Values leave through a throttle (`throttleHz`); the last value is always sent on release.
@@ -83,6 +96,8 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   const drag = useSharedValue<DragState>(startDrag(0, 1));
   const [display, setDisplay] = React.useState(asNumber(value, c.min));
   const [fine, setFine] = React.useState(false);
+  const glow = useGlow();
+  const spread = useFineSpread(fine);
 
   // Feedback from the installation or another device moves the fader, unless the finger is on it.
   React.useEffect(() => {
@@ -130,6 +145,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     shouldCancelWhenOutside: false,
     onBegin: (e) => {
       "worklet";
+      animateGlow(glow, true);
       if (!absolute) return;
       dragging.value = true;
       const p = vertical ? 1 - e.y / h : e.x / w;
@@ -166,6 +182,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
       if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, pos.value, true);
@@ -198,13 +215,18 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   const thumbX = useDerivedValue(() => (vertical ? 0 : w * pos.value - thumb / 2));
   const thumbY = useDerivedValue(() => (vertical ? h * (1 - pos.value) - thumb / 2 : 0));
   const r = t.radius.md;
+  // Tick marks along both long edges (every 10 %); in fine mode they spread around the thumb.
+  const tickLen = Math.max(4, (vertical ? w : h) * 0.16);
+  const ticks = useDerivedValue(() =>
+    trackTicksPath(11, pos.value, spread.value, 0, w, h, vertical, tickLen),
+  );
 
   const step = (c.step ?? (c.max - c.min) / 100) * (c.invert ? -1 : 1);
   return (
     <ControlFrame
       label={c.label}
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
-      badge={fine ? "FINE" : undefined}
+      badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
       <GestureDetector gesture={gesture}>
@@ -232,7 +254,25 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
             <Canvas style={{ width: w, height: h }}>
               <RoundedRect x={0} y={0} width={w} height={h} r={r} color={t.control.track} />
               <Group clip={rrect(rect(0, 0, w, h), r, r)}>
+                {/* Neon glow of the lit value: full while touched, softer at rest. */}
+                <Rect
+                  x={fillX}
+                  y={fillY}
+                  width={fillW}
+                  height={fillH}
+                  color={t.control.fill}
+                  opacity={glow}
+                >
+                  <BlurMask blur={GLOW_BLUR} style="outer" />
+                </Rect>
                 <Rect x={fillX} y={fillY} width={fillW} height={fillH} color={t.control.fill} />
+                <Path
+                  path={ticks}
+                  color={t.control.tick}
+                  style="stroke"
+                  strokeWidth={t.stroke.hairline}
+                  opacity={0.9}
+                />
                 <Rect
                   x={thumbX}
                   y={thumbY}

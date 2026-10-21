@@ -94,6 +94,21 @@ describe("parseConfig", () => {
       expect(r.issues.some((i) => i.path === "theme.primary")).toBe(true);
   });
 
+  it("theme.splash: optional loading-screen image, an asset path or URL", () => {
+    expect(ok(demo).theme.splash).toBe("demo-splash.jpg");
+    const none = clone(demo) as any;
+    delete none.theme.splash;
+    expect(ok(none).theme.splash).toBeUndefined();
+    const url = clone(demo) as any;
+    url.theme.splash = "https://cdn.example.com/lobby.jpg";
+    expect(ok(url).theme.splash).toBe("https://cdn.example.com/lobby.jpg");
+    for (const bad of ["", "javascript:alert(1)", "data:image/png;base64,AAAA"]) {
+      const cfg = clone(demo) as any;
+      cfg.theme.splash = bad;
+      expect(parseConfig(cfg).ok, bad).toBe(false);
+    }
+  });
+
   it("resolves targets", () => {
     const cfg = ok(demo);
     const pult = cfg.pults[0]!;

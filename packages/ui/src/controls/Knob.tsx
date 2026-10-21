@@ -1,4 +1,5 @@
 import {
+  BlurMask,
   Canvas,
   Circle,
   Group,
@@ -12,6 +13,7 @@ import {
   FINE_POINTERS,
   createDeltaAccumulator,
   createThrottle,
+  fineBadge,
   formatValue,
   hsvToHex,
   hueDrag,
@@ -38,6 +40,7 @@ import {
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
+import { GLOW_BLUR, animateGlow, dialTicksPath, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
@@ -53,7 +56,9 @@ const HUE_STOPS = Array.from({ length: 7 }, (_, i) => hsvToHex(i / 6, 1, 1));
  * - `absolute`: arc over `travel` degrees (240° by default), hard stops at min and max.
  * - `relative`: endless encoder, the needle turns freely and the change is sent.
  * - `hue`: colour wheel, 0..360° that wraps around.
- * Two fingers = fine mode (`fineFactor`); double-tap = back to default (absolute and hue).
+ * Two fingers = fine mode (`fineFactor`): the badge shows the coefficient and the tick ring
+ * spreads apart around the needle. Double-tap = back to default (absolute and hue). The lit arc
+ * glows, fully while touched (`@osc/controls` states).
  */
 export function Knob(props: ControlProps<"knob">) {
   const mode = knobMode(props.control);
@@ -69,7 +74,11 @@ function useDial(size: { width: number; height: number }) {
   const d = Math.min(w, h);
   const stroke = t.size.knobArc;
   const r = d / 2 - stroke;
-  return { w, h, d, stroke, r, cx: w / 2, cy: h / 2 };
+  // Tick ring between the arc and the cap.
+  const tickOuter = r - stroke * 1.4;
+  const tickInner = r - stroke * 2.4;
+  const cap = r - stroke * 2.8;
+  return { w, h, d, stroke, r, cx: w / 2, cy: h / 2, tickOuter, tickInner, cap };
 }
 
 /** Needle end points for an angle (degrees, 0 = up, clockwise). */
@@ -95,6 +104,8 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   const dragging = useSharedValue(false);
   const [display, setDisplay] = React.useState(initial);
   const [fine, setFine] = React.useState(false);
+  const glow = useGlow();
+  const spread = useFineSpread(fine);
 
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
@@ -136,6 +147,10 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 4,
+    onBegin: () => {
+      "worklet";
+      animateGlow(glow, true);
+    },
     onActivate: (e) => {
       "worklet";
       dragging.value = true;
@@ -159,6 +174,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
       if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, pos.value, true);
@@ -174,7 +190,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   });
   const gesture = useSimultaneousGestures(pan, doubleTap);
 
-  const { w, h, d, stroke, r, cx, cy } = useDial(size);
+  const { w, h, d, stroke, r, cx, cy, tickInner, tickOuter, cap } = useDial(size);
   const travel = c.travel;
   const start = knobStart(travel);
   const oval = Skia.XYWHRect(cx - r, cy - r, r * 2, r * 2);
@@ -197,13 +213,28 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   const innerTip = useDerivedValue(
     () => needle(start + pos.value * travel, cx, cy, r * 0.25, r - stroke * 2).p1,
   );
+  // A tick every 10 % of the travel; in fine mode they spread around the needle.
+  const ticks = useDerivedValue(() =>
+    dialTicksPath(
+      11,
+      start,
+      travel,
+      start + pos.value * travel,
+      spread.value,
+      0,
+      cx,
+      cy,
+      tickInner,
+      tickOuter,
+    ),
+  );
 
   const step = c.step ?? (c.max - c.min) / 100;
   return (
     <ControlFrame
       label={c.label}
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
-      badge={fine ? "FINE" : undefined}
+      badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
       <GestureDetector gesture={gesture}>
@@ -234,6 +265,17 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
                 strokeWidth={stroke}
                 strokeCap="round"
               />
+              {/* Neon glow of the lit arc: full while touched, softer at rest. */}
+              <Path
+                path={fillPath}
+                color={t.control.fill}
+                style="stroke"
+                strokeWidth={stroke}
+                strokeCap="round"
+                opacity={glow}
+              >
+                <BlurMask blur={GLOW_BLUR} style="outer" />
+              </Path>
               <Path
                 path={fillPath}
                 color={t.control.fill}
@@ -241,7 +283,14 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
                 strokeWidth={stroke}
                 strokeCap="round"
               />
-              <Circle cx={cx} cy={cy} r={r - stroke * 1.5} color={t.color.surfaceRaised} />
+              <Path
+                path={ticks}
+                color={t.control.tick}
+                style="stroke"
+                strokeWidth={t.stroke.hairline}
+                strokeCap="round"
+              />
+              <Circle cx={cx} cy={cy} r={cap} color={t.color.surfaceRaised} />
               <Line
                 p1={innerTip}
                 p2={tip}
@@ -264,6 +313,8 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
   const angle = useSharedValue(0);
   const last = useSharedValue(0);
   const [fine, setFine] = React.useState(false);
+  const glow = useGlow();
+  const spread = useFineSpread(fine);
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
   const acc = React.useMemo(
@@ -290,6 +341,10 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 4,
+    onBegin: () => {
+      "worklet";
+      animateGlow(glow, true);
+    },
     onActivate: () => {
       "worklet";
       last.value = 0;
@@ -305,15 +360,24 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
       scheduleOnRN(end);
     },
   });
 
-  const { w, h, d, stroke, r, cx, cy } = useDial(size);
+  const { w, h, d, stroke, r, cx, cy, tickInner, tickOuter, cap } = useDial(size);
   const p1 = useDerivedValue(() => needle(angle.value, cx, cy, r * 0.25, r - stroke * 2).p1);
   const p2 = useDerivedValue(() => needle(angle.value, cx, cy, r * 0.25, r - stroke * 2).p2);
+  // An endless ring of ribs that turns with the needle; in fine mode they spread around it.
+  const ticks = useDerivedValue(() =>
+    dialTicksPath(24, 0, 360, angle.value, spread.value, angle.value, cx, cy, tickInner, tickOuter),
+  );
   return (
-    <ControlFrame label={c.label} badge={fine ? "FINE" : undefined} disabled={disabled}>
+    <ControlFrame
+      label={c.label}
+      badge={fine ? fineBadge(fineFactor) : undefined}
+      disabled={disabled}
+    >
       <GestureDetector gesture={pan}>
         <View
           className="flex-1"
@@ -339,7 +403,25 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
                 style="stroke"
                 strokeWidth={stroke}
               />
-              <Circle cx={cx} cy={cy} r={r - stroke * 1.5} color={t.color.surfaceRaised} />
+              <Path
+                path={ticks}
+                color={t.control.tick}
+                style="stroke"
+                strokeWidth={t.stroke.hairline}
+                strokeCap="round"
+              />
+              <Circle cx={cx} cy={cy} r={cap} color={t.color.surfaceRaised} />
+              {/* The needle is an encoder's lit part: it glows, fully while touched. */}
+              <Line
+                p1={p1}
+                p2={p2}
+                color={t.control.fill}
+                strokeWidth={t.stroke.strong * 2}
+                strokeCap="round"
+                opacity={glow}
+              >
+                <BlurMask blur={GLOW_BLUR} style="outer" />
+              </Line>
               <Line
                 p1={p1}
                 p2={p2}
@@ -365,6 +447,7 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
   const dragging = useSharedValue(false);
   const [display, setDisplay] = React.useState(initial);
   const [fine, setFine] = React.useState(false);
+  const glow = useGlow();
 
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
@@ -401,6 +484,10 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 4,
+    onBegin: () => {
+      "worklet";
+      animateGlow(glow, true);
+    },
     onActivate: () => {
       "worklet";
       dragging.value = true;
@@ -415,6 +502,7 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
       if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, hue.value, true, false);
@@ -439,7 +527,7 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
     <ControlFrame
       label={c.label}
       value={c.showValue ? formatValue(Math.round(display), { unit: c.unit ?? "°" }) : undefined}
-      badge={fine ? "FINE" : undefined}
+      badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
       <GestureDetector gesture={gesture}>
@@ -467,7 +555,12 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
                 </Circle>
               </Group>
               <Circle cx={cx} cy={cy} r={r - stroke * 1.5} color={t.color.surfaceRaised} />
+              {/* The current colour is the lit value: it glows, fully while touched. */}
+              <Circle cx={cx} cy={cy} r={(r - stroke * 1.5) * 0.45} color={current} opacity={glow}>
+                <BlurMask blur={GLOW_BLUR} style="outer" />
+              </Circle>
               <Circle cx={cx} cy={cy} r={(r - stroke * 1.5) * 0.45} color={current} />
+
               <Circle cx={dotX} cy={dotY} r={stroke * 1.4} color={t.control.thumb} />
             </Canvas>
           )}

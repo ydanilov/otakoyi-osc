@@ -1,14 +1,12 @@
-import { createBridgeHttp, httpBaseOf } from "@osc/protocol";
+import type { BridgeHttp } from "@osc/protocol";
 import { createMemoryServices, type ControlServices } from "@osc/ui";
 import { audioInput, imagePicker } from "./platform/media";
 
-/** Services for a pult connected to a bridge: media and prompt presets over the bridge's HTTP API. */
-export function bridgeServices(
-  socketUrl: string,
-  device: string,
-  secret: string | undefined,
-): Omit<ControlServices, "pult"> {
-  const http = createBridgeHttp({ base: httpBaseOf(socketUrl), device, secret });
+/**
+ * Services for a pult connected to a bridge — real or simulated, both answer the same HTTP API
+ * (`BridgeHttp`): media and prompt presets live on the bridge, which sends the OSC.
+ */
+export function bridgeServices(http: BridgeHttp): Omit<ControlServices, "pult"> {
   return {
     imagePicker,
     audio: audioInput,
@@ -23,8 +21,8 @@ export function bridgeServices(
   };
 }
 
-/** Demo installation / gallery: everything in memory, nothing leaves the device. */
-export function demoServices(): Omit<ControlServices, "pult"> {
+/** The control gallery: everything in memory, nothing leaves the device. */
+export function galleryServices(): Omit<ControlServices, "pult"> {
   const { media, prompts } = createMemoryServices();
   return { imagePicker, audio: audioInput, media, prompts };
 }

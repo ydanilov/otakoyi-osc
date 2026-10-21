@@ -98,6 +98,17 @@ export const Theme = z
     /** Asset paths relative to the config's asset bundle. */
     logo: z.string().optional(),
     icon: z.string().optional(),
+    /**
+     * Full-screen image of the client-branded loading screen (ADR-012, ADR-013): an asset path
+     * relative to the config's asset bundle, or an http(s) URL. Without it the loading screen uses
+     * the plain background. Set by the studio only (ADR-004).
+     */
+    splash: z
+      .string()
+      .min(1)
+      .max(2048)
+      .refine((s) => !/^(javascript|data|file):/i.test(s.trim()), "splash: an asset path or URL")
+      .optional(),
   })
   .superRefine((t, ctx) => {
     for (const issue of checkBrand(t)) {

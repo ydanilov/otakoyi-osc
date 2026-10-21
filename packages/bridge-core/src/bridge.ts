@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
 import { message, type OscMessage } from "@osc/core";
 import {
   coerceValue,
@@ -14,6 +13,7 @@ import {
   PROTOCOL_VERSION,
   parseClientMessage,
   type ActivityEntry,
+  type BridgeHealth,
   type ClientMessage,
   type ErrorCode,
   type Holder,
@@ -74,6 +74,8 @@ export const PAIRING_MS = 2 * 60 * 1000;
  */
 export const OSC_PAIR = "/otakoyi/pair";
 export const OSC_PAIR_REQUEST = "/otakoyi/pair/request";
+/** Telemetry convention (docs/integration.md): the installation's frame rate, about once a second. */
+export const OSC_FPS = "/sys/fps";
 
 export interface BridgeAuth {
   /** Installation PIN for clients on the local network. Unset = no PIN (dev only). */
@@ -122,12 +124,17 @@ export class Bridge {
     }
   >();
   private promptSeq = 0;
+  /** When this bridge started (epoch ms), for the uptime in `health()`. */
+  readonly startedAt: number;
+  /** Last `/sys/fps` the installation reported (telemetry), or null. */
+  private fps: number | null = null;
 
   constructor(
     readonly config: InstallationConfig,
     private io: BridgeIO,
     private auth: BridgeAuth = {},
   ) {
+    this.startedAt = io.now();
     for (const pult of config.pults) {
       const store = new PultStore(config, pult, { send: (t, m) => io.sendOsc(t, m) });
       store.onChange((id, value) => this.broadcastValue(pult.id, id, value));
@@ -210,6 +217,11 @@ export class Bridge {
     this.io.supervisor?.heartbeat(targetId);
     if (msg.address === OSC_PAIR_REQUEST)
       return this.setPairing(!this.pairingUntil, { device: `target:${targetId}` });
+    if (msg.address === OSC_FPS) {
+      const a = msg.args[0];
+      const v = a && "value" in a ? a.value : undefined;
+      if (typeof v === "number" && Number.isFinite(v)) this.fps = v;
+    }
     this.checkPromptConfirm(msg);
     for (const store of this.stores.values()) store.receive(msg);
   }
@@ -280,6 +292,28 @@ export class Bridge {
       this.activityPending = [];
       this.broadcast({ t: "activity", entries });
     }
+  }
+
+  /**
+   * Health and telemetry for `/api/health` and the Installation panel: target status, latched
+   * modes, connected devices, uptime and the installation's last reported FPS.
+   */
+  health(): BridgeHealth {
+    const now = this.io.now();
+    return {
+      ok: true,
+      protocol: PROTOCOL_VERSION,
+      installation: this.config.installation,
+      targets: this.status().map((t) => ({
+        ...t,
+        lastSeen: t.lastFeedbackAt === null ? null : new Date(t.lastFeedbackAt).toISOString(),
+      })),
+      modes: { ...this.modes },
+      devices: this.devices.length,
+      startedAt: this.startedAt,
+      uptimeS: Math.max(0, Math.floor((now - this.startedAt) / 1000)),
+      fps: this.fps,
+    };
   }
 
   /** Recent activity, oldest first. */
@@ -564,8 +598,10 @@ export class Bridge {
   }
 }
 
-function same(a: string, b: string): boolean {
-  const x = Buffer.from(a);
-  const y = Buffer.from(b);
-  return x.length === y.length && timingSafeEqual(x, y);
+/** Constant-time string comparison (no Node `crypto`, so the core also runs inside the app). */
+export function same(a: string, b: string): boolean {
+  let diff = a.length ^ b.length;
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return diff === 0;
 }

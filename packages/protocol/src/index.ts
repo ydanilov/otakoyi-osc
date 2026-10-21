@@ -96,6 +96,24 @@ export interface TargetStatus {
   lastFeedbackAt: number | null;
 }
 
+/**
+ * `GET /api/health` (and the simulator's `health()`): what the Installation panel shows as stats.
+ * Fields after `devices` were added with the panel; older bridges leave them out.
+ */
+export interface BridgeHealth {
+  ok: boolean;
+  protocol: number;
+  installation: { id: string; name: string; revision: number; [k: string]: unknown };
+  targets: Array<TargetStatus & { lastSeen?: string | null; [k: string]: unknown }>;
+  modes: InstallationModes;
+  devices: number;
+  /** When the bridge started, epoch ms. */
+  startedAt?: number;
+  uptimeS?: number;
+  /** Last `/sys/fps` from the installation, or null when it never reported one. */
+  fps?: number | null;
+}
+
 export type ErrorCode =
   | "version"
   | "auth"

@@ -38,6 +38,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "peerDependencies": {
+    "@expo/ui": "*",
     "@shopify/react-native-skia": "*",
     "lucide-react-native": "*",
     "nativewind": "*",

@@ -13,7 +13,7 @@ import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { demoConfig } from "@/lib/demo";
-import { demoServices } from "@/lib/services";
+import { galleryServices } from "@/lib/services";
 
 /**
  * Control gallery — every control type in every state, under different themes and client brands.
@@ -131,7 +131,7 @@ function Cell({ control, state }: { control: Control; state: (typeof STATES)[num
 export default function Gallery() {
   const [i, setI] = React.useState(0);
   const current = BRANDS[i]!;
-  const services = React.useMemo(() => ({ ...demoServices(), pult: "gallery" }), []);
+  const services = React.useMemo(() => ({ ...galleryServices(), pult: "gallery" }), []);
   return (
     <ThemeProvider brand={current.brand} className="flex-1">
       <SafeAreaView className="bg-background flex-1">

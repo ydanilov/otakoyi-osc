@@ -3,8 +3,8 @@ import { argValue, message, type OscMessage } from "@osc/core";
 import type { ServerMessage } from "@osc/protocol";
 import { parseConfig, type Target } from "@osc/schema";
 import demo from "../../../packages/schema/examples/demo-installation.json";
-import { ACTIVITY_SIZE, Bridge, FEEDBACK_TIMEOUT_MS, type LogEntry, type Peer } from "./bridge";
-import type { Supervisor } from "./supervisor";
+import { ACTIVITY_SIZE, Bridge, FEEDBACK_TIMEOUT_MS, type LogEntry, type Peer } from "./index";
+import type { Supervisor } from "./index";
 
 function setup(edit: (cfg: any) => void = () => {}, supervisor?: Supervisor) {
   const cfg = structuredClone(demo) as any;

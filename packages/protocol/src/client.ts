@@ -2,15 +2,41 @@ import { PROTOCOL_VERSION, type ClientMessage, type Role, type ServerMessage } f
 
 export type BridgeConnection = "connecting" | "open" | "closed";
 
-export interface BridgeClientOptions {
-  /** ws:// or wss:// URL of the bridge socket, e.g. ws://192.168.1.20:8080/ws */
-  url: string;
+/** Who connects and where the bridge's messages go; the same for every transport. */
+export interface TransportHandlers {
   device: string;
   name?: string | undefined;
   role: Role;
   secret?: string | undefined;
   onMessage(msg: ServerMessage): void;
   onConnection?(state: BridgeConnection): void;
+}
+
+/**
+ * How a pult talks to a bridge. The app does not care whether the bridge is on the installation
+ * machine (WebSocket, `BridgeClient`) or simulated in-process (`@osc/sim`, the demo): both speak
+ * the same protocol messages and the same hello / welcome handshake.
+ */
+export interface BridgeTransport {
+  readonly state: BridgeConnection;
+  connect(): void;
+  close(): void;
+  send(msg: Exclude<ClientMessage, { t: "hello" }>): void;
+}
+
+export type TransportFactory = (handlers: TransportHandlers) => BridgeTransport;
+
+/** A real bridge over WebSocket. */
+export function webSocketTransport(
+  url: string,
+  WebSocketImpl?: typeof WebSocket,
+): TransportFactory {
+  return (h) => new BridgeClient({ ...h, url, ...(WebSocketImpl ? { WebSocketImpl } : {}) });
+}
+
+export interface BridgeClientOptions extends TransportHandlers {
+  /** ws:// or wss:// URL of the bridge socket, e.g. ws://192.168.1.20:8080/ws */
+  url: string;
   /** WebSocket implementation (defaults to the global one; tests pass `ws`). */
   WebSocketImpl?: typeof WebSocket;
 }
@@ -22,7 +48,7 @@ const BACKOFF_MS = [250, 500, 1000, 2000, 4000];
  * Reconnects with backoff, re-sends hello each time; the bridge answers with a fresh welcome,
  * so state never drifts after a drop. Auth and version errors stop reconnecting.
  */
-export class BridgeClient {
+export class BridgeClient implements BridgeTransport {
   private ws: WebSocket | null = null;
   private attempt = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;

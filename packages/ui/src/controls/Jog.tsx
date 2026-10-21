@@ -1,11 +1,27 @@
-import { Canvas, Group, Rect, RoundedRect, rect, rrect } from "@shopify/react-native-skia";
-import { FINE_POINTERS, createDeltaAccumulator, formatValue, jogDelta } from "@osc/controls";
+import {
+  BlurMask,
+  Canvas,
+  Group,
+  Path,
+  Rect,
+  RoundedRect,
+  rect,
+  rrect,
+} from "@shopify/react-native-skia";
+import {
+  FINE_POINTERS,
+  createDeltaAccumulator,
+  fineBadge,
+  formatValue,
+  jogDelta,
+} from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
+import { GLOW_BLUR, animateGlow, trackTicksPath, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
@@ -16,7 +32,8 @@ const RIB = 12;
 /**
  * Endless jog wheel (`fader` with `mode: "relative"`, ADR-015). There is no position: dragging
  * scrolls the ribs and sends the change (a full track = max − min), summed per throttle window so
- * no movement is lost. Two fingers = fine (`fineFactor`).
+ * no movement is lost. Two fingers = fine (`fineFactor`): the ribs spread apart around the centre
+ * index (×1.8) and the badge shows the coefficient. The centre index glows, fully while touched.
  */
 export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader">) {
   const t = useTheme();
@@ -28,6 +45,8 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   const last = useSharedValue(0);
   const [fine, setFine] = React.useState(false);
   const [moved, setMoved] = React.useState(0);
+  const glow = useGlow();
+  const spread = useFineSpread(fine);
 
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
@@ -57,6 +76,10 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 2,
+    onBegin: () => {
+      "worklet";
+      animateGlow(glow, true);
+    },
     onActivate: () => {
       "worklet";
       last.value = 0;
@@ -71,21 +94,24 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
       scheduleOnRN(end);
     },
   });
 
-  const ribs = Math.ceil(length / RIB) + 2;
-  const shift = useDerivedValue(() => (((offset.value % RIB) + RIB) % RIB) - RIB);
-  const transform = useDerivedValue(() =>
-    vertical ? [{ translateY: -shift.value }] : [{ translateX: shift.value }],
-  );
+  // Ribs every RIB px that scroll with the drag; in fine mode they spread around the centre.
+  const ribs = Math.max(2, Math.round(length / RIB) + 1);
+  const ribLen = Math.max(4, (vertical ? w : h) * 0.3);
+  const ribPath = useDerivedValue(() => {
+    const phase = length > 0 ? offset.value / length : 0;
+    return trackTicksPath(ribs, 0.5, spread.value, phase, w, h, vertical, ribLen);
+  });
   const r = t.radius.md;
   return (
     <ControlFrame
       label={c.label}
       value={c.showValue ? formatValue(moved, { unit: c.unit }) : undefined}
-      badge={fine ? "FINE" : undefined}
+      badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
       <GestureDetector gesture={pan}>
@@ -106,30 +132,24 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
             <Canvas style={{ width: w, height: h }}>
               <RoundedRect x={0} y={0} width={w} height={h} r={r} color={t.control.track} />
               <Group clip={rrect(rect(0, 0, w, h), r, r)}>
-                <Group transform={transform}>
-                  {Array.from({ length: ribs }, (_, i) =>
-                    vertical ? (
-                      <Rect
-                        key={i}
-                        x={w * 0.2}
-                        y={i * RIB}
-                        width={w * 0.6}
-                        height={t.stroke.strong}
-                        color={t.control.tick}
-                      />
-                    ) : (
-                      <Rect
-                        key={i}
-                        x={i * RIB}
-                        y={h * 0.2}
-                        width={t.stroke.strong}
-                        height={h * 0.6}
-                        color={t.control.tick}
-                      />
-                    ),
-                  )}
-                </Group>
-                {/* Centre index: the point the ribs move past. */}
+                <Path
+                  path={ribPath}
+                  color={t.control.tick}
+                  style="stroke"
+                  strokeWidth={t.stroke.strong}
+                  strokeCap="round"
+                />
+                {/* Centre index: the point the ribs move past. Glows (fully while touched). */}
+                <Rect
+                  x={vertical ? 0 : w / 2 - t.stroke.strong / 2}
+                  y={vertical ? h / 2 - t.stroke.strong / 2 : 0}
+                  width={vertical ? w : t.stroke.strong}
+                  height={vertical ? t.stroke.strong : h}
+                  color={t.control.fill}
+                  opacity={glow}
+                >
+                  <BlurMask blur={GLOW_BLUR} style="outer" />
+                </Rect>
                 <Rect
                   x={vertical ? 0 : w / 2 - t.stroke.strong / 2}
                   y={vertical ? h / 2 - t.stroke.strong / 2 : 0}

@@ -6,9 +6,16 @@ import type { InstallationConfig } from "@osc/schema";
 import { Bonjour } from "bonjour-service";
 import { WebSocketServer, type WebSocket } from "ws";
 import { createApi } from "./api";
-import { Bridge, type BridgeAuth, type BridgeIO, type LogEntry, type Peer } from "./bridge";
+import {
+  Bridge,
+  type BridgeAuth,
+  type BridgeIO,
+  type LogEntry,
+  type Peer,
+  type Supervisor,
+} from "@osc/bridge-core";
 import type { Browse } from "./resolver";
-import type { Supervisor } from "./supervisor";
+
 import { bonjourBrowse, openTargets } from "./targets";
 import { pairingUrl, webPultUrl } from "@osc/protocol";
 import QRCode from "qrcode";
@@ -23,6 +30,11 @@ export interface ServerOptions {
   host: string;
   /** Built web pult (apps/mobile/dist). Optional. */
   webDir?: string | undefined;
+  /**
+   * The config's asset bundle (logo, loading-screen image), served at `/assets/<path>` so relative
+   * `theme.logo` / `theme.splash` paths resolve. Default: `assets/` next to the config (main.ts).
+   */
+  assetsDir?: string | undefined;
   /** Directory for the JSONL command log. */
   logDir: string;
   /**
@@ -44,6 +56,15 @@ export interface ServerOptions {
   /** mDNS browse for `host: "auto"` targets; null disables discovery. Default: bonjour. */
   browse?: Browse | null;
 }
+
+/** What `/assets/` serves: brand images only. */
+const ASSET_MIME: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+};
 
 const HELLO_TIMEOUT_MS = 5000;
 const KEEPALIVE_MS = 15000;
@@ -120,6 +141,7 @@ export async function startServer(opts: ServerOptions) {
 
   // --- HTTP: health + web pult ----------------------------------------------------------------
   const webRoot = opts.webDir ? resolve(opts.webDir) : undefined;
+  const assetsRoot = opts.assetsDir ? resolve(opts.assetsDir) : undefined;
   const http = createServer((req, res) => {
     serve(req, res).catch(() => {
       res.writeHead(500).end();
@@ -129,19 +151,12 @@ export async function startServer(opts: ServerOptions) {
     const url = new URL(req.url ?? "/", "http://bridge");
     if (url.pathname === "/api/health") {
       res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      const health = bridge.health();
       return res.end(
         JSON.stringify({
-          ok: true,
-          protocol: PROTOCOL_VERSION,
-          installation: opts.config.installation,
+          ...health,
           // Per target: online, last feedback (epoch ms and ISO), where it is reached.
-          targets: bridge.status().map((t) => ({
-            ...t,
-            lastSeen: t.lastFeedbackAt === null ? null : new Date(t.lastFeedbackAt).toISOString(),
-            ...transports.describe(t.id),
-          })),
-          modes: bridge.modes,
-          devices: bridge.devices.length,
+          targets: health.targets.map((t) => ({ ...t, ...transports.describe(t.id) })),
         }),
       );
     }
@@ -183,6 +198,21 @@ export async function startServer(opts: ServerOptions) {
         "cache-control": "no-store",
       });
       return res.end(html);
+    }
+    if (url.pathname.startsWith("/assets/")) {
+      // Brand assets of the config (theme.logo, theme.splash as relative paths), images only.
+      if (!assetsRoot) return res.writeHead(404).end();
+      const rel = normalize(decodeURIComponent(url.pathname.slice("/assets/".length))).replace(
+        /^([/\\])+/,
+        "",
+      );
+      const file = join(assetsRoot, rel);
+      const type = ASSET_MIME[extname(file).toLowerCase()];
+      if (!type || !file.startsWith(assetsRoot + sep)) return res.writeHead(404).end();
+      const body = await readFile(file).catch(() => null);
+      if (!body) return res.writeHead(404).end();
+      res.writeHead(200, { "content-type": type, "cache-control": "public, max-age=300" });
+      return res.end(body);
     }
     if (!webRoot) return res.writeHead(404).end("No web pult configured");
     const rel = normalize(decodeURIComponent(url.pathname)).replace(/^([/\\])+/, "");

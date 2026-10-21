@@ -35,8 +35,4 @@ export class JsonFile<T> {
   }
 }
 
-/** Short random id (letters and digits), valid as a schema id. */
-export function newId(prefix = ""): string {
-  const rand = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-  return `${prefix}${rand}`;
-}
+export { newId } from "@osc/bridge-core";

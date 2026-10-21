@@ -18,7 +18,9 @@
   "theme": {
     "mode": "dark",
     "primary": "#8DFF2E",
-    "accent": "#3DD6FF"
+    "accent": "#3DD6FF",
+    "logo": "demo-logo.png",
+    "splash": "demo-splash.jpg"
   },
   "pults": [
     {
