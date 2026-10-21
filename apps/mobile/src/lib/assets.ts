@@ -1,6 +1,6 @@
 /**
  * Brand assets of a config (`theme.logo`, `theme.splash`): an http(s) URL is used as is; a
- * relative path is in the config's asset bundle — served by the bridge at `/assets/<path>`, or
+ * relative path is in the config's asset bundle — served by the bridge at `/brand/<path>`, or
  * bundled with the app for the demo installation.
  */
 export type AssetSource = { uri: string } | number;
@@ -19,6 +19,6 @@ export function resolveAsset(
   if (bundled !== undefined) return bundled;
   if (!o.httpBase) return null;
   return {
-    uri: `${o.httpBase.replace(/\/$/, "")}/assets/${rel.split("/").map(encodeURIComponent).join("/")}`,
+    uri: `${o.httpBase.replace(/\/$/, "")}/brand/${rel.split("/").map(encodeURIComponent).join("/")}`,
   };
 }

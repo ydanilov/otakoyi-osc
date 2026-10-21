@@ -517,7 +517,6 @@ function DraggableCard({
   return (
     <Animated.View
       style={[{ width: CARD_W }, style]}
-      className={cn("gap-1 rounded-md border p-2", className)}
       accessibilityActions={
         editing
           ? [
@@ -531,30 +530,33 @@ function DraggableCard({
         if (e.nativeEvent.actionName === "moveRight" && index < count - 1) onDrop(index + 1);
       }}
     >
-      {children}
-      {editing && (
-        <View className="flex-row items-center gap-1">
-          <Pressable
-            onPress={onDelete}
-            accessibilityRole="button"
-            accessibilityLabel={`Delete ${label}`}
-            className="bg-muted min-h-8 w-10 items-center justify-center rounded-sm"
-          >
-            <Text className="text-status-critical text-base">−</Text>
-          </Pressable>
-          <GestureDetector gesture={pan}>
-            <View
-              className="bg-muted min-h-8 flex-1 items-center justify-center rounded-sm"
-              accessibilityLabel={`Drag ${label} to reorder`}
-              testID={`prompt-grip-${index}`}
-              // Web: show the grab cursor; native ignores it.
-              style={{ cursor: "grab" } as object}
+      {/* Reanimated views are not NativeWind-interop'd: the card look is on this View. */}
+      <View className={cn("flex-1 gap-1 rounded-md border p-2", className)}>
+        {children}
+        {editing && (
+          <View className="flex-row items-center gap-1">
+            <Pressable
+              onPress={onDelete}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${label}`}
+              className="bg-muted min-h-8 w-10 items-center justify-center rounded-sm"
             >
-              <Text className="text-muted-foreground text-sm tracking-widest">⋮⋮</Text>
-            </View>
-          </GestureDetector>
-        </View>
-      )}
+              <Text className="text-status-critical text-base">−</Text>
+            </Pressable>
+            <GestureDetector gesture={pan}>
+              <View
+                className="bg-muted min-h-8 flex-1 items-center justify-center rounded-sm"
+                accessibilityLabel={`Drag ${label} to reorder`}
+                testID={`prompt-grip-${index}`}
+                // Web: show the grab cursor; native ignores it.
+                style={{ cursor: "grab" } as object}
+              >
+                <Text className="text-muted-foreground text-sm tracking-widest">⋮⋮</Text>
+              </View>
+            </GestureDetector>
+          </View>
+        )}
+      </View>
     </Animated.View>
   );
 }

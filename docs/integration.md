@@ -134,7 +134,7 @@ times a second, handles `/otakoyi/*`, and confirms prompts by echoing their text
 **Brand assets and the loading screen** (set by the studio, ADR-004). After pairing, the app shows
 a client-branded loading screen while it connects: `theme.splash` (full-screen image) with
 `theme.logo` on it. Both are an http(s) URL or a path relative to the config's asset bundle; the
-bridge serves the bundle from `assets/` next to the config file at `/assets/<path>` (images only,
+bridge serves the bundle from `assets/` next to the config file at `/brand/<path>` (images only,
 `--assets` overrides the folder). Without `splash` the screen uses the plain background.
 
 ```json

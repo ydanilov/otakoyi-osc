@@ -31,7 +31,7 @@ export interface ServerOptions {
   /** Built web pult (apps/mobile/dist). Optional. */
   webDir?: string | undefined;
   /**
-   * The config's asset bundle (logo, loading-screen image), served at `/assets/<path>` so relative
+   * The config's asset bundle (logo, loading-screen image), served at `/brand/<path>` (`/assets/` belongs to the web pult build) so relative
    * `theme.logo` / `theme.splash` paths resolve. Default: `assets/` next to the config (main.ts).
    */
   assetsDir?: string | undefined;
@@ -57,7 +57,7 @@ export interface ServerOptions {
   browse?: Browse | null;
 }
 
-/** What `/assets/` serves: brand images only. */
+/** What `/brand/` serves: brand images only. */
 const ASSET_MIME: Record<string, string> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
@@ -199,10 +199,10 @@ export async function startServer(opts: ServerOptions) {
       });
       return res.end(html);
     }
-    if (url.pathname.startsWith("/assets/")) {
+    if (url.pathname.startsWith("/brand/")) {
       // Brand assets of the config (theme.logo, theme.splash as relative paths), images only.
       if (!assetsRoot) return res.writeHead(404).end();
-      const rel = normalize(decodeURIComponent(url.pathname.slice("/assets/".length))).replace(
+      const rel = normalize(decodeURIComponent(url.pathname.slice("/brand/".length))).replace(
         /^([/\\])+/,
         "",
       );

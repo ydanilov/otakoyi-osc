@@ -135,7 +135,7 @@ describe("bridge server (real sockets)", () => {
       mdns: false,
     });
     closers.push(() => server.close());
-    const base = `http://127.0.0.1:${server.port}/assets`;
+    const base = `http://127.0.0.1:${server.port}/brand`;
     const ok = await fetch(`${base}/splash.png`);
     expect(ok.status).toBe(200);
     expect(ok.headers.get("content-type")).toBe("image/png");

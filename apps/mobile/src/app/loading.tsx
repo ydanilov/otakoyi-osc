@@ -33,7 +33,10 @@ export default function Loading() {
   // The minimum time counts from when this screen is on screen (or from a retry).
   const [shownAt] = React.useState(Date.now());
   const startedAt = Math.max(app.startedAt, shownAt);
-  const name = brand.name || app.session?.displayName || "the installation";
+  // Before the bridge answers a new pairing, its name is unknown: show its address instead.
+  const host = app.session?.bridge?.replace(/^wss?:\/\//, "").replace(/\/ws$/, "");
+  const name = brand.name || "The installation";
+  const logoName = brand.name || host || "Otakoyi";
   const phase = loadingPhase({
     state: s,
     startedAt,
@@ -60,7 +63,7 @@ export default function Loading() {
       app.retry();
       setNow(Date.now());
     } else if (a === "address") {
-      const address = app.session?.bridge?.replace(/^wss?:\/\//, "").replace(/\/ws$/, "");
+      const address = host;
       router.push({ pathname: "/manual", params: address ? { address } : {} });
     }
   };
@@ -73,7 +76,11 @@ export default function Loading() {
           style={{ paddingTop: insets.top + 96, paddingBottom: insets.bottom + 16 }}
           testID="loading-screen"
         >
-          <ClientLogo name={name} source={brand.logo ?? undefined} />
+          <ClientLogo
+            name={logoName}
+            source={brand.logo ?? undefined}
+            size={brand.name ? "lg" : "sm"}
+          />
           <View className="w-full max-w-sm items-center gap-6">
             {phase.phase === "error" ? (
               <View className="gap-3 self-stretch" testID="loading-error">
@@ -96,7 +103,7 @@ export default function Loading() {
                 </View>
               </View>
             ) : (
-              <Loader label={`Connecting to ${name}…`} />
+              <Loader label={brand.name ? `Connecting to ${brand.name}…` : "Connecting…"} />
             )}
             <Text className="text-muted-foreground text-xs tracking-wider">
               Powered by <Text className="text-foreground text-xs font-semibold">otakoyi</Text>

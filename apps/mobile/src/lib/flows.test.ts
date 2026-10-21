@@ -186,12 +186,12 @@ describe("pairing storage and preferences", () => {
 });
 
 describe("brand assets", () => {
-  it("URLs as is; relative paths from the bridge's /assets/ or the bundled demo", () => {
+  it("URLs as is; relative paths from the bridge's /brand/ or the bundled demo", () => {
     expect(resolveAsset("https://cdn.example.com/a.jpg", {})).toEqual({
       uri: "https://cdn.example.com/a.jpg",
     });
     expect(resolveAsset("splash.jpg", { httpBase: "http://10.0.0.2:8080" })).toEqual({
-      uri: "http://10.0.0.2:8080/assets/splash.jpg",
+      uri: "http://10.0.0.2:8080/brand/splash.jpg",
     });
     expect(resolveAsset("demo-splash.jpg", { bundled: { "demo-splash.jpg": 7 } })).toBe(7);
     expect(resolveAsset("../secret.png", { httpBase: "http://h" })).toBeNull();

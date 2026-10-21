@@ -17,7 +17,7 @@ export function useBrand(): {
   const { session, savedBrand } = useApp();
   const s = useSessionState();
   const theme = s.config?.theme ?? savedBrand?.theme;
-  const name = s.config?.installation.name ?? savedBrand?.name ?? session?.displayName ?? "";
+  const name = s.config?.installation.name ?? savedBrand?.name ?? session?.name ?? "";
   const opts = {
     httpBase: session?.bridge ? httpBaseOf(session.bridge) : undefined,
     bundled: session?.kind === "demo" ? DEMO_ASSETS : undefined,

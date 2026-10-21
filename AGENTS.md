@@ -101,7 +101,7 @@ Run `pnpm verify` before every commit.
 apps/mobile/            Expo app (iOS now, Android later) + web pult build
   src/app/              routes: connect, manual, scan, loading, pult, settings, installation, dialog
   src/lib/              session, pairing storage, loading / navigation / installation logic (tested)
-  src/components/ds/    local stand-ins for design-system components (TODO(ds) until they land)
+  src/components/       app compositions of the DS (Installation / Settings content, Preview)
 apps/bridge/            the bridge program: sockets, UDP/TCP OSC, files, pairing page, runtime
 packages/bridge-core/   the bridge's core (Bridge, Lease, PromptStore) — shared with packages/sim
 packages/sim/           simulated installation for demo mode: transport, HTTP API, preview model
