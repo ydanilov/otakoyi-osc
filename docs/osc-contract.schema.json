@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ydanilov/otakoyi-osc/docs/osc-contract.schema.json",
+  "title": "Otakoyi OSC contract",
+  "description": "What an installation accepts and reports over OSC. Lives in the installation repo as otakoyi/osc-contract.json. See docs/integration.md.",
+  "type": "object",
+  "required": ["contractVersion", "installation", "osc", "parameters"],
+  "additionalProperties": false,
+  "$defs": {
+    "address": {
+      "type": "string",
+      "pattern": "^/([^\\s#*,?\\[\\]{}]|\\{(index|row|col)\\})*$",
+      "not": {
+        "pattern": "^/(otakoyi|sys)(/|$)"
+      },
+      "description": "OSC address. May contain {index}, {row} or {col} placeholders. /otakoyi/* and /sys/* are reserved."
+    },
+    "value": {
+      "type": ["number", "string", "boolean", "null"]
+    }
+  },
+  "properties": {
+    "contractVersion": {
+      "const": 1
+    },
+    "installation": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "useCase": {
+          "enum": ["lobby", "live", "both"],
+          "description": "ADR-013: lobby controller (phone first) or live VJ console (tablet first)."
+        }
+      }
+    },
+    "software": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "app": {
+          "enum": [
+            "touchdesigner",
+            "touchplayer",
+            "browser",
+            "unreal",
+            "unity",
+            "resolume",
+            "notch",
+            "other"
+          ]
+        },
+        "version": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string",
+          "description": "Project file, e.g. installation.toe"
+        },
+        "os": {
+          "enum": ["windows", "macos", "linux"]
+        },
+        "machines": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      }
+    },
+    "osc": {
+      "type": "object",
+      "required": ["in"],
+      "additionalProperties": false,
+      "properties": {
+        "in": {
+          "type": "object",
+          "required": ["port"],
+          "additionalProperties": false,
+          "properties": {
+            "protocol": {
+              "enum": ["udp", "tcp"],
+              "default": "udp"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "feedback": {
+          "type": "object",
+          "required": ["port"],
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "aliveAddress": {
+              "type": "string",
+              "pattern": "^/",
+              "description": "Optional; default /sys/fps. Must arrive at least every 5 s."
+            }
+          }
+        },
+        "heartbeat": {
+          "type": "string",
+          "pattern": "^/",
+          "description": "Runtime heartbeat address (ADR-011), e.g. /sys/heartbeat."
+        }
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["address", "type", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "$ref": "#/$defs/address"
+          },
+          "type": {
+            "enum": ["float", "int", "bool", "trigger", "enum", "xy", "color", "string"]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Suggested label; final copy lives in Figma."
+          },
+          "description": {
+            "type": "string"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "default": {
+            "$ref": "#/$defs/value"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "curve": {
+            "enum": ["linear", "log", "exp"]
+          },
+          "options": {
+            "type": "array",
+            "description": "For type enum: allowed values with labels.",
+            "items": {
+              "type": "object",
+              "required": ["value", "label"],
+              "properties": {
+                "value": {
+                  "$ref": "#/$defs/value"
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "For template addresses: number of indices (0-based)."
+          },
+          "colorFormat": {
+            "enum": ["rgbFloat", "rgbInt", "hsvFloat", "hex"]
+          },
+          "feedback": {
+            "type": "boolean",
+            "default": false,
+            "description": "The installation echoes the current value on the same address."
+          },
+          "dangerous": {
+            "type": "boolean",
+            "default": false,
+            "description": "Visible or irreversible effect on a live show; the pult uses hold-to-confirm."
+          },
+          "hint": {
+            "type": "string",
+            "description": "Suggested control type (fader, knob, xy, toggle, button, holdToConfirm, segmented, sceneList, buttonGrid, colorPicker, …)."
+          },
+          "group": {
+            "type": "string",
+            "description": "Logical group, e.g. Wall, Scenes, Audio."
+          }
+        }
+      }
+    },
+    "telemetry": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["address", "type", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "type": {
+            "enum": ["float", "int", "string", "bool"]
+          },
+          "label": {
+            "type": "string"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "rateHz": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["flash", "restart", "blackout", "idle", "pause"]
+      },
+      "description": "System actions handled via /otakoyi/<action> (docs/integration.md step 3)."
+    },
+    "pairingOverlay": {
+      "type": "boolean",
+      "description": "The installation shows the pairing card on /otakoyi/pair (tools/touchdesigner/otakoyi_pairing.tox)."
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

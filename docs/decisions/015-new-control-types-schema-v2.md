@@ -1,6 +1,6 @@
 # 015 — New control types and schema v2
 
-**Status:** Accepted · 2026-10-22
+**Status:** Accepted
 
 ## Context
 

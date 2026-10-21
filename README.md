@@ -1,15 +1,38 @@
 # Otakoyi Control
 
-Branded OSC controller for generative installations. The studio builds a pult per installation;
-the client logs in and controls it from an iPhone, an iPad or a browser.
+Branded OSC controller for Otakoyi's generative installations. The studio designs a pult per
+installation in Figma; the client pairs a phone or tablet with the installation and controls it
+from the app (iOS first) or a web pult in the browser. A small bridge on the installation machine
+turns that into plain OSC for TouchDesigner or any other OSC software.
+
+## Where to start
+
+| You are…                                                                                    | Read                                       |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Working on an installation** (TouchDesigner, browser engine, …) that must be controllable | [docs/integration.md](docs/integration.md) |
+| Working on this repo (app, bridge, schema, design system)                                   | [AGENTS.md](AGENTS.md)                     |
+| Looking for why something is the way it is                                                  | [docs/decisions](docs/decisions/README.md) |
+| Designing in Figma                                                                          | [docs/figma.md](docs/figma.md)             |
+
+## How it fits together
+
+```
+Figma page per client ──exporter──▶ config JSON
+                                        │
+iPhone / iPad / browser ◀──WebSocket──▶ bridge (installation machine)
+                                        │ OSC/UDP :7000      ▲ feedback :9000
+                                        ▼                    │
+                              TouchDesigner / any OSC software
+```
 
 - `apps/mobile` — Expo app (iOS first) and the web pult
-- `packages/*` — OSC codec, config schema, tokens, control logic, design system
+- `apps/bridge` — the bridge: WebSocket for pults, OSC to the installation, lease, log, pairing
+- `packages/*` — OSC codec, config schema, protocol, tokens, control logic, design system
+- `tools/touchdesigner` — reference TouchDesigner target and the pairing overlay `.tox`
+- `docs/osc-contract.schema.json` — what an installation declares it accepts over OSC
 
 ```bash
 pnpm install
 pnpm verify
-pnpm --filter @osc/mobile start
+pnpm --filter @osc/mobile build:web && OTAKOYI_PIN=2468 pnpm bridge   # http://localhost:8080
 ```
-
-Start with [AGENTS.md](AGENTS.md) and [docs/decisions](docs/decisions/README.md).
