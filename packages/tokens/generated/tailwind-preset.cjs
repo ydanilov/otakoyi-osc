@@ -45,10 +45,10 @@ module.exports = {
       },
       "borderRadius": {
         "none": "0px",
-        "sm": "6px",
-        "md": "10px",
-        "lg": "16px",
-        "xl": "24px",
+        "sm": "8px",
+        "md": "12px",
+        "lg": "22px",
+        "xl": "28px",
         "full": "9999px",
         "DEFAULT": "var(--radius)"
       },

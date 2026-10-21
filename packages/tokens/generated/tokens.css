@@ -27,7 +27,7 @@
   --status-studio: 155 123 255;
   --control-track: 21 23 29;
   --control-fill: 141 255 46;
-  --radius: 10px;
+  --radius: 12px;
 }
 
 .light {
@@ -58,5 +58,5 @@
   --status-studio: 155 123 255;
   --control-track: 213 217 223;
   --control-fill: 79 145 22;
-  --radius: 10px;
+  --radius: 12px;
 }
