@@ -18,6 +18,7 @@ const { values } = parseArgs({
     host: { type: "string", default: "0.0.0.0" },
     web: { type: "string", default: resolve(repo, "apps/mobile/dist") },
     logs: { type: "string", default: resolve(repo, "apps/bridge/logs") },
+    data: { type: "string", default: resolve(repo, "apps/bridge/data") },
   },
 });
 
@@ -38,6 +39,7 @@ const server = await startServer({
   host: values.host,
   webDir: values.web,
   logDir: values.logs,
+  dataDir: values.data,
   debug: process.env.OTAKOYI_DEBUG === "1",
   auth: { clientPin: pin, studioKey: process.env.OTAKOYI_STUDIO_KEY || undefined },
 });

@@ -74,6 +74,8 @@ export class Bridge {
   private online = new Map<string, boolean>();
   /** Device whose `set` is being applied; null while applying installation feedback. */
   private applyingFor: Peer | null = null;
+  /** Device behind a value applied over HTTP (no socket of its own). */
+  private applyingBy: string | null = null;
 
   constructor(
     readonly config: InstallationConfig,
@@ -204,6 +206,46 @@ export class Bridge {
     }
   }
 
+  /**
+   * Authenticate an HTTP request (image upload, prompt presets) with the same secrets as `hello`.
+   * Returns who is asking, or null.
+   */
+  authorize(secret: string | undefined, device: string | undefined): Holder | null {
+    const dev = (device ?? "").slice(0, 64) || "http";
+    if (this.auth.studioKey && secret && same(this.auth.studioKey, secret))
+      return { device: dev, role: "studio" };
+    if (
+      this.auth.clientPin === undefined ||
+      (secret !== undefined && same(this.auth.clientPin, secret))
+    )
+      return { device: dev, role: "client" };
+    return null;
+  }
+
+  /** May this caller change controls right now (holds the lease, or is the studio)? */
+  canControl(who: Holder): boolean {
+    return who.role === "studio" || this.lease.canSend(who.device);
+  }
+
+  /**
+   * Apply a value the bridge itself decided (e.g. the path of a validated image upload): sends the
+   * OSC, syncs every device and logs it. The caller has checked `canControl`.
+   */
+  applyValue(pult: string, id: string, value: ControlValue, who: Holder): boolean {
+    const store = this.stores.get(pult);
+    const control = store?.control(id);
+    if (!store || !control) return false;
+    if (control.studioOnly && who.role !== "studio") return false;
+    this.applyingBy = who.device;
+    try {
+      store.interact(control, value);
+    } finally {
+      this.applyingBy = null;
+    }
+    this.log("set", who, { pult, id, value });
+    return true;
+  }
+
   get devices(): Holder[] {
     return [...this.sessions.values()].flatMap((s) => (s.holder ? [s.holder] : []));
   }
@@ -262,7 +304,7 @@ export class Bridge {
 
   private broadcastValue(pult: string, id: string, value: ControlValue) {
     const origin = this.applyingFor;
-    const by = origin ? (this.sessions.get(origin)?.holder?.device ?? null) : null;
+    const by = origin ? (this.sessions.get(origin)?.holder?.device ?? null) : this.applyingBy;
     this.broadcast({ t: "value", pult, id, value, by }, origin);
   }
 
