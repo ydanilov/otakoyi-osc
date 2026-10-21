@@ -50,6 +50,8 @@ export interface MediaLibrary {
 
 /** Prompt presets on the bridge (or a demo stand-in). */
 export interface PromptPresets {
+  /** true: the bridge re-sends a live preset that was edited or deleted (the control must not). */
+  readonly remote?: boolean;
   list(pult: string, control: string): Promise<PromptPresetDto[]>;
   create(
     pult: string,
@@ -60,7 +62,12 @@ export interface PromptPresets {
     id: string,
     patch: { label?: string; text?: string; on?: boolean },
   ): Promise<PromptPresetDto>;
+  /** Soft delete; restorable with `restore` for a while (Undo toast). */
   remove(id: string): Promise<unknown>;
+  restore(id: string): Promise<PromptPresetDto>;
+  duplicate(id: string): Promise<PromptPresetDto>;
+  /** Persist a new order (every preset of the control, once). */
+  reorder(pult: string, control: string, ids: string[]): Promise<PromptPresetDto[]>;
 }
 
 export interface ControlServices {
@@ -90,7 +97,15 @@ export const stubServices: ControlServices = {
     show: unavailable,
     remove: unavailable,
   },
-  prompts: { list: async () => [], create: unavailable, update: unavailable, remove: unavailable },
+  prompts: {
+    list: async () => [],
+    create: unavailable,
+    update: unavailable,
+    remove: unavailable,
+    restore: unavailable,
+    duplicate: unavailable,
+    reorder: unavailable,
+  },
 };
 
 const ServicesContext = React.createContext<ControlServices>(stubServices);
@@ -152,7 +167,8 @@ export function createMemoryServices(
       },
     },
     prompts: {
-      list: async (p, c) => presets.filter((x) => x.pultId === p && x.controlId === c),
+      list: async (p, c) =>
+        presets.filter((x) => x.pultId === p && x.controlId === c && !x.deletedAt),
       create: async (p, c, x) => {
         const preset = {
           id: `p${++n}`,
@@ -175,7 +191,29 @@ export function createMemoryServices(
         return next;
       },
       remove: async (id) => {
-        presets = presets.filter((x) => x.id !== id);
+        presets = presets.map((x) => (x.id === id ? { ...x, deletedAt: now() } : x));
+      },
+      restore: async (id) => {
+        const cur = presets.find((x) => x.id === id);
+        if (!cur) throw new Error("Too late to undo");
+        const back = { ...cur };
+        delete back.deletedAt;
+        presets = presets.map((x) => (x.id === id ? back : x));
+        return back;
+      },
+      duplicate: async (id) => {
+        const cur = presets.find((x) => x.id === id);
+        if (!cur) throw new Error("No such preset");
+        const copy = { ...cur, id: `p${++n}`, label: `${cur.label} copy` };
+        const i = presets.indexOf(cur);
+        presets = [...presets.slice(0, i + 1), copy, ...presets.slice(i + 1)];
+        return copy;
+      },
+      reorder: async (p, c, ids) => {
+        const mine = presets.filter((x) => x.pultId === p && x.controlId === c);
+        const queue = ids.flatMap((id) => mine.filter((x) => x.id === id));
+        presets = presets.map((x) => (mine.includes(x) ? (queue.shift() ?? x) : x));
+        return presets.filter((x) => x.pultId === p && x.controlId === c && !x.deletedAt);
       },
     },
   };

@@ -422,6 +422,11 @@ export const Prompt = z.object({
   maxPresets: z.number().int().min(1).max(200).default(32),
   /** Initial blend amount (0 = all A, 1 = all B). */
   default: z.number().min(0).max(1).default(0),
+  /**
+   * How long the installation has to confirm a new prompt (echo of the text, or
+   * `<address>/applied`) before the pult shows Error. 0 = no confirmation, applied at once.
+   */
+  confirmMs: z.number().int().min(0).max(60000).default(4000),
 });
 
 export const Control = z.discriminatedUnion("type", [
@@ -688,6 +693,8 @@ export const PromptPreset = z.object({
   on: z.boolean().default(true),
   createdAt: z.string(),
   updatedAt: z.string(),
+  /** Soft delete: restorable (Undo) until the bridge purges it. */
+  deletedAt: z.string().optional(),
 });
 export type PromptPreset = z.infer<typeof PromptPreset>;
 

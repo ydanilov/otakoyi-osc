@@ -10,35 +10,16 @@ import type { ControlProps } from "../controls/types";
 import { useLayout } from "../controls/useLayout";
 import { useTheme } from "../theme/ThemeProvider";
 import { PHONE_BREAKPOINT, paginate, type Cell, type Screen } from "./layout";
-import type { ControlMode, PultStore } from "./store";
 
-const StoreContext = React.createContext<PultStore | null>(null);
+import { useControlMode, useControlValue, usePultStore } from "./context";
 
-export function PultProvider({ store, children }: { store: PultStore; children: React.ReactNode }) {
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
-}
-
-export function usePultStore(): PultStore {
-  const s = React.useContext(StoreContext);
-  if (!s) throw new Error("usePultStore must be used inside <PultProvider>");
-  return s;
-}
-
-export function useControlValue(id: string): ControlValue {
-  const store = usePultStore();
-  return React.useSyncExternalStore(
-    (fn) => store.subscribe(id, fn),
-    () => store.get(id),
-  );
-}
-
-export function useControlMode(): ControlMode {
-  const store = usePultStore();
-  return React.useSyncExternalStore(
-    (fn) => store.subscribeMode(fn),
-    () => store.mode,
-  );
-}
+export {
+  PultProvider,
+  useControlMeta,
+  useControlMode,
+  useControlValue,
+  usePultStore,
+} from "./context";
 
 /** One control wired to the store. Studio-only controls are hidden unless the session is a studio session. */
 function ConnectedControl({ control, studio }: { control: AnyControl; studio: boolean }) {

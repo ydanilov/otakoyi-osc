@@ -13,7 +13,8 @@ import {
 import { Fader } from "./Fader";
 import { HoldToConfirm } from "./HoldToConfirm";
 import { Knob } from "./Knob";
-import { ImageUpload, MicControl, PromptControl } from "./media";
+import { ImageUpload, MicControl } from "./media";
+import { PromptControl } from "./Prompt";
 import { Meter } from "./Meter";
 import { Thumbstick } from "./Thumbstick";
 import type { ControlProps } from "./types";

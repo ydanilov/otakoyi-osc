@@ -1,23 +1,14 @@
-import {
-  analyzeBlock,
-  createBeatDetector,
-  isPromptValue,
-  promptValue,
-  type ControlValue,
-  type MicFrame,
-} from "@osc/controls";
-import type { ImageAssetDto, PromptPresetDto } from "@osc/protocol";
-import { Control, type ControlOf } from "@osc/schema";
+import { analyzeBlock, createBeatDetector, type ControlValue, type MicFrame } from "@osc/controls";
+import type { ImageAssetDto } from "@osc/protocol";
+import type { ControlOf } from "@osc/schema";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import { Button } from "@osc/ui/components/ui/button";
-import { Input } from "@osc/ui/components/ui/input";
 import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
 import { useControlServices } from "../platform/services";
+import { useControlMeta } from "../pult/context";
 import { ControlFrame } from "./ControlFrame";
 import { Led } from "./discrete";
-import { Fader } from "./Fader";
 import type { ControlProps } from "./types";
 
 const ASPECT: Record<ControlOf<"image">["aspect"], number | undefined> = {
@@ -42,10 +33,11 @@ export function ImageUpload({ control: c, value, onChange, disabled }: ControlPr
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const current = asImage(value);
+  const { rev } = useControlMeta(c.id); // bumped when another pult changed the library
 
   const refresh = React.useCallback(() => {
     if (c.library) media.list(pult, c.id).then(setItems, () => {});
-  }, [media, pult, c.id, c.library]);
+  }, [media, pult, c.id, c.library, rev]); // eslint-disable-line react-hooks/exhaustive-deps
   React.useEffect(refresh, [refresh]);
 
   const showLocally = (a: ImageAssetDto) => {
@@ -243,167 +235,6 @@ export function MicControl({ control: c, value, onChange, disabled }: ControlPro
           {error ?? "The microphone isn't available on this device yet"}
         </Text>
       )}
-    </ControlFrame>
-  );
-}
-
-/**
- * Prompt (ADR-015): client-made presets on the bridge; assign one to A (and B), switch presets on
- * or off, and blend A↔B. The live texts and the mix are the control's value.
- */
-export function PromptControl({ control: c, value, onChange, disabled }: ControlProps<"prompt">) {
-  const { prompts, pult } = useControlServices();
-  const [presets, setPresets] = React.useState<PromptPresetDto[]>([]);
-  const [sel, setSel] = React.useState<{ a: string | null; b: string | null }>({
-    a: null,
-    b: null,
-  });
-  const [draft, setDraft] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
-  const current = isPromptValue(value) ? value : { a: null, b: null, mix: c.default };
-
-  const refresh = React.useCallback(
-    () => prompts.list(pult, c.id).then(setPresets, (e: Error) => setError(e.message)),
-    [prompts, pult, c.id],
-  );
-  React.useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const emit = (list: PromptPresetDto[], s: typeof sel, mix: number) =>
-    onChange(promptValue(list, { ...s, mix }, c.maxLength));
-  const run = async (fn: () => Promise<unknown>) => {
-    setError(null);
-    try {
-      await fn();
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
-  const assign = (slot: "a" | "b", id: string) => {
-    const next = { ...sel, [slot]: sel[slot] === id ? null : id };
-    setSel(next);
-    emit(presets, next, current.mix);
-  };
-  const toggleOn = (p: PromptPresetDto) =>
-    run(async () => {
-      const updated = await prompts.update(p.id, { on: !p.on });
-      const list = presets.map((x) => (x.id === p.id ? updated : x));
-      setPresets(list);
-      if (sel.a === p.id || sel.b === p.id) emit(list, sel, current.mix);
-    });
-  const save = () =>
-    run(async () => {
-      const text = draft.trim();
-      if (!text) return;
-      await prompts.create(pult, c.id, { label: text.slice(0, 24), text });
-      setDraft("");
-      await refresh();
-    });
-
-  const mixControl = React.useMemo(
-    () =>
-      Control.parse({
-        id: `${c.id}-mix`,
-        type: "fader",
-        mode: "crossfade",
-        address: `${c.address}/mix`,
-        orientation: "horizontal",
-        labels: { a: "A", b: "B" },
-        default: c.default,
-        showValue: false,
-        label: "Blend",
-      }) as ControlOf<"fader">,
-    [c.id, c.address, c.default],
-  );
-
-  return (
-    <ControlFrame label={c.label} disabled={disabled}>
-      <View className="flex-1 gap-2">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="grow-0">
-          <View className="flex-row gap-2">
-            {presets.length === 0 && (
-              <Text className="text-muted-foreground py-2 text-xs">
-                No prompts yet — add one below.
-              </Text>
-            )}
-            {presets.map((p) => (
-              <View key={p.id} className="bg-card border-border w-40 gap-1 rounded-md border p-2">
-                <Pressable
-                  disabled={disabled}
-                  onPress={() => toggleOn(p)}
-                  accessibilityRole="switch"
-                  accessibilityState={{ checked: p.on }}
-                  accessibilityLabel={`${p.label} on`}
-                  className="flex-row items-center gap-2"
-                >
-                  <Led on={p.on} />
-                  <Text className="text-foreground flex-1 text-xs font-medium" numberOfLines={1}>
-                    {p.label}
-                  </Text>
-                </Pressable>
-                <View className="flex-row gap-1">
-                  {(c.blend ? (["a", "b"] as const) : (["a"] as const)).map((slot) => {
-                    const active = sel[slot] === p.id;
-                    return (
-                      <Pressable
-                        key={slot}
-                        disabled={disabled}
-                        onPress={() => assign(slot, p.id)}
-                        accessibilityRole="radio"
-                        accessibilityState={{ selected: active }}
-                        accessibilityLabel={`${p.label} to ${slot.toUpperCase()}`}
-                        className={cn(
-                          "min-h-8 flex-1 items-center justify-center rounded-sm",
-                          active ? "bg-primary" : "bg-muted",
-                        )}
-                      >
-                        <Text
-                          className={cn(
-                            "font-mono text-xs",
-                            active ? "text-primary-foreground" : "text-muted-foreground",
-                          )}
-                        >
-                          {c.blend ? slot.toUpperCase() : "Live"}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-        {c.blend && (
-          <View className="min-h-16 flex-1">
-            <Fader
-              control={mixControl}
-              value={current.mix}
-              onChange={(v) => typeof v === "number" && emit(presets, sel, v)}
-              disabled={disabled}
-            />
-          </View>
-        )}
-        <View className="flex-row items-center gap-2">
-          <Input
-            className="flex-1"
-            value={draft}
-            onChangeText={setDraft}
-            maxLength={c.maxLength}
-            placeholder="New prompt…"
-            editable={!disabled}
-            onSubmitEditing={save}
-          />
-          <Button size="sm" variant="secondary" disabled={disabled || !draft.trim()} onPress={save}>
-            <Text>Save</Text>
-          </Button>
-        </View>
-        {error && (
-          <Text className="text-status-critical text-xs" numberOfLines={1}>
-            {error}
-          </Text>
-        )}
-      </View>
     </ControlFrame>
   );
 }

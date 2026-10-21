@@ -1,6 +1,14 @@
 import { timingSafeEqual } from "node:crypto";
 import { message, type OscMessage } from "@osc/core";
-import { coerceValue, PultStore, type ControlValue } from "@osc/controls";
+import {
+  coerceValue,
+  isPromptValue,
+  promptConfirms,
+  PultStore,
+  reapplyAfterChange,
+  type ControlValue,
+  type PromptValue,
+} from "@osc/controls";
 import {
   MIN_PROTOCOL_VERSION,
   PROTOCOL_VERSION,
@@ -13,7 +21,7 @@ import {
   type ServerMessage,
   type TargetStatus,
 } from "@osc/protocol";
-import { actionsOf, type InstallationConfig, type Target } from "@osc/schema";
+import { actionsOf, type Control, type InstallationConfig, type Target } from "@osc/schema";
 import { Lease } from "./lease";
 import type { Supervisor } from "./supervisor";
 
@@ -102,6 +110,18 @@ export class Bridge {
   readonly modes: InstallationModes = { blackout: false, idle: false, pause: false };
   private activityRing: ActivityEntry[] = [];
   private activityPending: ActivityEntry[] = [];
+  /** Prompts waiting for the installation to confirm, by `pult/control`. */
+  private promptPending = new Map<
+    string,
+    {
+      pult: string;
+      control: Extract<Control, { type: "prompt" }>;
+      sent: PromptValue;
+      seq: number;
+      until: number;
+    }
+  >();
+  private promptSeq = 0;
 
   constructor(
     readonly config: InstallationConfig,
@@ -177,6 +197,7 @@ export class Bridge {
         } finally {
           this.applyingFor = null;
         }
+        this.afterSend(msg.pult, control, value);
         this.log("set", who, { pult: msg.pult, id: msg.id, value });
         return;
       }
@@ -189,6 +210,7 @@ export class Bridge {
     this.io.supervisor?.heartbeat(targetId);
     if (msg.address === OSC_PAIR_REQUEST)
       return this.setPairing(!this.pairingUntil, { device: `target:${targetId}` });
+    this.checkPromptConfirm(msg);
     for (const store of this.stores.values()) store.receive(msg);
   }
 
@@ -248,6 +270,11 @@ export class Bridge {
       }
       this.broadcastStatus(st);
     }
+    for (const [key, p] of this.promptPending)
+      if (this.io.now() >= p.until) {
+        this.promptPending.delete(key);
+        this.broadcast({ t: "prompt", pult: p.pult, id: p.control.id, state: "error", seq: p.seq });
+      }
     if (this.activityPending.length) {
       const entries = this.activityPending;
       this.activityPending = [];
@@ -343,8 +370,81 @@ export class Bridge {
     } finally {
       this.applyingBy = null;
     }
+    this.afterSend(pult, control, value);
     this.log("set", who, { pult, id, value });
     return true;
+  }
+
+  /**
+   * A control's data on the bridge changed (prompt presets, image library): log it and tell every
+   * pult to fetch it again.
+   */
+  dataChanged(
+    pult: string,
+    id: string,
+    kind: "prompts" | "images",
+    who: Holder,
+    extra: Record<string, unknown> = {},
+  ) {
+    this.log(kind === "prompts" ? "prompt" : "image", who, { pult, id, ...extra });
+    this.broadcast({ t: "data", pult, id, kind });
+  }
+
+  /**
+   * A preset changed or was deleted: if it is live on the control, send the control again with
+   * the preset re-resolved (a deleted preset empties its slot: the installation's base look).
+   */
+  reapplyPrompt(
+    pult: string,
+    id: string,
+    presets: readonly { id: string; text: string; on: boolean }[],
+    presetId: string,
+    who: Holder,
+  ): boolean {
+    const store = this.stores.get(pult);
+    const control = store?.control(id);
+    const current = store?.get(id);
+    if (!store || control?.type !== "prompt" || !isPromptValue(current)) return false;
+    const next = reapplyAfterChange(current, presets, presetId, control.maxLength);
+    return next ? this.applyValue(pult, id, next, who) : false;
+  }
+
+  /** After a control sent OSC: a prompt waits for the installation to confirm (Applying → On / Error). */
+  private afterSend(pult: string, control: Control, value: ControlValue) {
+    if (control.type !== "prompt" || !isPromptValue(value)) return;
+    const seq = ++this.promptSeq;
+    const key = `${pult}/${control.id}`;
+    if (control.confirmMs === 0) {
+      this.promptPending.delete(key);
+      return this.broadcast({ t: "prompt", pult, id: control.id, state: "applied", seq });
+    }
+    this.promptPending.set(key, {
+      pult,
+      control,
+      sent: value,
+      seq,
+      until: this.io.now() + control.confirmMs,
+    });
+    this.broadcast({ t: "prompt", pult, id: control.id, state: "applying", seq });
+  }
+
+  private checkPromptConfirm(msg: OscMessage) {
+    if (!this.promptPending.size) return;
+    const first = msg.args[0];
+    const text = first && "value" in first ? first.value : undefined;
+    for (const [key, p] of this.promptPending)
+      if (
+        promptConfirms(p.control.address, p.sent, p.control.blend, { address: msg.address, text })
+      ) {
+        this.promptPending.delete(key);
+        this.broadcast({
+          t: "prompt",
+          pult: p.pult,
+          id: p.control.id,
+          state: "applied",
+          seq: p.seq,
+        });
+      }
   }
 
   get devices(): Holder[] {

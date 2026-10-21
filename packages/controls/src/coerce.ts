@@ -94,7 +94,8 @@ export function coerceValue(c: Control, v: unknown): ControlValue | undefined {
       const a = text(v.a);
       const b = c.blend ? text(v.b) : null;
       if (a === undefined || b === undefined) return undefined;
-      return { a, b, mix: clamp(v.mix) };
+      const ref = (x: unknown) => (typeof x === "string" && x.length <= 64 ? x : null);
+      return { a, b, mix: clamp(v.mix), aId: ref(v.aId), bId: c.blend ? ref(v.bId) : null };
     }
     case "image":
       // The path is decided by the bridge after a validated upload (HTTP), never by a device.

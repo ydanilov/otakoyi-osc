@@ -30,7 +30,17 @@ export interface InstallationModes {
 /** One line of the activity feed (drawer → Installation). */
 export interface ActivityEntry {
   ts: string;
-  event: "connect" | "disconnect" | "set" | "lease" | "action" | "mode" | "pairing" | "rejected";
+  event:
+    | "connect"
+    | "disconnect"
+    | "set"
+    | "lease"
+    | "action"
+    | "mode"
+    | "pairing"
+    | "rejected"
+    | "prompt"
+    | "image";
   device?: string | undefined;
   role?: string | undefined;
   [k: string]: unknown;
@@ -119,6 +129,13 @@ export type ServerMessage =
   | { t: "status"; targets: TargetStatus[]; modes?: InstallationModes }
   /** v2: new activity since the last batch (sent at most once a second), oldest first. */
   | { t: "activity"; entries: ActivityEntry[] }
+  /**
+   * v2: confirmation of the last prompt sent by a prompt control: `applying` right after the
+   * bridge sent it, then `applied` when the installation confirms or `error` after `confirmMs`.
+   */
+  | { t: "prompt"; pult: string; id: string; state: "applying" | "applied" | "error"; seq: number }
+  /** v2: a control's data on the bridge changed (prompt presets, image library): fetch it again. */
+  | { t: "data"; pult: string; id: string; kind: "prompts" | "images" }
   | { t: "error"; code: ErrorCode; message: string }
   | { t: "pong"; at: number }
   /** Pairing QR shown on the installation until `until` (epoch ms), or hidden (null). */

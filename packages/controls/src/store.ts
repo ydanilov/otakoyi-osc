@@ -1,6 +1,7 @@
 import { argValue, type OscMessage } from "@osc/core";
 import { initialValue, isGroupValue, messagesFor, type ControlValue } from "./logic";
 import { knobMode, wrapHue } from "./modes";
+import type { PromptAck } from "./prompt";
 import {
   targetOf,
   type AnyControl,
@@ -37,6 +38,11 @@ export class PultStore {
   private modeListeners = new Set<Listener>();
   private changeListeners = new Set<(id: string, value: ControlValue) => void>();
   private byFeedback = new Map<string, Control[]>();
+  /** Per control: confirmation of the last prompt sent, and a revision of its server-side data. */
+  private acks = new Map<string, PromptAck>();
+  private revs = new Map<string, number>();
+  private metaListeners = new Map<string, Set<Listener>>();
+  private localSeq = 0;
   mode: ControlMode = "control";
 
   constructor(
@@ -91,6 +97,37 @@ export class PultStore {
     return this.controls().find((c) => c.id === id);
   }
 
+  /** Confirmation state of the last prompt this control sent (bridge `prompt` message). */
+  ack(id: string): PromptAck | null {
+    return this.acks.get(id) ?? null;
+  }
+
+  /** An older ack never replaces a newer one. */
+  setAck(id: string, ack: PromptAck) {
+    const cur = this.acks.get(id);
+    if (cur && cur.seq > ack.seq) return;
+    if (cur && cur.seq === ack.seq && cur.state === ack.state) return;
+    this.acks.set(id, ack);
+    this.metaListeners.get(id)?.forEach((f) => f());
+  }
+
+  /** Bumped when a control's data on the bridge changed (prompt presets, image library). */
+  rev(id: string): number {
+    return this.revs.get(id) ?? 0;
+  }
+
+  bumpRev(id: string) {
+    this.revs.set(id, this.rev(id) + 1);
+    this.metaListeners.get(id)?.forEach((f) => f());
+  }
+
+  subscribeMeta(id: string, fn: Listener): () => void {
+    const set = this.metaListeners.get(id) ?? new Set();
+    set.add(fn);
+    this.metaListeners.set(id, set);
+    return () => set.delete(fn);
+  }
+
   setMode(mode: ControlMode) {
     this.mode = mode;
     this.modeListeners.forEach((f) => f());
@@ -111,6 +148,9 @@ export class PultStore {
     const msgs = messagesFor(control, value);
     const target = targetOf(this.config, this.pult, control);
     if (msgs.length && target) this.transport.send(target, msgs);
+    // Direct OSC (no bridge) has nobody to confirm a prompt: treat it as applied.
+    if (control.type === "prompt")
+      this.setAck(control.id, { state: "applied", seq: ++this.localSeq });
     return true;
   }
 

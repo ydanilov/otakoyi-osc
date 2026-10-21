@@ -3,13 +3,21 @@ import type { ControlOf, PromptPreset } from "@osc/schema";
 import { JsonFile, newId } from "./storage";
 
 export type PromptResult<T> =
-  { ok: true; value: T } | { ok: false; status: 400 | 404 | 409; message: string };
+  { ok: true; value: T } | { ok: false; status: 400 | 404 | 409 | 410; message: string };
 
 type Limits = Pick<ControlOf<"prompt">, "maxLength" | "maxPresets">;
 
 /**
- * Prompt presets created by clients for `prompt` controls (ADR-015). Installation state, kept by the
- * bridge in `<dir>/prompts.json` and never written into the config.
+ * How long a deleted preset can be restored (the pult shows Undo for 5 s; the bridge keeps it
+ * longer so a slow network never loses an undo). Purged after that.
+ */
+export const UNDO_WINDOW_MS = 30_000;
+
+/**
+ * Prompt presets created by clients for `prompt` controls (ADR-015, ADR-016). Installation state,
+ * kept by the bridge in `<dir>/prompts.json` and never written into the config. The order of the
+ * list is the order on the pult (reorder is persisted). Deletes are soft: restorable for
+ * UNDO_WINDOW_MS.
  */
 export class PromptStore {
   private file: JsonFile<PromptPreset[]>;
@@ -24,13 +32,31 @@ export class PromptStore {
 
   private async load() {
     if (!this.items) this.items = await this.file.read();
+    // Purge deletes that can no longer be undone.
+    const t = this.now();
+    const kept = this.items.filter(
+      (p) => !p.deletedAt || t - Date.parse(p.deletedAt) < UNDO_WINDOW_MS,
+    );
+    if (kept.length !== this.items.length) {
+      this.items = kept;
+      await this.file.write(kept);
+    }
     return this.items;
   }
 
-  async list(pultId: string, controlId: string): Promise<PromptPreset[]> {
-    return (await this.load()).filter((p) => p.pultId === pultId && p.controlId === controlId);
+  private async save(items: PromptPreset[]) {
+    this.items = items;
+    await this.file.write(items);
   }
 
+  /** Live presets of a control, in pult order. */
+  async list(pultId: string, controlId: string): Promise<PromptPreset[]> {
+    return (await this.load()).filter(
+      (p) => p.pultId === pultId && p.controlId === controlId && !p.deletedAt,
+    );
+  }
+
+  /** A preset, including a soft-deleted one. */
   async get(id: string) {
     return (await this.load()).find((p) => p.id === id);
   }
@@ -56,8 +82,7 @@ export class PromptStore {
       createdAt: at,
       updatedAt: at,
     };
-    this.items = [...(await this.load()), preset];
-    await this.file.write(this.items);
+    await this.save([...(await this.load()), preset]);
     return { ok: true, value: preset };
   }
 
@@ -67,7 +92,7 @@ export class PromptStore {
     patch: { label?: unknown; text?: unknown; on?: unknown },
   ): Promise<PromptResult<PromptPreset>> {
     const items = await this.load();
-    const cur = items.find((p) => p.id === id);
+    const cur = items.find((p) => p.id === id && !p.deletedAt);
     if (!cur) return { ok: false, status: 404, message: "No such preset" };
     const bad = check(patch, limits, false);
     if (bad) return bad;
@@ -78,17 +103,78 @@ export class PromptStore {
       ...(patch.on !== undefined ? { on: patch.on as boolean } : {}),
       updatedAt: new Date(this.now()).toISOString(),
     };
-    this.items = items.map((p) => (p.id === id ? next : p));
-    await this.file.write(this.items);
+    await this.save(items.map((p) => (p.id === id ? next : p)));
     return { ok: true, value: next };
   }
 
-  async remove(id: string): Promise<boolean> {
+  /** Copy a preset right after the original ("Duplicate" in the card's actions). */
+  async duplicate(id: string, limits: Limits): Promise<PromptResult<PromptPreset>> {
     const items = await this.load();
-    if (!items.some((p) => p.id === id)) return false;
-    this.items = items.filter((p) => p.id !== id);
-    await this.file.write(this.items);
-    return true;
+    const cur = items.find((p) => p.id === id && !p.deletedAt);
+    if (!cur) return { ok: false, status: 404, message: "No such preset" };
+    if ((await this.list(cur.pultId, cur.controlId)).length >= limits.maxPresets)
+      return { ok: false, status: 409, message: `At most ${limits.maxPresets} presets` };
+    const at = new Date(this.now()).toISOString();
+    const copy: PromptPreset = {
+      ...cur,
+      id: newId("p"),
+      label: `${cur.label} copy`.slice(0, 64),
+      createdAt: at,
+      updatedAt: at,
+    };
+    const i = items.indexOf(cur);
+    await this.save([...items.slice(0, i + 1), copy, ...items.slice(i + 1)]);
+    return { ok: true, value: copy };
+  }
+
+  /** Soft delete. Returns the deleted preset (restorable until the undo window ends). */
+  async remove(id: string): Promise<PromptPreset | null> {
+    const items = await this.load();
+    const cur = items.find((p) => p.id === id && !p.deletedAt);
+    if (!cur) return null;
+    const gone = { ...cur, deletedAt: new Date(this.now()).toISOString() };
+    await this.save(items.map((p) => (p.id === id ? gone : p)));
+    return gone;
+  }
+
+  /** Undo a delete within the window; the preset returns to its place in the list. */
+  async restore(id: string, limits: Limits): Promise<PromptResult<PromptPreset>> {
+    const items = await this.load();
+    const cur = items.find((p) => p.id === id);
+    if (!cur) return { ok: false, status: 410, message: "Too late to undo" };
+    if (!cur.deletedAt) return { ok: true, value: cur };
+    if ((await this.list(cur.pultId, cur.controlId)).length >= limits.maxPresets)
+      return { ok: false, status: 409, message: `At most ${limits.maxPresets} presets` };
+    const { deletedAt: _, ...back } = cur;
+    await this.save(items.map((p) => (p.id === id ? back : p)));
+    return { ok: true, value: back };
+  }
+
+  /**
+   * New order for a control's presets. `ids` must be exactly its live presets; everything else in
+   * the file keeps its position.
+   */
+  async reorder(
+    pultId: string,
+    controlId: string,
+    ids: unknown,
+  ): Promise<PromptResult<PromptPreset[]>> {
+    const items = await this.load();
+    const mine = items.filter(
+      (p) => p.pultId === pultId && p.controlId === controlId && !p.deletedAt,
+    );
+    if (
+      !Array.isArray(ids) ||
+      ids.length !== mine.length ||
+      new Set(ids).size !== ids.length ||
+      !mine.every((p) => ids.includes(p.id))
+    )
+      return { ok: false, status: 400, message: "ids must list every preset of the control once" };
+    const queue = (ids as string[]).map((id) => mine.find((p) => p.id === id)!);
+    // Slots that held this control's presets get them in the new order.
+    const next = items.map((p) => (mine.includes(p) ? queue.shift()! : p));
+    await this.save(next);
+    return { ok: true, value: next.filter((p) => mine.includes(p)) };
   }
 }
 
