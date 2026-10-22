@@ -181,7 +181,11 @@
               "label": "Room sound",
               "address": "/mic",
               "bands": 4,
-              "outputs": ["level", "bands", "beat"]
+              "outputs": [
+                "level",
+                "bands",
+                "beat"
+              ]
             }
           ],
           "layout": {
@@ -329,7 +333,10 @@
                   "address": "/layers/grid"
                 }
               ],
-              "default": ["data", "audio"]
+              "default": [
+                "data",
+                "audio"
+              ]
             },
             {
               "id": "pan-tilt",

@@ -3,4 +3,5 @@ pnpm-lock.yaml
 td/*.toe
 .claude/
 tools/figma-export/fixtures/*.report.md
+tools/figma-export/fixtures/*.config.json
 tools/figma-plugin/dist/
