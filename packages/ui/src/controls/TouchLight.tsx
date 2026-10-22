@@ -1,6 +1,7 @@
 import {
   Circle,
   Group,
+  Path,
   RadialGradient,
   Skia,
   vec,
@@ -296,15 +297,16 @@ export function useInnerLight(
   return { allowed: light.allowed, colors, cx, cy, c, r, opacity, clip };
 }
 
-/** The inner light in a Skia canvas: draw it right above the element's fill, below its marks. */
-export function InnerLight({ allowed, colors, cx, cy, c, r, opacity, clip }: InnerLightProps) {
+/**
+ * The inner light in a Skia canvas: the element's own shape filled with the radial gradient (so it
+ * can never leave the element). Draw it right above the element's fill, below its marks.
+ */
+export function InnerLight({ allowed, colors, c, r, opacity, clip }: InnerLightProps) {
   if (!allowed) return null;
   return (
-    <Group clip={clip} opacity={opacity}>
-      <Circle cx={cx} cy={cy} r={r}>
-        <RadialGradient c={c} r={r} colors={colors} />
-      </Circle>
-    </Group>
+    <Path path={clip} opacity={opacity}>
+      <RadialGradient c={c} r={r} colors={colors} />
+    </Path>
   );
 }
 

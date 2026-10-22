@@ -227,7 +227,6 @@ function useKnobControls(id: string) {
         max: 100,
         int: true,
         unit: "%",
-        size: "compact",
       }),
       b: knob({
         id: `${id}-b`,
@@ -236,7 +235,6 @@ function useKnobControls(id: string) {
         max: 100,
         int: true,
         unit: "%",
-        size: "compact",
       }),
     };
   }, [id]);
