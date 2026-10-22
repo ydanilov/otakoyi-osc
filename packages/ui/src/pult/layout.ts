@@ -1,4 +1,4 @@
-import type { AnyControl, Cell } from "@osc/schema";
+import type { AnyControl, Cell, PanelPattern } from "@osc/schema";
 
 export { reflowForPhone, type Cell } from "@osc/schema";
 
@@ -86,4 +86,42 @@ export function paginate(cells: Map<string, Cell>, maxRows: number, fit?: Fit): 
     } else screens.push({ ids: [...b.ids], top: b.top, rows: b.bottom - b.top });
   }
   return screens.length ? screens : [{ ids: [], top: 0, rows: 1 }];
+}
+
+/**
+ * Console-Panel patterns (Figma Patterns) fill their column's width up to a maximum — centred when
+ * capped: Fader Bank 640, Knob Row and Camera Control 480, the others 560.
+ */
+export function panelMaxWidth(pattern: PanelPattern): number {
+  if (pattern === "faderBank") return 640;
+  if (pattern === "knobRow" || pattern === "cameraControl") return 480;
+  return 560;
+}
+
+/**
+ * Height (pt) a panel needs (its Figma component's height): it fills the column's height but never
+ * gets shorter — a band that would squeeze it moves to the next screen (`paginate` with `fit`).
+ * `count` = controls in the panel (rows of knobs, list rows).
+ */
+export function panelMinHeight(pattern: PanelPattern, count: number): number {
+  switch (pattern) {
+    case "faderBank":
+      return 466;
+    case "knobGroup":
+      return 58 + Math.ceil(count / 2) * 186 + (Math.ceil(count / 2) - 1) * 12;
+    case "knobRow":
+      return 244;
+    case "layerToggles":
+      return 136;
+    case "cameraControl":
+      return 366;
+    case "sceneBar":
+      return 114;
+    case "showActions":
+      return 146;
+    case "list":
+      return count * 56 + Math.max(0, count - 1);
+    case "stack":
+      return 58 + count * 82 + (count - 1) * 12;
+  }
 }

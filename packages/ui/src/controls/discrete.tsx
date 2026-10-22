@@ -17,6 +17,9 @@ import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
 import { CONTINUOUS, useDepthStyle, usePressState } from "../ds/depth";
 import { LedSwitch } from "../forms/LedSwitch";
+import { Glyph } from "../ds/Glyph";
+import { iconByName } from "../ds/iconByName";
+import type { PhosphorIcon } from "../ds/icons";
 import { useControlServices } from "../platform/services";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
@@ -189,10 +192,40 @@ function LedBar({ on }: { on: boolean }) {
 }
 
 export function ToggleControl(props: ControlProps<"toggle">) {
-  return props.control.style === "switch" ? (
-    <SwitchToggle {...props} />
-  ) : (
-    <ButtonToggle {...props} />
+  if (props.control.style === "switch") return <SwitchToggle {...props} />;
+  if (props.control.style === "led") return <LedToggle {...props} />;
+  return <ButtonToggle {...props} />;
+}
+
+/**
+ * Toggle `style: "led"` (Figma Group Button, the channel strip's ON button): a raised key that stays
+ * raised; the LED strip under the label lights when on. Without a label it reads ON / OFF.
+ */
+function LedToggle({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
+  const on = value === true;
+  const label = c.label ?? (on ? "ON" : "OFF");
+  return (
+    <View className="flex-1">
+      <Pad
+        disabled={disabled}
+        className="min-h-0 gap-1.5 px-1"
+        onPress={() => onChange(!on)}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: on, disabled: !!disabled }}
+        accessibilityLabel={c.label ?? c.id}
+      >
+        <Text
+          className={cn(
+            "text-center text-sm font-semibold uppercase",
+            on ? "text-foreground" : "text-muted-foreground",
+          )}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+        <LedBar on={on} />
+      </Pad>
+    </View>
   );
 }
 
@@ -367,6 +400,7 @@ export function Segmented({ control: c, value, onChange, disabled }: ControlProp
               key={i}
               index={i}
               label={o.label}
+              icon={iconByName(o.icon)}
               active={i === selected}
               disabled={disabled}
               well={well}
@@ -383,6 +417,7 @@ export function Segmented({ control: c, value, onChange, disabled }: ControlProp
 function SegmentOption({
   index,
   label,
+  icon,
   active,
   disabled,
   well,
@@ -390,6 +425,8 @@ function SegmentOption({
 }: {
   index: number;
   label: string;
+  /** Figma Segmented Content=Icon: the icon instead of the text (the label stays its name). */
+  icon?: PhosphorIcon | null;
   active: boolean;
   disabled?: boolean;
   well: { boxShadow: string };
@@ -407,6 +444,7 @@ function SegmentOption({
       onPressMove={lit.onPressMove}
       onPressOut={lit.onPressOut}
       accessibilityRole="radio"
+      accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       className={cn(
         "flex-1 items-center justify-center rounded-full px-2",
@@ -416,25 +454,39 @@ function SegmentOption({
     >
       {/* Touch light: inside the segment's capsule, below the label. */}
       <TouchLightView light={light} radius={t.radius.full} />
-      <Text
-        className="text-sm"
-        style={
-          active
-            ? {
-                color: t.control.fill,
-                textShadowColor: t.control.fill,
-                textShadowRadius: 8,
-                textShadowOffset: { width: 0, height: 0 },
-              }
-            : { color: t.color.textMuted }
-        }
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
+      {icon ? (
+        <View style={active ? iconGlow(t.control.fill) : undefined}>
+          <Glyph icon={icon} size={22} color={active ? t.control.fill : t.color.textMuted} />
+        </View>
+      ) : (
+        <Text
+          className="text-sm"
+          style={
+            active
+              ? {
+                  color: t.control.fill,
+                  textShadowColor: t.control.fill,
+                  textShadowRadius: 8,
+                  textShadowOffset: { width: 0, height: 0 },
+                }
+              : { color: t.color.textMuted }
+          }
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }
+
+/** Glow/Primary on a lit icon (web: drop-shadow filter; native: shadow). */
+const iconGlow = (color: string) => ({
+  shadowColor: color,
+  shadowOpacity: 0.9,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 0 },
+});
 
 /** Grid of pads. `radio` keeps one cell lit, `toggle` latches each cell, `momentary` lights while held. */
 export function ButtonGrid({ control: c, value, onChange, disabled }: ControlProps<"buttonGrid">) {

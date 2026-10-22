@@ -18,9 +18,10 @@ import { useBrand } from "@/lib/brand";
 import { loadingPhase, nextLoadingTick, type LoadingAction } from "@/lib/loading";
 
 /**
- * Client-branded loading screen (ADR-012, ADR-013), from DS parts: the client's full-screen image
- * (`theme.splash`, DS Backdrop with its legibility gradient), their logo (DS Client Logo), the DS
- * Loader "Connecting to …" and a small "Powered by otakoyi". Shown while the bridge handshake runs
+ * Client-branded loading screen (ADR-012, ADR-013; Figma Demo › 02 Loading), from DS parts: the
+ * client's full-screen image (`theme.splash`, DS Backdrop with its legibility gradient), their logo
+ * (DS Client Logo) and the DS Loader "Connecting to …" centred together. The demo shows
+ * "OTAKOYI · Demo · Simulated installation" and "Starting the demo…". Shown while the bridge handshake runs
  * (at least ~600 ms, no maximum). Problems appear inline here (Retry / Enter address), never as an
  * alert.
  */
@@ -37,13 +38,8 @@ export default function Loading() {
   const host = app.session?.bridge?.replace(/^wss?:\/\//, "").replace(/\/ws$/, "");
   const name = brand.name || "The installation";
   const logoName = brand.name || host || "Otakoyi";
-  const phase = loadingPhase({
-    state: s,
-    startedAt,
-    now,
-    name,
-    demo: app.session?.kind === "demo",
-  });
+  const demo = app.session?.kind === "demo";
+  const phase = loadingPhase({ state: s, startedAt, now, name, demo });
 
   // Re-evaluate when the minimum time or the "unreachable" timeout passes.
   React.useEffect(() => {
@@ -72,15 +68,20 @@ export default function Loading() {
     <ThemeProvider brand={brand.theme}>
       <Backdrop source={brand.splash ?? undefined}>
         <View
-          className="flex-1 items-center justify-between px-6"
-          style={{ paddingTop: insets.top + 96, paddingBottom: insets.bottom + 16 }}
+          className="flex-1 items-center justify-center gap-7 px-6"
+          style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
           testID="loading-screen"
         >
-          <ClientLogo
-            name={logoName}
-            source={brand.logo ?? undefined}
-            size={brand.name ? "lg" : "sm"}
-          />
+          {demo ? (
+            // Figma Demo › 02 Loading: the studio's name over the simulated installation.
+            <ClientLogo name="Otakoyi" subtitle="Demo · Simulated installation" size="lg" />
+          ) : (
+            <ClientLogo
+              name={logoName}
+              source={brand.logo ?? undefined}
+              size={brand.name ? "lg" : "sm"}
+            />
+          )}
           <View className="w-full max-w-sm items-center gap-6">
             {phase.phase === "error" ? (
               <View className="gap-3 self-stretch" testID="loading-error">
@@ -103,11 +104,16 @@ export default function Loading() {
                 </View>
               </View>
             ) : (
-              <Loader label={brand.name ? `Connecting to ${brand.name}…` : "Connecting…"} />
+              <Loader
+                label={
+                  demo
+                    ? "Starting the demo…"
+                    : brand.name
+                      ? `Connecting to ${brand.name}…`
+                      : "Connecting…"
+                }
+              />
             )}
-            <Text className="text-muted-foreground text-xs tracking-wider">
-              Powered by <Text className="text-foreground text-xs font-semibold">otakoyi</Text>
-            </Text>
           </View>
         </View>
       </Backdrop>

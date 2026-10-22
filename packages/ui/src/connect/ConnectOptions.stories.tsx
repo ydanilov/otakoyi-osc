@@ -9,8 +9,12 @@ const meta = {
   component: ConnectOptions,
   args: { onScan: fn(), onEnterAddress: fn(), onDemo: fn() },
   decorators: [
-    (Story) => (
-      <View style={{ width: 390, height: 760 }}>
+    (Story, ctx) => (
+      <View
+        style={
+          ctx.args.layout === "tablet" ? { width: 1210, height: 760 } : { width: 402, height: 778 }
+        }
+      >
         <Story />
       </View>
     ),
@@ -26,20 +30,23 @@ const meta = {
           do: ["Scan is the primary action; demo is the low-emphasis one."],
           dont: ["Don't show the pult before pairing (except the demo)."],
           anatomy: [
-            "Brand Mark + Wordmark",
-            "Scan pairing QR (Primary LG)",
-            "Enter address and PIN (Secondary LG) → sheet with Connect Form",
-            "Try the demo (Ghost)",
-            "Note: where the QR is",
+            "Phone: Brand Mark + Wordmark centred at the top",
+            "Phone hero (centred): 104 pt recessed tile (radius 30) with the scan icon and a soft signal glow; title “Connect to your installation”; subtitle",
+            "Actions pinned at the bottom: Scan pairing QR (Primary LG), Enter address and PIN (Secondary LG) → sheet with Connect Form, Try the demo (Ghost), centred note — no “or” divider",
+            "Tablet: brand story on the left (mark, “Your installation, in your hands.”), title + actions on the right",
           ],
           behaviour: [
             "Scan opens the camera with the Viewfinder; address/PIN opens a sheet; demo starts the in-app simulated installation.",
           ],
-          a11y: ["Three buttons in reading order; ≥ 48 pt high."],
+          a11y: ["Three buttons in reading order; ≥ 40 pt high; the title is a header."],
           content: ["Fixed copy."],
           figma: {
             component: "Connect screen (Screens)",
-            variants: [["Connect · phone / tablet", "ConnectOptions"]],
+            node: "106:8",
+            variants: [
+              ["Phone / 01 Connect (106:8)", 'layout="phone"'],
+              ["Tablet / 01 Connect (106:161)", 'layout="tablet"'],
+            ],
           },
         }),
       },
@@ -56,3 +63,5 @@ export const Default: Story = {
     await expect(args.onDemo).toHaveBeenCalled();
   },
 };
+
+export const Tablet: Story = { args: { layout: "tablet" } };

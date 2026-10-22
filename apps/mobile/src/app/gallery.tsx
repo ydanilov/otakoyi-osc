@@ -12,6 +12,8 @@ import { cn } from "@osc/ui/lib/utils";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { parseConfig, type InstallationConfig } from "@osc/schema";
+import allControls from "../../../../packages/schema/examples/demo-installation.json";
 import { demoConfig } from "@/lib/demo";
 import { galleryServices } from "@/lib/services";
 
@@ -36,11 +38,18 @@ function variantOf(c: Control): string {
   return c.type;
 }
 
-/** One example of every control type and variant, from the demo installation (presets applied). */
+/** The installation with every control type (the bridge's sample), plus the "Try the demo" one. */
+const GALLERY_SOURCE: InstallationConfig = (() => {
+  const r = parseConfig(allControls);
+  if (!r.ok) throw new Error("demo-installation.json is invalid");
+  return r.config;
+})();
+
+/** One example of every control type and variant (presets applied). */
 const CONTROLS: Control[] = (() => {
   const seen = new Set<string>();
   const out: Control[] = [];
-  for (const p of demoConfig.pults)
+  for (const p of [...GALLERY_SOURCE.pults, ...demoConfig.pults])
     for (const g of p.pages)
       for (const c of g.controls)
         if (c.type !== "unsupported" && !seen.has(variantOf(c))) {

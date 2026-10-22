@@ -4,18 +4,107 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BrandMark, Wordmark } from "../chrome/Brand";
 import { Button } from "../chrome/Button";
 import { Loader } from "../chrome/Loader";
-import { InfoCard, Note } from "../chrome/Status";
+import { InfoCard } from "../chrome/Status";
+import { Glyph } from "../ds/Glyph";
+import { CONTINUOUS, useDepthStyle } from "../ds/depth";
+import { useTheme } from "../theme/ThemeProvider";
+import { withAlpha } from "@osc/tokens";
 import { Text } from "../components/ui/text";
 import { KeyIcon, MonitorIcon, ScanIcon, WifiSlashIcon } from "../ds/icons";
 import { manualPairing } from "../ds/logic";
 import { TextField } from "../forms/Field";
 import { Backdrop, ClientLogo } from "./Brand";
 
+const CONNECT_COPY = {
+  title: "Connect to your installation",
+  subtitle: "Scan the pairing QR on the installation screen. No account needed.",
+  note: "The QR appears only while pairing is on.",
+  hero: "Your installation,\nin your hands.",
+  heroBody:
+    "A pult made by the studio for this installation. Lobby or live show — same app, no account.",
+} as const;
+
 /**
  * Pattern `Connect` (ADR-012, no client login): the first screen. Three ways in — scan the pairing
  * QR shown on the installation, enter its address and PIN (form in a sheet), or try the demo.
+ * - `phone` (Figma Demo › Phone / 01 Connect 106:8): iOS onboarding — brand mark + wordmark centred
+ *   at the top; a centred hero (104 pt recessed tile, radius 30, with the scan icon and a soft
+ *   signal glow; title; subtitle); the actions pinned at the bottom: primary, secondary, ghost,
+ *   and a centred note. No "or" divider.
+ * - `tablet` (Tablet / 01 Connect 106:161): the brand story on the left, the actions on the right.
  */
 export function ConnectOptions({
+  onScan,
+  onEnterAddress,
+  onDemo,
+  layout = "phone",
+}: {
+  onScan: () => void;
+  onEnterAddress: () => void;
+  onDemo: () => void;
+  layout?: "phone" | "tablet";
+}) {
+  if (layout === "tablet")
+    return <ConnectTablet onScan={onScan} onEnterAddress={onEnterAddress} onDemo={onDemo} />;
+  return (
+    <View className="flex-1 gap-6 p-6">
+      <View className="flex-row items-center justify-center gap-3">
+        <BrandMark size="sm" />
+        <Wordmark size="sm" align="start" />
+      </View>
+      <View className="flex-1 items-center justify-center gap-5">
+        <ScanTile />
+        <View className="items-center gap-2.5 px-3">
+          <Text
+            className="text-foreground text-center text-xl font-semibold"
+            accessibilityRole="header"
+          >
+            {CONNECT_COPY.title}
+          </Text>
+          <Text className="text-muted-foreground text-md text-center">{CONNECT_COPY.subtitle}</Text>
+        </View>
+      </View>
+      <View className="gap-3">
+        <Button label="Scan pairing QR" size="lg" onPress={onScan} block />
+        <Button
+          label="Enter address and PIN"
+          variant="secondary"
+          size="lg"
+          onPress={onEnterAddress}
+          block
+        />
+        <Button label="Try the demo" variant="ghost" onPress={onDemo} block />
+        <Text className="text-muted-foreground text-center text-xs">{CONNECT_COPY.note}</Text>
+      </View>
+    </View>
+  );
+}
+
+/** The hero's 104 pt recessed tile (radius 30) with the scan icon and a soft signal glow. */
+function ScanTile() {
+  const t = useTheme();
+  const inset = useDepthStyle("inset");
+  const glow = boxShadowGlow(t.control.fill);
+  return (
+    <View
+      className="bg-control-track items-center justify-center"
+      style={[
+        CONTINUOUS,
+        { width: 104, height: 104, borderRadius: 30 },
+        { boxShadow: `${inset.boxShadow}, ${glow}` },
+      ]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Glyph icon={ScanIcon} size={48} color={t.control.fill} />
+    </View>
+  );
+}
+
+/** Figma Scan Tile glow: the signal colour at 18 %, 40 pt blur. */
+const boxShadowGlow = (color: string) => `0px 0px 40px 0px ${withAlpha(color, 0.18)}`;
+
+function ConnectTablet({
   onScan,
   onEnterAddress,
   onDemo,
@@ -25,25 +114,35 @@ export function ConnectOptions({
   onDemo: () => void;
 }) {
   return (
-    <View className="flex-1 justify-between gap-8 px-6 py-10">
-      <View className="items-center gap-4 pt-10">
+    <View className="flex-1 flex-row items-center gap-16 px-[72px]">
+      <View className="flex-1 gap-8">
         <BrandMark size="md" />
-        <Wordmark size="lg" />
+        <Text className="text-foreground text-[44px] font-semibold leading-[52px]">
+          {CONNECT_COPY.hero}
+        </Text>
+        <Text className="text-muted-foreground text-md max-w-[420px]">{CONNECT_COPY.heroBody}</Text>
       </View>
-      <View className="gap-3">
-        <Button label="Scan pairing QR" icon={ScanIcon} size="lg" onPress={onScan} block />
-        <Button
-          label="Enter address and PIN"
-          icon={KeyIcon}
-          variant="secondary"
-          size="lg"
-          onPress={onEnterAddress}
-          block
-        />
-        <Button label="Try the demo" icon={MonitorIcon} variant="ghost" onPress={onDemo} block />
-        <Note>
-          The QR is on the installation's screen when pairing mode is on. Ask on site or the studio.
-        </Note>
+      <View className="flex-1 gap-6">
+        <Text className="text-foreground text-xl font-semibold" accessibilityRole="header">
+          {CONNECT_COPY.title}
+        </Text>
+        <Text className="text-muted-foreground text-md">{CONNECT_COPY.subtitle}</Text>
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <Button label="Scan pairing QR" size="lg" onPress={onScan} block />
+          </View>
+          <View className="flex-1">
+            <Button
+              label="Enter address and PIN"
+              variant="secondary"
+              size="lg"
+              onPress={onEnterAddress}
+              block
+            />
+          </View>
+        </View>
+        <Button label="Try the demo" variant="ghost" onPress={onDemo} block />
+        <Text className="text-muted-foreground text-center text-xs">{CONNECT_COPY.note}</Text>
       </View>
     </View>
   );

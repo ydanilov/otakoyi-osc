@@ -1,6 +1,6 @@
 import { parseConfig, type InstallationConfig } from "@osc/schema";
 import { Simulator } from "@osc/sim";
-import demoJson from "../../../../packages/schema/examples/demo-installation.json";
+import demoJson from "../../../../packages/schema/examples/try-the-demo.json";
 import { Session } from "./session";
 
 const parsed = parseConfig(demoJson);
@@ -15,7 +15,9 @@ export const DEMO_ASSETS: Readonly<Record<string, number>> = {
 };
 
 /**
- * "Try the demo" (ADR-012): a simulated installation inside the app — the same bridge core and
+ * "Try the demo" (ADR-012) — the installation of the Figma page "Demo · Try the demo"
+ * (`packages/schema/examples/try-the-demo.json`): VJ console (tablet), Lighting cues, Lobby wall
+ * (phone): a simulated installation inside the app — the same bridge core and
  * protocol as a real one (`@osc/sim`), with the demo config. App Review and prospective clients
  * use it; nothing leaves the device.
  */

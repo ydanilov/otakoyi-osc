@@ -4,7 +4,6 @@ import {
   ArrowClockwiseIcon,
   Button,
   CaretLeftIcon,
-  CheckIcon,
   ClockCounterClockwiseIcon,
   ConnectionStatus,
   FlashlightIcon,
@@ -16,8 +15,9 @@ import {
   Note,
   PauseIcon,
   PowerIcon,
-  QuickActionsRow,
+  InstallationActions,
   Section,
+  iconByName,
   StatTile,
   type ActivityKind,
   type QuickActionItem,
@@ -36,6 +36,7 @@ import {
   quickActions,
 } from "@/lib/installation";
 import { installationOnline } from "@/lib/session";
+import { pultRows } from "@/lib/nav";
 
 /** How often the stats refresh while the panel is open. */
 const HEALTH_MS = 2000;
@@ -135,20 +136,31 @@ function Main({
     disabled: !canControl,
   }));
 
+  const rows = pultRows(pults, pultId ?? undefined);
+  const modeItems = modes.map((m) => ({
+    id: m.name,
+    label: m.label,
+    icon: m.name === "idle" ? HandPalmIcon : PauseIcon,
+  }));
   return (
     <View className="gap-6" testID="installation-panel">
+      <View className="gap-3 pr-14">
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          Installation
+        </Text>
+        <Text className="text-foreground text-xl font-semibold" numberOfLines={1}>
+          {s.config?.installation.name ?? session?.displayName}
+        </Text>
+        <ConnectionStatus
+          state={online ? "online" : s.connection === "open" ? "connecting" : "offline"}
+        />
+      </View>
       <View className="gap-3">
-        <View className="flex-row items-center gap-3">
-          <Text className="text-foreground flex-1 text-xl font-semibold" numberOfLines={1}>
-            {s.config?.installation.name ?? session?.displayName}
-          </Text>
-          <ConnectionStatus
-            state={online ? "online" : s.connection === "open" ? "connecting" : "offline"}
-          />
-        </View>
-        <View className="flex-row flex-wrap gap-2">
+        <View className="flex-row gap-3">
           {stats.map((st) => (
-            <StatTile key={st.key} label={st.label} value={st.value} />
+            <View key={st.key} className="flex-1">
+              <StatTile label={st.label} value={st.value} />
+            </View>
           ))}
         </View>
         {state.name !== "online" && state.name !== "offline" && (
@@ -156,15 +168,15 @@ function Main({
         )}
       </View>
 
-      {pults.length > 1 && (
-        <Section title="Pult">
+      {rows.length > 1 && (
+        <Section title="Pults">
           <ListCard>
-            {pults.map((p) => (
+            {rows.map((p) => (
               <ListRow
                 key={p.id}
-                icon={p.id === pultId ? CheckIcon : MonitorIcon}
+                icon={iconByName(p.icon) ?? MonitorIcon}
                 title={p.name}
-                value={p.id === pultId ? "On screen" : undefined}
+                value={p.value}
                 onPress={() => onPult(p.id)}
               />
             ))}
@@ -172,39 +184,22 @@ function Main({
         </Section>
       )}
 
-      {items.length > 0 && (
-        <View className="gap-2">
-          <QuickActionsRow
-            actions={items}
-            onAction={(id) => {
-              const a = actions.find((x) => x.name === id);
-              if (!a) return;
-              const m = actionMessage(a, s.modes);
-              session?.action(m.name, m.on);
-            }}
-          />
-          {!canControl && <Note>Take control to use the quick actions.</Note>}
-        </View>
-      )}
-
-      {modes.length > 0 && (
-        <Section title="Modes">
-          <ListCard>
-            {modes.map((m) => (
-              <ListRow
-                key={m.name}
-                icon={m.name === "idle" ? HandPalmIcon : PauseIcon}
-                title={m.label}
-                subtitle={m.name === "idle" ? "Keep the ambient loop, stop reacting" : undefined}
-                trailing="switch"
-                checked={s.modes[m.name]}
-                disabled={!canControl}
-                onCheckedChange={(on) => session?.setMode(m.name, on)}
-              />
-            ))}
-          </ListCard>
-        </Section>
-      )}
+      <View className="gap-2">
+        <InstallationActions
+          actions={items}
+          onAction={(id) => {
+            const a = actions.find((x) => x.name === id);
+            if (!a) return;
+            const m = actionMessage(a, s.modes);
+            session?.action(m.name, m.on);
+          }}
+          modes={modeItems}
+          modeState={{ ...s.modes }}
+          onModeChange={(id, on) => session?.setMode(id as "idle" | "pause", on)}
+          modesDisabled={!canControl}
+        />
+        {!canControl && <Note>Take control to use the quick actions and modes.</Note>}
+      </View>
 
       <ListCard>
         <ListRow

@@ -1,49 +1,62 @@
 import {
   BellIcon,
+  ClockCounterClockwiseIcon,
+  DeviceMobileIcon,
+  DrawerHeader,
+  GearSixIcon,
   InfoIcon,
   LifebuoyIcon,
-  LightningIcon,
   ListCard,
   ListRow,
-  MonitorIcon,
-  Note,
   QrCodeIcon,
+  ScanIcon,
   Section,
-  SignOutIcon,
-  SunIcon,
+  VibrateIcon,
 } from "@osc/ui";
 import { Text } from "@osc/ui/components/ui/text";
 import Constants from "expo-constants";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
-import { useApp, useSessionState } from "@/lib/app-context";
+import { useApp } from "@/lib/app-context";
 import { DebugContent } from "./DebugContent";
 import { SheetTop } from "./SheetTop";
 
 /**
- * Settings (ADR-013): pairing QR, control preferences, Developer › Debug, what's new, help, and forget this
- * installation (or exit the demo). No appearance switch: the theme mode ships in the config
- * (ADR-004), and there is no way to change the brand here.
+ * Settings (ADR-013; Figma Demo › Phone / 04 Settings, Tablet / 04 Settings): inset-grouped sections
+ * — Pairing (show the pairing QR on the installation, pair another installation), Control
+ * preferences (haptics, keep screen awake, status notifications), Developer › Debug, About (what's
+ * new, help & support, app version) and Account (forget this installation, or exit the demo).
+ * No appearance switch: the theme mode ships in the config (ADR-004).
+ * `variant`: `sheet` (iPhone system sheet: Close × leading, centred title) or `drawer` (iPad left
+ * drawer: large title and a round close button).
  */
 export function SettingsContent({
   onClose,
   onShowPairing,
   onLeave,
+  variant = "sheet",
 }: {
   onClose: () => void;
   onShowPairing: () => void;
   onLeave: () => void;
+  variant?: "sheet" | "drawer";
 }) {
   const { session, prefs, setPrefs } = useApp();
-  const s = useSessionState();
   const demo = session?.kind === "demo";
   const [page, setPage] = React.useState<"whatsNew" | "help" | "debug" | null>(null);
   const version = Constants.expoConfig?.version ?? "";
+  const build = Constants.expoConfig?.ios?.buildNumber ?? "1";
+  const Top = ({ title, onBack }: { title: string; onBack?: () => void }) =>
+    variant === "drawer" ? (
+      <DrawerHeader title={title} onBack={onBack} onClose={onClose} />
+    ) : (
+      <SheetTop title={title} onBack={onBack} onClose={onClose} />
+    );
 
   if (page === "debug")
     return (
       <View className="flex-1">
-        <SheetTop title="Debug" onBack={() => setPage(null)} onClose={onClose} />
+        <Top title="Debug" onBack={() => setPage(null)} />
         <ScrollView contentContainerClassName="px-4 pb-10 pt-2">
           <DebugContent />
         </ScrollView>
@@ -53,10 +66,9 @@ export function SettingsContent({
   if (page)
     return (
       <View className="flex-1">
-        <SheetTop
-          title={page === "help" ? "Help" : "What's new"}
+        <Top
+          title={page === "help" ? "Help & support" : "What's new"}
           onBack={() => setPage(null)}
-          onClose={onClose}
         />
         <ScrollView contentContainerClassName="gap-3 px-5 pb-10 pt-2">
           {(page === "help" ? HELP : WHATS_NEW).map((p) => (
@@ -68,48 +80,46 @@ export function SettingsContent({
       </View>
     );
 
-  const address = session?.bridge?.replace(/^wss?:\/\//, "").replace(/\/ws$/, "");
   return (
     <View className="flex-1" testID="settings-panel">
-      <SheetTop title="Settings" onClose={onClose} />
+      <Top title="Settings" />
       <ScrollView contentContainerClassName="gap-6 px-4 pb-10 pt-2">
-        <Section title={demo ? "Demo" : "This installation"}>
+        <Section title="Pairing">
           <ListCard>
             <ListRow
-              icon={MonitorIcon}
-              title={s.config?.installation.name ?? session?.displayName ?? "—"}
-              trailing="value"
-              value={demo ? "Simulated" : address}
+              icon={QrCodeIcon}
+              title="Show pairing QR on installation"
+              onPress={onShowPairing}
+              disabled={demo}
             />
-            {!demo && <ListRow icon={QrCodeIcon} title="Show pairing QR" onPress={onShowPairing} />}
+            <ListRow icon={ScanIcon} title="Pair another installation" onPress={onLeave} />
           </ListCard>
-          <Note>
-            {demo
-              ? "A simulated installation inside the app. Nothing leaves this device."
-              : "Another phone on the same Wi-Fi can scan the pairing QR to join."}
-          </Note>
         </Section>
 
-        <Section title="Controls">
+        <Section title="Control preferences">
           <ListCard>
             <ListRow
-              icon={LightningIcon}
+              icon={VibrateIcon}
               title="Haptics"
               trailing="switch"
               checked={prefs.haptics}
               onCheckedChange={(v) => setPrefs({ haptics: v })}
             />
             <ListRow
-              icon={SunIcon}
+              icon={DeviceMobileIcon}
               title="Keep screen awake"
               trailing="switch"
               checked={prefs.keepAwake}
               onCheckedChange={(v) => setPrefs({ keepAwake: v })}
             />
+            <ListRow
+              icon={BellIcon}
+              title="Status notifications"
+              trailing="switch"
+              checked={prefs.notifications}
+              onCheckedChange={(v) => setPrefs({ notifications: v })}
+            />
           </ListCard>
-          <Note>
-            Two fingers on a fader or knob for fine control. Double-tap resets to the default.
-          </Note>
         </Section>
 
         <Section title="Developer">
@@ -117,33 +127,40 @@ export function SettingsContent({
             <ListRow
               icon={InfoIcon}
               title="Debug"
-              subtitle="Bridge, OSC log"
+              value="Bridge, OSC log"
               onPress={() => setPage("debug")}
             />
           </ListCard>
         </Section>
 
-        <ListCard>
-          <ListRow icon={BellIcon} title="What's new" onPress={() => setPage("whatsNew")} />
-          <ListRow icon={LifebuoyIcon} title="Help" onPress={() => setPage("help")} />
-          <ListRow
-            icon={InfoIcon}
-            title="About this pult"
-            subtitle="Designed by the studio. Ask them for changes."
-            trailing="none"
-          />
-        </ListCard>
+        <Section title="About">
+          <ListCard>
+            <ListRow
+              icon={ClockCounterClockwiseIcon}
+              title="What's new"
+              value={`v${version}`}
+              onPress={() => setPage("whatsNew")}
+            />
+            <ListRow icon={LifebuoyIcon} title="Help & support" onPress={() => setPage("help")} />
+            <ListRow
+              icon={InfoIcon}
+              title="App version"
+              trailing="value"
+              value={`${version} (${build})`}
+            />
+          </ListCard>
+        </Section>
 
-        <ListCard>
-          <ListRow
-            icon={SignOutIcon}
-            title={demo ? "Exit demo" : "Forget this installation"}
-            trailing="destructive"
-            onPress={onLeave}
-          />
-        </ListCard>
-
-        <Text className="text-muted-foreground text-center text-xs">Otakoyi Control {version}</Text>
+        <Section title="Account">
+          <ListCard>
+            <ListRow
+              icon={GearSixIcon}
+              title={demo ? "Exit demo" : "Forget this installation"}
+              trailing="destructive"
+              onPress={onLeave}
+            />
+          </ListCard>
+        </Section>
       </ScrollView>
     </View>
   );

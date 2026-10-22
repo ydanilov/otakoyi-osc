@@ -81,10 +81,17 @@ export function BrandMark({ size = "md" }: { size?: keyof typeof MARK }) {
 }
 
 /** Figma `Wordmark`: "otakoyi" + CONTROLS. */
-export function Wordmark({ size = "sm" }: { size?: "sm" | "lg" }) {
+export function Wordmark({
+  size = "sm",
+  align = "center",
+}: {
+  size?: "sm" | "lg";
+  /** `start`: left-aligned next to a Brand Mark (Connect, phone). */
+  align?: "center" | "start";
+}) {
   return (
     <View
-      className="items-center"
+      className={align === "start" ? "items-start" : "items-center"}
       accessible
       accessibilityRole="header"
       accessibilityLabel="Otakoyi Controls"

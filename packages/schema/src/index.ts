@@ -138,6 +138,14 @@ const base = {
   studioOnly: z.boolean().default(false),
   /** Address the installation sends state back on; defaults to the control's own address. */
   feedback: address.optional(),
+  /**
+   * Icon (Figma `Icon/<name>`, a Phosphor name in kebab case, e.g. "device-mobile"): shown where the
+   * control is drawn as a list row (panel pattern `list`). Unknown names draw no icon.
+   */
+  icon: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]*$/, "icon: a Phosphor icon name like device-mobile")
+    .optional(),
 };
 
 const ranged = {
@@ -192,9 +200,10 @@ export const Toggle = z.object({
   default: z.boolean().default(false),
   /**
    * button: a latching pad. switch: a hardware-style latching switch with two LEDs (ON / OFF).
-   * Same messages either way.
+   * led: a Group Button key — the label (or ON / OFF without one) over an LED strip; the channel
+   * strip's ON button in a Fader Bank. Same messages in every style.
    */
-  style: z.enum(["button", "switch"]).default("button"),
+  style: z.enum(["button", "switch", "led"]).default("button"),
   /** Pad size (style `button`). See `PadSize`. */
   size: PadSize.optional(),
   /**
@@ -272,7 +281,15 @@ export const XYPad = z.object({
   throttleHz: z.number().min(1).max(240).default(60),
 });
 
-const option = z.object({ label: z.string().min(1), value: oscValue });
+const option = z.object({
+  label: z.string().min(1),
+  value: oscValue,
+  /** Figma Segmented Content=Icon: the option shows this icon (the label is its VoiceOver name). */
+  icon: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]*$/)
+    .optional(),
+});
 
 export const Segmented = z.object({
   ...base,
@@ -519,12 +536,53 @@ export const Placements = z.record(id, Grid);
 /** Every page ships a phone and a tablet layout (ADR-013, ADR-014). */
 export const PageLayout = z.object({ phone: Placements, tablet: Placements });
 
+/**
+ * Figma Patterns built from Console Panels (ADR-014): a titled group of controls placed as one
+ * cell. The pattern decides how the controls inside are arranged.
+ */
+export const PANEL_PATTERNS = [
+  /** Channel strips side by side: each vertical fader, with the toggle that follows it (ON). */
+  "faderBank",
+  /** Knobs in rows of two, evenly spaced. */
+  "knobGroup",
+  /** Knobs in one row. */
+  "knobRow",
+  /** A Button Group (layers), centred vertically. */
+  "layerToggles",
+  /** Thumbstick over a relative fader (pan / tilt + zoom nudge). */
+  "cameraControl",
+  /** A Segmented control (scenes), centred vertically. */
+  "sceneBar",
+  /** Buttons / hold-to-confirm in one row, centred vertically. */
+  "showActions",
+  /** Toggles as List Rows with Menu Switches in one List Card (no title by default). */
+  "list",
+  /** Anything else: the controls stacked, sharing the height. */
+  "stack",
+] as const;
+export type PanelPattern = (typeof PANEL_PATTERNS)[number];
+
+export const Panel = z.object({
+  id,
+  /** Console Panel title (e.g. "Mix", "Shape"). */
+  title: z.string().optional(),
+  pattern: z.enum(PANEL_PATTERNS).default("stack"),
+  /** Ids of this page's controls, in order. */
+  controls: z.array(id).min(1),
+});
+export type Panel = z.infer<typeof Panel>;
+
 export const Page = z.object({
   id,
   title: z.string().min(1),
   columns: z.literal(12).default(12),
   /** Controls, once. Their placement per form factor is in `layout`. */
   controls: z.array(AnyControl),
+  /**
+   * Console Panels (Figma Patterns). A layout may place a panel (by its id) instead of the
+   * controls in it; every control is placed exactly once per form factor, directly or in a panel.
+   */
+  panels: z.array(Panel).default([]),
   layout: PageLayout,
 });
 
@@ -533,6 +591,16 @@ export const Pult = z.object({
   id,
   name: z.string().min(1),
   defaultTarget: id.optional(),
+  /**
+   * Primary form factor (ADR-013): the app opens this pult first on that form factor (lobby →
+   * phone, live → tablet). Both layouts still ship.
+   */
+  formFactor: z.enum(["phone", "tablet"]).optional(),
+  /** Icon in the Installation › Pults list (Figma `Icon/<name>`, Phosphor kebab case). */
+  icon: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]*$/)
+    .optional(),
   pages: z.array(Page).min(1),
 });
 
@@ -579,28 +647,57 @@ const InstallationConfigBase = z
         });
       pult.pages.forEach((page, gi) => {
         const ids = new Set(page.controls.map((c) => c.id));
-        for (const ff of FORM_FACTORS) {
-          const placements = page.layout[ff];
-          const lpath = ["pults", pi, "pages", gi, "layout", ff];
-          for (const c of page.controls)
-            if (!placements[c.id])
-              ctx.addIssue({
-                code: "custom",
-                path: [...lpath, c.id],
-                message: `Control "${c.id}" has no ${ff} placement`,
-              });
-          for (const [cid, g] of Object.entries(placements)) {
+        const panels = new Map(page.panels.map((p) => [p.id, p]));
+        page.panels.forEach((panel, ki) => {
+          const ppath = ["pults", pi, "pages", gi, "panels", ki];
+          if (ids.has(panel.id))
+            ctx.addIssue({
+              code: "custom",
+              path: [...ppath, "id"],
+              message: `Panel id "${panel.id}" is also a control id`,
+            });
+          panel.controls.forEach((cid, i) => {
             if (!ids.has(cid))
               ctx.addIssue({
                 code: "custom",
+                path: [...ppath, "controls", i],
+                message: `Panel "${panel.id}" has unknown control "${cid}"`,
+              });
+          });
+        });
+        for (const ff of FORM_FACTORS) {
+          const placements = page.layout[ff];
+          const lpath = ["pults", pi, "pages", gi, "layout", ff];
+          const placed = new Map<string, number>();
+          for (const [cid, g] of Object.entries(placements)) {
+            const panel = panels.get(cid);
+            if (!ids.has(cid) && !panel)
+              ctx.addIssue({
+                code: "custom",
                 path: [...lpath, cid],
-                message: `${ff} layout places unknown control "${cid}"`,
+                message: `${ff} layout places unknown control or panel "${cid}"`,
               });
             else if (g.x + g.w > page.columns)
               ctx.addIssue({
                 code: "custom",
                 path: [...lpath, cid],
-                message: `Control "${cid}" overflows the 12-column ${ff} grid`,
+                message: `"${cid}" overflows the 12-column ${ff} grid`,
+              });
+            for (const c of panel ? panel.controls : [cid]) placed.set(c, (placed.get(c) ?? 0) + 1);
+          }
+          for (const c of page.controls) {
+            const n = placed.get(c.id) ?? 0;
+            if (n === 0)
+              ctx.addIssue({
+                code: "custom",
+                path: [...lpath, c.id],
+                message: `Control "${c.id}" has no ${ff} placement`,
+              });
+            else if (n > 1)
+              ctx.addIssue({
+                code: "custom",
+                path: [...lpath, c.id],
+                message: `Control "${c.id}" is placed ${n} times in the ${ff} layout`,
               });
           }
         }

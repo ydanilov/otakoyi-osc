@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import demo from "../examples/demo-installation.json";
+import tryDemo from "../examples/try-the-demo.json";
 import legacy from "../examples/legacy-v1-installation.json";
 import {
   CONTROL_TYPES,
@@ -135,7 +136,60 @@ describe("schema v2 layouts (ADR-014)", () => {
     if (r.ok || r.reason !== "invalid") throw new Error("expected invalid");
     const msgs = r.issues.map((i) => i.message).join("\n");
     expect(msgs).toMatch(/"intensity" has no phone placement/);
-    expect(msgs).toMatch(/tablet layout places unknown control "ghost"/);
+    expect(msgs).toMatch(/tablet layout places unknown control or panel "ghost"/);
+  });
+
+  it("places Console Panels (Figma patterns) instead of their controls", () => {
+    const cfg = ok(tryDemo);
+    const mix = cfg.pults[0]!.pages[0]!;
+    expect(mix.panels.map((p) => p.pattern)).toEqual([
+      "faderBank",
+      "knobGroup",
+      "layerToggles",
+      "cameraControl",
+      "sceneBar",
+    ]);
+    expect(mix.layout.tablet.mix).toEqual({ x: 0, y: 0, w: 4, h: 8 });
+    expect(mix.layout.tablet.layer1).toBeUndefined();
+    expect(cfg.pults.map((p) => p.formFactor)).toEqual(["tablet", undefined, "phone"]);
+  });
+
+  it("rejects a control placed twice, or not at all, through panels", () => {
+    const twice = clone(tryDemo) as any;
+    twice.pults[0].pages[0].layout.tablet.layer1 = { x: 0, y: 8, w: 1, h: 1 };
+    const none = clone(tryDemo) as any;
+    delete none.pults[0].pages[0].layout.phone.camera;
+    const unknown = clone(tryDemo) as any;
+    unknown.pults[0].pages[0].panels[0].controls.push("ghost");
+    const clash = clone(tryDemo) as any;
+    clash.pults[0].pages[0].panels[0].id = "layer1";
+    const msgs = (c: unknown) => {
+      const r = parseConfig(c);
+      if (r.ok || r.reason !== "invalid") throw new Error("expected invalid");
+      return r.issues.map((i) => i.message).join("\n");
+    };
+    expect(msgs(twice)).toMatch(/"layer1" is placed 2 times in the tablet layout/);
+    expect(msgs(none)).toMatch(/"cam" has no phone placement/);
+    expect(msgs(unknown)).toMatch(/Panel "mix" has unknown control "ghost"/);
+    expect(msgs(clash)).toMatch(/Panel id "layer1" is also a control id/);
+  });
+
+  it("reads icons on segmented options and toggles, the LED toggle and the picker style", () => {
+    const page = ok(tryDemo).pults[0]!.pages[0]!;
+    const scene = page.controls.find((c) => c.id === "scene");
+    expect(scene?.type === "segmented" && scene.options.map((o) => o.icon)).toEqual([
+      "lightning",
+      "sun",
+      "moon",
+      "circle-half",
+    ]);
+    const on = page.controls.find((c) => c.id === "layer3-on");
+    expect(on?.type === "toggle" && on.style).toBe("led");
+    const fx = ok(tryDemo).pults[0]!.pages[1]!.controls.find((c) => c.id === "colour");
+    expect(fx?.type === "colorPicker" && fx.pickerStyle).toBe("knobs");
+    const bad = clone(tryDemo) as any;
+    bad.pults[0].pages[1].controls[0].pickerStyle = "spiral";
+    expect(parseConfig(bad).ok).toBe(false);
   });
 
   it("still reads v1: grid becomes the tablet layout and is re-flowed for phones", () => {

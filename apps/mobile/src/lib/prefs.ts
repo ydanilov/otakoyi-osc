@@ -4,10 +4,12 @@ import type { KeyValueStore } from "./pairing";
 export interface Prefs {
   haptics: boolean;
   keepAwake: boolean;
+  /** Status notifications (installation offline / back) — Figma Settings › Control preferences. */
+  notifications: boolean;
 }
 
 /** Fine mode has no setting: it is always two fingers (ADR-007, ADR-013). */
-export const DEFAULT_PREFS: Prefs = { haptics: true, keepAwake: true };
+export const DEFAULT_PREFS: Prefs = { haptics: true, keepAwake: true, notifications: true };
 const KEY = "otakoyi.prefs";
 
 export async function loadPrefs(kv: KeyValueStore): Promise<Prefs> {
@@ -17,6 +19,8 @@ export async function loadPrefs(kv: KeyValueStore): Promise<Prefs> {
     return {
       haptics: typeof v.haptics === "boolean" ? v.haptics : DEFAULT_PREFS.haptics,
       keepAwake: typeof v.keepAwake === "boolean" ? v.keepAwake : DEFAULT_PREFS.keepAwake,
+      notifications:
+        typeof v.notifications === "boolean" ? v.notifications : DEFAULT_PREFS.notifications,
     };
   } catch {
     return { ...DEFAULT_PREFS };

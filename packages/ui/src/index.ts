@@ -85,6 +85,7 @@ export {
 export { Glyph, toneColor, type Tone } from "./ds/Glyph";
 export { StatusLed } from "./ds/Led";
 export * from "./ds/icons";
+export { iconByName, ICON_NAMES } from "./ds/iconByName";
 export * from "./ds/logic";
 export {
   Button,
@@ -128,6 +129,7 @@ export {
 } from "./containers/Cards";
 export { Dialog } from "./containers/Dialog";
 export { Inspector } from "./containers/Inspector";
+export { Drawer, DrawerHeader } from "./containers/Drawer";
 export { EdgeSwipe } from "./containers/EdgeSwipe";
 export { PullDownMenu } from "./menus/PullDownMenu";
 export { ContextMenu } from "./menus/ContextMenu";

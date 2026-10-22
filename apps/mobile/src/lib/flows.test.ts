@@ -12,7 +12,15 @@ import {
   quickActions,
 } from "./installation";
 import { MIN_LOADING_MS, UNREACHABLE_MS, loadingPhase, nextLoadingTick } from "./loading";
-import { EDGE_SWIPE_MIN, edgeSwipe, edgeTarget, formFactorOf, presentationOf } from "./nav";
+import {
+  EDGE_SWIPE_MIN,
+  currentPult,
+  edgeSwipe,
+  edgeTarget,
+  formFactorOf,
+  presentationOf,
+  pultRows,
+} from "./nav";
 import { createPairingStore, memoryKeyValue, PAIRING_KEY } from "./pairing";
 import { DEFAULT_PREFS, loadPrefs, savePrefs } from "./prefs";
 
@@ -95,8 +103,34 @@ describe("navigation (ADR-013)", () => {
   it("iPhone: sheets; iPad: Settings form sheet, Installation inspector", () => {
     expect(presentationOf("settings", "phone")).toBe("sheet");
     expect(presentationOf("installation", "phone")).toBe("sheet");
-    expect(presentationOf("settings", "tablet")).toBe("formSheet");
+    expect(presentationOf("settings", "tablet")).toBe("drawer");
     expect(presentationOf("installation", "tablet")).toBe("inspector");
+  });
+  it("opens the pult made for this form factor first (ADR-013)", () => {
+    const pults = [
+      { id: "vj", formFactor: "tablet" as const },
+      { id: "cues" },
+      { id: "lobby", formFactor: "phone" as const },
+    ];
+    expect(currentPult(pults, null, "tablet")?.id).toBe("vj");
+    expect(currentPult(pults, null, "phone")?.id).toBe("lobby");
+    expect(currentPult(pults, "cues", "phone")?.id).toBe("cues");
+    expect(currentPult([{ id: "a" }, { id: "b" }], null, "phone")?.id).toBe("a");
+  });
+  it("lists pults with the current one first (Figma Installation › Pults)", () => {
+    const rows = pultRows(
+      [
+        { id: "vj", name: "VJ console", pages: [1, 2, 3, 4] },
+        { id: "cues", name: "Lighting cues", pages: [1, 2] },
+        { id: "lobby", name: "Lobby wall", pages: [1] },
+      ],
+      "lobby",
+    );
+    expect(rows.map((r) => [r.name, r.value])).toEqual([
+      ["Lobby wall", "current"],
+      ["VJ console", "4 screens"],
+      ["Lighting cues", "2 screens"],
+    ]);
   });
 });
 
@@ -140,7 +174,10 @@ describe("installation panel", () => {
     });
     expect(actionMessage(a[0]!, modes)).toEqual({ name: "flash" });
     expect(modeToggles(["idle"]).map((m) => m.name)).toEqual(["idle"]);
-    expect(modeToggles(["idle", "pause"]).map((m) => m.label)).toEqual(["Idle", "Pause"]);
+    expect(modeToggles(["idle", "pause"]).map((m) => m.label)).toEqual([
+      "Idle mode — ignore players",
+      "Pause playback",
+    ]);
   });
   it("activity lines say what happened and who", () => {
     const ts = "2026-10-22T10:11:12.000Z";
@@ -180,14 +217,14 @@ describe("pairing storage and preferences", () => {
   it("preferences default to on and survive a reload", async () => {
     const kv = memoryKeyValue();
     expect(await loadPrefs(kv)).toEqual(DEFAULT_PREFS);
-    await savePrefs(kv, { haptics: false, keepAwake: true });
-    expect(await loadPrefs(kv)).toEqual({ haptics: false, keepAwake: true });
+    await savePrefs(kv, { haptics: false, keepAwake: true, notifications: false });
+    expect(await loadPrefs(kv)).toEqual({ haptics: false, keepAwake: true, notifications: false });
     // A stored key from an older build (the removed debug overlay switch) is dropped.
     await kv.set(
       "otakoyi.prefs",
       JSON.stringify({ haptics: true, keepAwake: false, debugOverlay: true }),
     );
-    expect(await loadPrefs(kv)).toEqual({ haptics: true, keepAwake: false });
+    expect(await loadPrefs(kv)).toEqual({ haptics: true, keepAwake: false, notifications: true });
   });
 });
 

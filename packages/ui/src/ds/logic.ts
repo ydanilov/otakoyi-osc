@@ -87,20 +87,35 @@ export interface SheetOptions {
 export type Presentation =
   | { kind: "sheet"; options: SheetOptions }
   /** iPad Installation: a 390 pt trailing inspector panel inside the pult screen, no dimming. */
-  | { kind: "inspector"; width: number };
+  | { kind: "inspector"; width: number }
+  /** iPad Settings: a 400 pt floating drawer from the leading edge over the dimmed pult. */
+  | { kind: "drawer"; width: number };
+
+/**
+ * iPad Settings drawer (Figma Tablet / 04 Settings): 400 pt wide, 12 pt in from the left and the
+ * bottom, its top 12 pt under the status bar, radius 28.
+ */
+export const DRAWER = { width: 400, inset: 12, top: 12, radius: 28 } as const;
+
+/** A swipe to the left on the drawer closes it: far enough (80 pt) or fast enough. */
+export function drawerCloses(translationX: number, velocityX: number): boolean {
+  "worklet";
+  return translationX < -80 || velocityX < -600;
+}
 
 /** Width of the iPad Installation inspector (HIG inspector width). */
 export const INSPECTOR_WIDTH = 390;
 
 /**
  * How Settings, Installation and dialogs are presented (ADR-013, HIG):
- * - Settings: iPhone system sheet, large detent; iPad form sheet.
+ * - Settings: iPhone system sheet, large detent; iPad a floating drawer from the left.
  * - Installation: iPhone system sheet, large detent; iPad trailing inspector (no dimming).
  * - Dialog: iPhone sheet at the medium detent (can grow to large); iPad form sheet.
  */
 export function presentationFor(surface: OverlaySurface, windowWidth: number): Presentation {
   const phone = formFactor(windowWidth) === "phone";
   if (surface === "installation" && !phone) return { kind: "inspector", width: INSPECTOR_WIDTH };
+  if (surface === "settings" && !phone) return { kind: "drawer", width: DRAWER.width };
   const detents = surface === "dialog" && phone ? [0.5, 1] : [1];
   return {
     kind: "sheet",

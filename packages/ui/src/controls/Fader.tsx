@@ -60,11 +60,19 @@ const RELATIVE_SLOP = 4;
  * `mode: "crossfade"` (ADR-015) fills from the centre, holds a detent at 50 % and shows the shares
  * in the header ("A 30 · B 70"); the ends carry LEDs only (no letters); `mode: "relative"` is an endless jog wheel (`JogFader`).
  */
-export function Fader(props: ControlProps<"fader">) {
+export type FaderProps = ControlProps<"fader"> & {
+  /**
+   * Figma Fader State=Off: the channel is switched off (its strip's ON button in a Fader Bank) —
+   * no lit line, the thumb LED dark. The fader still moves and sends.
+   */
+  muted?: boolean;
+};
+
+export function Fader(props: FaderProps) {
   return props.control.mode === "relative" ? <JogFader {...props} /> : <PositionFader {...props} />;
 }
 
-function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"fader">) {
+function PositionFader({ control: c, value, onChange, disabled, muted }: FaderProps) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
   const crossfade = c.mode === "crossfade";
@@ -284,7 +292,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     return b.build();
   });
   const lit = fine ? t.color.accent : t.control.fill;
-  const isLit = Math.abs(valueToPosition(display, range) - center) > 0.001 || crossfade;
+  const isLit = !muted && (Math.abs(valueToPosition(display, range) - center) > 0.001 || crossfade);
 
   const step = (c.step ?? (c.max - c.min) / 100) * (c.invert ? -1 : 1);
   return (
@@ -357,16 +365,18 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
                 strokeWidth={t.stroke.default}
                 strokeCap="round"
               />
-              {/* The lit value line: full glow while touched, ~40 % at rest. */}
-              <LitRRect
-                x={lineX}
-                y={lineY}
-                width={lineW}
-                height={lineH}
-                r={line / 2}
-                color={lit}
-                glow={glow}
-              />
+              {/* The lit value line: full glow while touched, ~40 % at rest; none when muted. */}
+              {!muted && (
+                <LitRRect
+                  x={lineX}
+                  y={lineY}
+                  width={lineW}
+                  height={lineH}
+                  r={line / 2}
+                  color={lit}
+                  glow={glow}
+                />
+              )}
               {/* Raised thumb (cap) with its LED and grips. */}
               <RaisedRRect
                 t={t}
