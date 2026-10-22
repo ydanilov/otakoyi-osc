@@ -1,7 +1,11 @@
 import { ThemeProvider } from "@osc/ui";
 import * as React from "react";
 import { ScrollView } from "react-native";
-import { InstallationContent, type InstallationView } from "@/components/InstallationContent";
+import {
+  INSTALLATION_TITLE,
+  InstallationContent,
+  type InstallationView,
+} from "@/components/InstallationContent";
 import { SheetTop } from "@/components/SheetTop";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { useBrand } from "@/lib/brand";
@@ -16,8 +20,8 @@ export default function Installation() {
   return (
     <ThemeProvider brand={brand.theme}>
       <SheetTop
-        title={view === "activity" ? "Activity" : "Installation"}
-        onBack={view === "activity" ? () => setView("main") : undefined}
+        title={INSTALLATION_TITLE[view]}
+        onBack={view !== "main" ? () => setView("main") : undefined}
         onClose={closeSheet}
       />
       <ScrollView contentContainerClassName="px-4 pb-10 pt-2">

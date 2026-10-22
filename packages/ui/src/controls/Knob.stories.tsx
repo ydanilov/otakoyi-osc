@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
+import { expect } from "storybook/test";
 import * as React from "react";
 import { ControlHarness } from "../stories/ControlHarness";
 import { makeControl } from "../stories/controls";
@@ -13,8 +14,10 @@ function KnobStory({
   min,
   max,
   mode,
+  size,
 }: {
   mode: "absolute" | "relative" | "hue";
+  size: "regular" | "compact";
   value: number;
   disabled: boolean;
   label: string;
@@ -35,8 +38,9 @@ function KnobStory({
         min,
         max,
         mode,
+        size,
       }),
-    [label, centered, unit, min, max, mode],
+    [label, centered, unit, min, max, mode, size],
   );
   return (
     <ControlHarness control={control} value={value} disabled={disabled} width={180} height={180} />
@@ -55,9 +59,11 @@ const meta = {
     unit: "",
     min: 0,
     max: 1,
+    size: "regular",
   },
   argTypes: {
     mode: { control: "inline-radio", options: ["absolute", "relative", "hue"] },
+    size: { control: "inline-radio", options: ["regular", "compact"] },
     value: { control: { type: "range", min: 0, max: 1, step: 0.01 } },
   },
   parameters: {
@@ -73,7 +79,7 @@ const meta = {
           do: ["Group knobs that belong together in a Console Panel."],
           dont: ["Don't make knobs smaller than 72 pt; the drag needs room."],
           anatomy: [
-            "Label + value readout",
+            "Header: label + value readout, centred above the dial, 6 pt apart",
             "Track arc (control track)",
             "Lit arc (control/signal) from start (or centre)",
             "Knob cap with indicator line",
@@ -96,6 +102,7 @@ const meta = {
               ["Mode=Absolute", "default"],
               ["Mode=Relative", 'mode: "relative"'],
               ["Mode=Color", 'mode: "hue"'],
+              ["Size=Regular | Compact", 'size: "regular" | "compact" (dial ≈ 0.7×, same labels)'],
               ["Orientation=Vertical | Horizontal", "label placement in the cell"],
               ["State=Fine", "two-finger drag (runtime)"],
               ["State=Disabled", "disabled"],
@@ -110,7 +117,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  play: async ({ canvas }) => {
+    // Knob header: label and value centred above the dial.
+    await expect(await canvas.findByTestId("control-header-center")).toBeVisible();
+  },
+};
 export const Centered: Story = {
   args: { label: "Pan", centered: true, value: 0.5, min: -1, max: 1 },
 };
@@ -120,5 +132,9 @@ export const WithUnit: Story = {
 export const Relative: Story = { args: { mode: "relative", label: "Scrub" } };
 export const Hue: Story = {
   args: { mode: "hue", label: "Hue", value: 200, min: 0, max: 360, unit: "°" },
+};
+export const Compact: Story = { args: { size: "compact" } };
+export const CompactRelative: Story = {
+  args: { size: "compact", mode: "relative", label: "Scrub" },
 };
 export const Disabled: Story = { args: { disabled: true } };

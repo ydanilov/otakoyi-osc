@@ -6,14 +6,15 @@ import { Glyph, onStatus, toneColor, type Tone } from "../ds/Glyph";
 import type { PhosphorIcon } from "../ds/icons";
 import { cn } from "../lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
+import { TouchLightView, usePressLight, useTouchLight } from "../controls/TouchLight";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 export type ButtonSize = "sm" | "md" | "lg";
 
-const SIZE: Record<ButtonSize, { box: string; text: string; icon: number }> = {
-  sm: { box: "h-8 px-3 gap-1.5 rounded-sm", text: "text-xs", icon: 14 },
-  md: { box: "h-10 px-4 gap-2 rounded-md", text: "text-sm", icon: 16 },
-  lg: { box: "h-12 px-5 gap-2 rounded-md", text: "text-md", icon: 18 },
+const SIZE: Record<ButtonSize, { box: string; text: string; icon: number; radius: "sm" | "md" }> = {
+  sm: { box: "h-8 px-3 gap-1.5 rounded-sm", text: "text-xs", icon: 14, radius: "sm" },
+  md: { box: "h-10 px-4 gap-2 rounded-md", text: "text-sm", icon: 16, radius: "md" },
+  lg: { box: "h-12 px-5 gap-2 rounded-md", text: "text-md", icon: 18, radius: "md" },
 };
 
 const FILL: Record<ButtonVariant, string> = {
@@ -64,11 +65,14 @@ export function Button({
   ...props
 }: ButtonProps) {
   const t = useTheme();
-  const press = usePressState(forced, { onPressIn, onPressOut });
   const isDisabled = !!disabled;
+  const light = useTouchLight({ disabled: isDisabled });
+  const lit = usePressLight(light, { onPressIn, onPressOut });
+  const press = usePressState(forced, { onPressIn: lit.onPressIn, onPressOut: lit.onPressOut });
   const shadow = useDepthStyle(
     depthFor(variant, press.pressed, isDisabled),
     glowFor(variant, press.pressed, isDisabled),
+    "active",
   );
   const ink =
     variant === "primary"
@@ -82,8 +86,10 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={label}
       aria-disabled={isDisabled}
+      ref={lit.ref}
       disabled={isDisabled}
       onPressIn={press.onPressIn}
+      onPressMove={lit.onPressMove}
       onPressOut={press.onPressOut}
       hitSlop={size === "sm" ? 6 : undefined}
       className={cn(
@@ -97,6 +103,8 @@ export function Button({
       style={[shadow, isDisabled && { opacity: t.control.disabledOpacity }]}
       {...props}
     >
+      {/* Touch light: inside the button, below the icon and label. */}
+      <TouchLightView light={light} radius={t.radius[s.radius]} />
       {icon && <Glyph icon={icon} size={s.icon} color={ink} />}
       <Text className={cn("font-semibold", s.text)} style={{ color: ink }} numberOfLines={1}>
         {label}

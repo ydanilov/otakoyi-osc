@@ -51,6 +51,10 @@ export interface Theme {
     viewOnlyOverlay: string;
   };
   status: Record<StatusName, string>;
+  /** Debug page scrims (Figma Debug Tag / Debug HUD); the hairline is `status.warning`. */
+  debug: { tagBackground: string; hudBackground: string };
+  /** Touch light (press response): sizes, opacities and timings. See tokens.json `touchLight`. */
+  touchLight: TouchLightTokens;
   /** Neumorphic shadow / highlight colours for the current mode (Figma `elevation/*`). See depth.ts. */
   elevation: Record<keyof typeof base.elevation.dark, string>;
   space: typeof base.space;
@@ -65,6 +69,9 @@ export interface Theme {
 }
 
 export const baseTokens = base;
+
+/** Touch light tokens (Figma `Touch Light`): diameters, opacities, the core colour, timings. */
+export type TouchLightTokens = typeof base.touchLight;
 
 export interface BrandIssue {
   level: "error" | "warning";
@@ -191,6 +198,8 @@ export function createTheme(brand: BrandInput = {}): Theme {
       viewOnlyOverlay: withAlpha(background, 0.55),
     },
     status,
+    debug: { tagBackground: base.debug.tagBackground, hudBackground: base.debug.hudBackground },
+    touchLight: base.touchLight,
     elevation: { ...base.elevation[mode] },
     space: base.space,
     radius: base.radius,

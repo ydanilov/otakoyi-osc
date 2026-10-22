@@ -15,8 +15,14 @@ export type GlowTone = "signal" | "critical" | "warning" | "accent" | "online" |
 export type ElevationColor = keyof typeof base.elevation.dark;
 type Effect = (typeof base.elevation.effects.raised)[number] & { inset?: boolean };
 
-const effects = base.elevation.effects as Record<
-  Exclude<Depth, "flat"> | "glow",
+/**
+ * Glow strength: `rest` = Glow/Primary (a lit value at rest), `active` = Glow/Primary Active (a
+ * finger on it, a pressed button).
+ */
+export type GlowLevel = "rest" | "active";
+
+const effects = base.elevation.effects as unknown as Record<
+  Exclude<Depth, "flat"> | "glow" | "glowActive",
   ReadonlyArray<Effect & { color: string }>
 >;
 
@@ -38,13 +44,18 @@ const css = (e: Effect, color: string) =>
 /**
  * CSS `box-shadow` string for a depth (+ optional glow). Works on web and on React Native ≥ 0.76
  * (`boxShadow` style, New Architecture), so every surface draws depth from the same tokens.
- * Returns `"none"` for flat surfaces without glow.
+ * Returns `"none"` for flat surfaces without glow. Pressed buttons pass `level: "active"`.
  */
-export function boxShadow(t: Theme, depth: Depth, glow?: GlowTone | false): string {
+export function boxShadow(
+  t: Theme,
+  depth: Depth,
+  glow?: GlowTone | false,
+  level: GlowLevel = "rest",
+): string {
   const parts: string[] = [];
   if (glow) {
     const c = glowColor(t, glow);
-    for (const e of effects.glow) parts.push(css(e, c));
+    for (const e of effects[level === "active" ? "glowActive" : "glow"]) parts.push(css(e, c));
   }
   if (depth !== "flat")
     for (const e of effects[depth]) parts.push(css(e, t.elevation[e.color as ElevationColor]));

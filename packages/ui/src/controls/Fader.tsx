@@ -1,13 +1,4 @@
-import {
-  BlurMask,
-  Canvas,
-  Group,
-  Path,
-  Rect,
-  RoundedRect,
-  rect,
-  rrect,
-} from "@shopify/react-native-skia";
+import { Canvas, Path, RoundedRect, Skia } from "@shopify/react-native-skia";
 import {
   createThrottle,
   crossfadeMix,
@@ -19,6 +10,7 @@ import {
   positionToValue,
   relativeDrag,
   resetValue,
+  spreadTicks,
   startDrag,
   valueToPosition,
   type DragState,
@@ -36,9 +28,11 @@ import {
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
-import { GLOW_BLUR, animateGlow, trackTicksPath, useFineSpread, useGlow } from "./states";
+import { InsetRRect, LitCircle, LitRRect, RaisedRRect } from "./skia";
+import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import { JogFader } from "./Jog";
+import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
 
@@ -99,6 +93,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   const [fine, setFine] = React.useState(false);
   const glow = useGlow();
   const spread = useFineSpread(fine);
+  const light = useTouchLight({ disabled: !!disabled });
 
   // Feedback from the installation or another device moves the fader, unless the finger is on it.
   React.useEffect(() => {
@@ -147,6 +142,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     onBegin: (e) => {
       "worklet";
       animateGlow(glow, true);
+      light.down(e.x, e.y);
       if (!absolute) return;
       dragging.value = true;
       const p = vertical ? 1 - e.y / h : e.x / w;
@@ -187,6 +183,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     onFinalize: () => {
       "worklet";
       animateGlow(glow, false);
+      light.up();
       if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, pos.value, true);
@@ -202,33 +199,82 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   });
   const gesture = useSimultaneousGestures(pan, doubleTap);
 
-  // Fill geometry. Centered faders fill from the middle (bipolar values such as pan).
+  // Geometry (Figma Fader): a recessed rail, a thin lit value line from the start (or the centre)
+  // to the thumb, a raised thumb (cap) with an LED and grip lines, ticks beside the rail.
   const center = c.centered || crossfade ? 0.5 : 0;
-  const fillStart = useDerivedValue(() => Math.min(center, pos.value));
-  const fillLen = useDerivedValue(() => Math.abs(pos.value - center));
-  const fill = useDerivedValue(() =>
-    vertical
-      ? { x: 0, y: h * (1 - fillStart.value - fillLen.value), width: w, height: h * fillLen.value }
-      : { x: w * fillStart.value, y: 0, width: w * fillLen.value, height: h },
-  );
-  const fillX = useDerivedValue(() => fill.value.x);
-  const fillY = useDerivedValue(() => fill.value.y);
-  const fillW = useDerivedValue(() => fill.value.width);
-  const fillH = useDerivedValue(() => fill.value.height);
-  const thumb = t.size.faderThumb / 2;
-  const thumbX = useDerivedValue(() => (vertical ? 0 : w * pos.value - thumb / 2));
-  const thumbY = useDerivedValue(() => (vertical ? h * (1 - pos.value) - thumb / 2 : 0));
-  const r = t.radius.md;
-  // Tick marks along both long edges (every 10 %); in fine mode they spread around the thumb.
-  const tickLen = Math.max(4, (vertical ? w : h) * 0.16);
-  const ticks = useDerivedValue(() =>
-    trackTicksPath(11, pos.value, spread.value, 0, w, h, vertical, tickLen),
-  );
+  const along = vertical ? h : w;
+  const across = vertical ? w : h;
+  const capLong = Math.min(t.size.faderCapLong, Math.max(24, across - 4));
+  const capShort = t.size.faderCapShort;
+  // The thumb's centre travels between half a thumb from each end.
+  const pad = (vertical ? capShort : t.size.faderCapShort - 4) / 2;
+  const travel = Math.max(1, along - pad * 2);
+  const mid = across / 2;
+  const rail = t.size.faderRail;
+  const line = t.size.faderLine;
+  /** Pixel along the track (top→bottom for vertical, left→right for horizontal) of a position. */
+  const at = (p: number) => {
+    "worklet";
+    return vertical ? pad + (1 - p) * travel : pad + p * travel;
+  };
+  const thumbC = useDerivedValue(() => at(pos.value));
+  const fillA = useDerivedValue(() => Math.min(at(center), thumbC.value));
+  const fillLen = useDerivedValue(() => Math.abs(thumbC.value - at(center)));
+  const lineX = vertical ? mid - line / 2 : fillA;
+  const lineY = vertical ? fillA : mid - line / 2;
+  const lineW = vertical ? line : fillLen;
+  const lineH = vertical ? fillLen : line;
+  const thumbW = vertical ? capLong : capShort - 4;
+  const thumbH = vertical ? capShort : capLong - 12;
+  const thumbX = useDerivedValue(() => (vertical ? mid - thumbW / 2 : thumbC.value - thumbW / 2));
+  const thumbY = useDerivedValue(() => (vertical ? thumbC.value - thumbH / 2 : mid - thumbH / 2));
+  // Touch light: centred on the thumb (it follows the thumb, which follows the finger).
+  const lightX = useDerivedValue(() => (vertical ? mid : thumbC.value));
+  const lightY = useDerivedValue(() => (vertical ? thumbC.value : mid));
+  const lightProps = useTouchLightSkia(light, lightX, lightY, "fader");
+  // LED across the thumb, 10 pt before its centre; three grip lines after it.
+  const ledLen = Math.round((vertical ? thumbW : thumbH) * 0.6);
+  const gripLen = Math.round((vertical ? thumbW : thumbH) * 0.48);
+  const ledX = useDerivedValue(() => (vertical ? mid - ledLen / 2 : thumbC.value - 12));
+  const ledY = useDerivedValue(() => (vertical ? thumbC.value - 12 : mid - ledLen / 2));
+  const grips = useDerivedValue(() => {
+    const b = Skia.PathBuilder.Make();
+    for (const o of [2, 7, 12]) {
+      const p = thumbC.value + o;
+      if (vertical) b.moveTo(mid - gripLen / 2, p).lineTo(mid + gripLen / 2, p);
+      else b.moveTo(p, mid - gripLen / 2).lineTo(p, mid + gripLen / 2);
+    }
+    return b.build();
+  });
+  // Ticks every 10 % beside the rail (left of a vertical fader, under a crossfade); every 5th is
+  // long. Fine mode spreads them ×1.8 around the thumb.
+  const showTicks = vertical || crossfade;
+  const ticks = useDerivedValue(() => {
+    const b = Skia.PathBuilder.Make();
+    if (!showTicks) return b.build();
+    const ps = spreadTicks(11, pos.value, spread.value, 0);
+    for (const p of ps) {
+      const k = Math.round(p * 10);
+      const major = Math.abs(p * 10 - k) < 0.02 && k % 5 === 0;
+      const q = at(p);
+      if (vertical) {
+        const x1 = mid - 12;
+        b.moveTo(x1 - (major ? 14 : 8), q).lineTo(x1, q);
+      } else {
+        const y1 = mid + rail / 2 + 8;
+        b.moveTo(q, y1).lineTo(q, y1 + (major ? 6 : 4));
+      }
+    }
+    return b.build();
+  });
+  const lit = fine ? t.color.accent : t.control.fill;
+  const isLit = Math.abs(valueToPosition(display, range) - center) > 0.001 || crossfade;
 
   const step = (c.step ?? (c.max - c.min) / 100) * (c.invert ? -1 : 1);
   return (
     <ControlFrame
       label={c.label}
+      align={vertical ? "center" : "split"}
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
@@ -256,66 +302,101 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
         >
           {w > 0 && (
             <Canvas style={{ width: w, height: h }}>
-              <RoundedRect x={0} y={0} width={w} height={h} r={r} color={t.control.track} />
-              <Group clip={rrect(rect(0, 0, w, h), r, r)}>
-                {/* Neon glow of the lit value: full while touched, softer at rest. */}
-                <Rect
-                  x={fillX}
-                  y={fillY}
-                  width={fillW}
-                  height={fillH}
-                  color={t.control.fill}
-                  opacity={glow}
-                >
-                  <BlurMask blur={GLOW_BLUR} style="outer" />
-                </Rect>
-                <Rect x={fillX} y={fillY} width={fillW} height={fillH} color={t.control.fill} />
-                <Path
-                  path={ticks}
-                  color={t.control.tick}
-                  style="stroke"
-                  strokeWidth={t.stroke.hairline}
-                  opacity={0.9}
-                />
-                {/* The lit edge: a neon bloom at the thumb, strongest while touched. */}
-                <Rect
-                  x={thumbX}
-                  y={thumbY}
-                  width={vertical ? w : thumb}
-                  height={vertical ? thumb : h}
-                  color={t.control.fill}
-                  opacity={glow}
-                >
-                  <BlurMask blur={GLOW_BLUR * 2} style="normal" />
-                </Rect>
-                <Rect
-                  x={thumbX}
-                  y={thumbY}
-                  width={vertical ? w : thumb}
-                  height={vertical ? thumb : h}
-                  color={t.control.thumb}
-                />
-              </Group>
-              <RoundedRect
-                x={0.5}
-                y={0.5}
-                width={w - 1}
-                height={h - 1}
-                r={r}
-                color={fine ? t.color.focus : t.control.trackBorder}
-                style="stroke"
-                strokeWidth={fine ? t.stroke.strong : 1}
+              {/* Rail: recessed, full length. */}
+              <InsetRRect
+                t={t}
+                color={t.control.track}
+                x={vertical ? mid - rail / 2 : 0}
+                y={vertical ? 0 : mid - rail / 2}
+                width={vertical ? rail : w}
+                height={vertical ? h : rail}
+                r={rail / 2}
               />
               {crossfade && (
-                // Centre detent mark.
-                <Rect
-                  x={vertical ? 0 : w / 2 - t.stroke.hairline / 2}
-                  y={vertical ? h / 2 - t.stroke.hairline / 2 : 0}
-                  width={vertical ? w : t.stroke.hairline}
-                  height={vertical ? t.stroke.hairline : h}
+                <>
+                  {/* A / B end LEDs and the centre detent. */}
+                  <LitCircle cx={4} cy={mid} r={4} color={lit} glow={glow} />
+                  <LitCircle cx={w - 4} cy={mid} r={4} color={lit} glow={glow} />
+                  <LitRRect
+                    x={at(0.5) - 1}
+                    y={mid - 6}
+                    width={2}
+                    height={12}
+                    r={1}
+                    color={lit}
+                    glow={glow}
+                  />
+                </>
+              )}
+              <Path
+                path={ticks}
+                color={t.control.tick}
+                style="stroke"
+                strokeWidth={t.stroke.default}
+                strokeCap="round"
+              />
+              {/* The lit value line: full glow while touched, ~40 % at rest. */}
+              <LitRRect
+                x={lineX}
+                y={lineY}
+                width={lineW}
+                height={lineH}
+                r={line / 2}
+                color={lit}
+                glow={glow}
+              />
+              {/* Raised thumb (cap) with its LED and grips. */}
+              <RaisedRRect
+                t={t}
+                sm
+                color={t.color.surfaceRaised}
+                x={thumbX}
+                y={thumbY}
+                width={thumbW}
+                height={thumbH}
+                r={t.radius.sm}
+              />
+              {/* Touch light: above the thumb, below its LED and grips. */}
+              <TouchLightSkia {...lightProps} />
+              {fine && (
+                <RoundedRect
+                  x={thumbX}
+                  y={thumbY}
+                  width={thumbW}
+                  height={thumbH}
+                  r={t.radius.sm}
+                  color={t.color.focus}
+                  style="stroke"
+                  strokeWidth={t.stroke.default}
+                />
+              )}
+              {isLit ? (
+                <LitRRect
+                  x={ledX}
+                  y={ledY}
+                  width={vertical ? ledLen : line}
+                  height={vertical ? line : ledLen}
+                  r={line / 2}
+                  color={lit}
+                  glow={glow}
+                />
+              ) : (
+                <RoundedRect
+                  x={ledX}
+                  y={ledY}
+                  width={vertical ? ledLen : line}
+                  height={vertical ? line : ledLen}
+                  r={line / 2}
                   color={t.control.tick}
                 />
               )}
+              <Path
+                path={grips}
+                color={t.control.track}
+                style="stroke"
+                strokeWidth={t.stroke.default}
+                strokeCap="round"
+              />
             </Canvas>
           )}
         </View>

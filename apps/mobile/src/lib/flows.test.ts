@@ -182,6 +182,12 @@ describe("pairing storage and preferences", () => {
     expect(await loadPrefs(kv)).toEqual(DEFAULT_PREFS);
     await savePrefs(kv, { haptics: false, keepAwake: true });
     expect(await loadPrefs(kv)).toEqual({ haptics: false, keepAwake: true });
+    // A stored key from an older build (the removed debug overlay switch) is dropped.
+    await kv.set(
+      "otakoyi.prefs",
+      JSON.stringify({ haptics: true, keepAwake: false, debugOverlay: true }),
+    );
+    expect(await loadPrefs(kv)).toEqual({ haptics: true, keepAwake: false });
   });
 });
 

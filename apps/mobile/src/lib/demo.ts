@@ -7,10 +7,11 @@ const parsed = parseConfig(demoJson);
 if (!parsed.ok) throw new Error("Demo config is invalid");
 export const demoConfig: InstallationConfig = parsed.config;
 
-/** The demo's brand assets, bundled with the app (relative paths of `theme.logo` / `theme.splash`). */
+/** The demo's assets, bundled with the app (`theme.logo` / `theme.splash`, picture pad images). */
 export const DEMO_ASSETS: Readonly<Record<string, number>> = {
   "demo-logo.png": require("../../../../packages/schema/examples/assets/demo-logo.png"),
   "demo-splash.jpg": require("../../../../packages/schema/examples/assets/demo-splash.jpg"),
+  "demo-pad.jpg": require("../../../../packages/schema/examples/assets/demo-pad.jpg"),
 };
 
 /**

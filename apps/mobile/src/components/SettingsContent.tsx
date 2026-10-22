@@ -17,10 +17,11 @@ import Constants from "expo-constants";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 import { useApp, useSessionState } from "@/lib/app-context";
+import { DebugContent } from "./DebugContent";
 import { SheetTop } from "./SheetTop";
 
 /**
- * Settings (ADR-013): pairing QR, control preferences, what's new, help, and forget this
+ * Settings (ADR-013): pairing QR, control preferences, Developer › Debug, what's new, help, and forget this
  * installation (or exit the demo). No appearance switch: the theme mode ships in the config
  * (ADR-004), and there is no way to change the brand here.
  */
@@ -36,19 +37,29 @@ export function SettingsContent({
   const { session, prefs, setPrefs } = useApp();
   const s = useSessionState();
   const demo = session?.kind === "demo";
-  const [about, setAbout] = React.useState<"whatsNew" | "help" | null>(null);
+  const [page, setPage] = React.useState<"whatsNew" | "help" | "debug" | null>(null);
   const version = Constants.expoConfig?.version ?? "";
 
-  if (about)
+  if (page === "debug")
+    return (
+      <View className="flex-1">
+        <SheetTop title="Debug" onBack={() => setPage(null)} onClose={onClose} />
+        <ScrollView contentContainerClassName="px-4 pb-10 pt-2">
+          <DebugContent />
+        </ScrollView>
+      </View>
+    );
+
+  if (page)
     return (
       <View className="flex-1">
         <SheetTop
-          title={about === "help" ? "Help" : "What's new"}
-          onBack={() => setAbout(null)}
+          title={page === "help" ? "Help" : "What's new"}
+          onBack={() => setPage(null)}
           onClose={onClose}
         />
         <ScrollView contentContainerClassName="gap-3 px-5 pb-10 pt-2">
-          {(about === "help" ? HELP : WHATS_NEW).map((p) => (
+          {(page === "help" ? HELP : WHATS_NEW).map((p) => (
             <Text key={p} className="text-foreground text-md leading-6">
               {p}
             </Text>
@@ -101,9 +112,20 @@ export function SettingsContent({
           </Note>
         </Section>
 
+        <Section title="Developer">
+          <ListCard>
+            <ListRow
+              icon={InfoIcon}
+              title="Debug"
+              subtitle="Bridge, OSC log"
+              onPress={() => setPage("debug")}
+            />
+          </ListCard>
+        </Section>
+
         <ListCard>
-          <ListRow icon={BellIcon} title="What's new" onPress={() => setAbout("whatsNew")} />
-          <ListRow icon={LifebuoyIcon} title="Help" onPress={() => setAbout("help")} />
+          <ListRow icon={BellIcon} title="What's new" onPress={() => setPage("whatsNew")} />
+          <ListRow icon={LifebuoyIcon} title="Help" onPress={() => setPage("help")} />
           <ListRow
             icon={InfoIcon}
             title="About this pult"

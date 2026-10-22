@@ -6,6 +6,7 @@ export interface Prefs {
   keepAwake: boolean;
 }
 
+/** Fine mode has no setting: it is always two fingers (ADR-007, ADR-013). */
 export const DEFAULT_PREFS: Prefs = { haptics: true, keepAwake: true };
 const KEY = "otakoyi.prefs";
 

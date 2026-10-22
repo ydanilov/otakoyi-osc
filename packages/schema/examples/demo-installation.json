@@ -98,13 +98,15 @@
               "id": "logo",
               "type": "toggle",
               "label": "Logo",
-              "address": "/wall/logo"
+              "address": "/wall/logo",
+              "size": "regular"
             },
             {
               "id": "flash",
               "type": "button",
               "label": "Flash",
-              "address": "/wall/flash"
+              "address": "/wall/flash",
+              "size": "regular"
             },
             {
               "id": "blackout",
@@ -494,14 +496,16 @@
               "type": "knob",
               "label": "Zoom",
               "address": "/live/zoom",
-              "preset": "knob/encoder"
+              "preset": "knob/encoder",
+              "size": "compact"
             },
             {
               "id": "color",
               "type": "knob",
               "label": "Colour",
               "address": "/live/color",
-              "preset": "knob/color-hue"
+              "preset": "knob/color-hue",
+              "size": "compact"
             },
             {
               "id": "cam",
@@ -550,6 +554,13 @@
               "label": "Strobe",
               "address": "/live/strobe",
               "preset": "toggle/switch"
+            },
+            {
+              "id": "visual",
+              "type": "toggle",
+              "label": "Visual",
+              "address": "/live/visual",
+              "image": "demo-pad.jpg"
             }
           ],
           "layout": {
@@ -599,7 +610,13 @@
               "strobe": {
                 "x": 8,
                 "y": 5,
-                "w": 4,
+                "w": 2,
+                "h": 3
+              },
+              "visual": {
+                "x": 10,
+                "y": 5,
+                "w": 2,
                 "h": 3
               }
             },
@@ -649,8 +666,14 @@
               "strobe": {
                 "x": 0,
                 "y": 15,
-                "w": 12,
-                "h": 2
+                "w": 6,
+                "h": 3
+              },
+              "visual": {
+                "x": 6,
+                "y": 15,
+                "w": 6,
+                "h": 3
               }
             }
           }

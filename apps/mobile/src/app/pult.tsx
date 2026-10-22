@@ -7,13 +7,18 @@ import {
   PultProvider,
   ThemeProvider,
 } from "@osc/ui";
+import { httpBaseOf } from "@osc/protocol";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { router } from "expo-router";
 import * as React from "react";
 import { Platform, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DemoBanner } from "@/components/DemoBanner";
-import { InstallationContent, type InstallationView } from "@/components/InstallationContent";
+import {
+  INSTALLATION_TITLE,
+  InstallationContent,
+  type InstallationView,
+} from "@/components/InstallationContent";
 import { PreviewPanel } from "@/components/PreviewPanel";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { edgeTarget, formFactorOf, presentationOf, type Panel } from "@/lib/nav";
@@ -55,7 +60,16 @@ export default function PultScreen() {
     else if (!config) router.replace("/loading");
   }, [session, config]);
 
-  const services = React.useMemo(() => (session ? bridgeServices(session.http) : null), [session]);
+  const services = React.useMemo(
+    () =>
+      session
+        ? bridgeServices(session.http, {
+            httpBase: session.bridge ? httpBaseOf(session.bridge) : undefined,
+            demo: session.kind === "demo",
+          })
+        : null,
+    [session],
+  );
   const pult = config?.pults.find((p) => p.id === app.pultId) ?? config?.pults[0];
   const store = pult ? session?.stores.get(pult.id) : undefined;
   const pultServices = React.useMemo(
@@ -111,7 +125,7 @@ export default function PultScreen() {
             <Inspector
               open={inspector}
               onClose={() => setInspector(false)}
-              title={view === "activity" ? "Activity" : "Installation"}
+              title={INSTALLATION_TITLE[view]}
             >
               <InstallationContent
                 view={view}

@@ -13,6 +13,7 @@ import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
 import type { ControlProps } from "./types";
+import { TouchLightView, usePressLight, useTouchLight } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 /**
@@ -48,6 +49,9 @@ export function HoldToConfirm({ control: c, onChange, disabled }: ControlProps<"
     setState("idle");
   };
 
+  const light = useTouchLight({ disabled: !!disabled });
+  const lit = usePressLight(light, { onPressIn, onPressOut });
+
   const { width: w, height: h } = size;
   const inset = t.size.holdRing / 2;
   const ring = React.useMemo(() => {
@@ -66,8 +70,10 @@ export function HoldToConfirm({ control: c, onChange, disabled }: ControlProps<"
   const label = state === "holding" ? "Hold…" : state === "done" ? "Sent" : (c.label ?? "Hold");
   return (
     <Pressable
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
+      ref={lit.ref}
+      onPressIn={lit.onPressIn}
+      onPressMove={lit.onPressMove}
+      onPressOut={lit.onPressOut}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={c.label ?? c.id}
@@ -81,6 +87,8 @@ export function HoldToConfirm({ control: c, onChange, disabled }: ControlProps<"
           state === "done" && "bg-destructive",
         )}
       >
+        {/* Touch light: inside the button, below the ring and the label. */}
+        <TouchLightView light={light} radius={t.radius.md} />
         {w > 0 && (
           <Canvas style={{ position: "absolute", width: w, height: h }} pointerEvents="none">
             <Path

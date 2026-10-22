@@ -81,7 +81,7 @@ const meta = {
             "Don't switch to absolute for critical parameters: a stray touch jumps the value.",
           ],
           anatomy: [
-            "Label (Control/Label) + value readout (Control/Value) + FINE badge",
+            "Header: label (Control/Label) + value readout (Control/Value) + FINE badge — centred above the track, 6 pt apart, on vertical faders and jog wheels; label left / value right on horizontal ones",
             "Track bed (control track, inset)",
             "Fill (control/signal)",
             "Thumb line",
@@ -126,9 +126,18 @@ type Story = StoryObj<typeof meta>;
 export const Vertical: Story = {
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole("slider", { name: "Master" })).toBeVisible();
+    // Vertical: label and value centred above the track.
+    await expect(await canvas.findByTestId("control-header-center")).toBeVisible();
   },
 };
-export const Horizontal: Story = { args: { orientation: "horizontal", label: "Speed", unit: "×" } };
+export const Horizontal: Story = {
+  args: { orientation: "horizontal", label: "Speed", unit: "×" },
+  play: async ({ canvas }) => {
+    // Horizontal keeps label left / value right.
+    await canvas.findByText("Speed");
+    await expect(canvas.queryByTestId("control-header-center")).toBeNull();
+  },
+};
 export const Absolute: Story = { args: { response: "absolute" } };
 export const Centered: Story = {
   args: { centered: true, label: "Pan", value: 0.5, orientation: "horizontal" },

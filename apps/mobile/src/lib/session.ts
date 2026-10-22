@@ -1,4 +1,4 @@
-import { PultStore } from "@osc/controls";
+import { DebugStore, PultStore, formatDebugValue, messagesFor } from "@osc/controls";
 import {
   modeFor,
   type ActionName,
@@ -40,6 +40,8 @@ export interface SessionState {
   lost: boolean;
   /** When the last welcome arrived (epoch ms), or null before the first. */
   welcomedAt: number | null;
+  /** Protocol version the bridge answered with (welcome `v`). */
+  protocol: number | null;
 }
 
 export interface SessionOptions {
@@ -55,6 +57,9 @@ export interface SessionOptions {
   http: BridgeHttp;
   now?: () => number;
 }
+
+/** Debug page: protocol ping and health (FPS) poll interval while it is open, ms. */
+export const DEBUG_POLL_MS = 2000;
 
 const NO_MODES: InstallationModes = { blackout: false, idle: false, pause: false };
 
@@ -72,6 +77,9 @@ export class Session {
   readonly pin: string | undefined;
   readonly name: string | undefined;
   stores = new Map<string, PultStore>();
+  /** Counters, rates and the OSC log behind the Debug page (Installation › Debug, Settings › Developer › Debug). */
+  readonly debug: DebugStore;
+  private debugTimer: ReturnType<typeof setInterval> | null = null;
   private t: BridgeTransport | null = null;
   private listeners = new Set<() => void>();
   private now: () => number;
@@ -86,6 +94,7 @@ export class Session {
     error: null,
     lost: false,
     welcomedAt: null,
+    protocol: null,
   };
 
   constructor(private opts: SessionOptions) {
@@ -96,6 +105,31 @@ export class Session {
     this.pin = opts.pin;
     this.name = opts.name;
     this.now = opts.now ?? Date.now;
+    this.debug = new DebugStore({ now: this.now });
+  }
+
+  /**
+   * Debug page open or closed (it calls this on mount / unmount). While open, the session pings the
+   * bridge (RTT) and reads its health (the installation's FPS) every DEBUG_POLL_MS; closed costs
+   * nothing.
+   */
+  setDebug(on: boolean) {
+    if (!on) {
+      if (this.debugTimer) clearInterval(this.debugTimer);
+      this.debugTimer = null;
+      return;
+    }
+    if (this.debugTimer) return;
+    const poll = () => {
+      if (this.s.connection !== "open") return;
+      this.t?.send({ t: "ping", at: this.debug.ping() });
+      this.http.health().then(
+        (h) => this.debug.setFps(h.fps),
+        () => {},
+      );
+    };
+    poll();
+    this.debugTimer = setInterval(poll, DEBUG_POLL_MS);
   }
 
   get state(): SessionState {
@@ -133,6 +167,7 @@ export class Session {
   }
 
   stop() {
+    this.setDebug(false);
     this.t?.close();
     this.t = null;
     this.patch({ connection: "closed" });
@@ -200,13 +235,17 @@ export class Session {
         const cfg = parsed.config;
         // Same config revision → keep the stores (and the UI); otherwise rebuild.
         if (this.s.config?.installation.revision !== cfg.installation.revision) {
+          this.debug.reset();
           this.stores = new Map(
             cfg.pults.map((p) => [
               p.id,
               new PultStore(cfg, p, {
                 send() {},
-                interact: (pult, control, value) =>
-                  this.t?.send({ t: "set", pult, id: control.id, value }),
+                interact: (pult, control, value) => {
+                  this.t?.send({ t: "set", pult, id: control.id, value });
+                  // What the bridge will send for it (the bridge is the one that sends OSC).
+                  this.debug.sent(control.id, safeMessages(control, value));
+                },
               }),
             ]),
           );
@@ -223,13 +262,22 @@ export class Session {
           error: null,
           lost: false,
           welcomedAt: this.now(),
+          protocol: msg.v,
         });
         this.applyMode();
         return;
       }
-      case "value":
-        this.stores.get(msg.pult)?.set(msg.id, msg.value as never);
+      case "value": {
+        const store = this.stores.get(msg.pult);
+        store?.set(msg.id, msg.value as never);
+        // Feedback from the installation (not another device's change).
+        if (msg.by === null && store) {
+          const c = store.control(msg.id);
+          const address = c?.feedback ?? (c && "address" in c ? String(c.address) : msg.id);
+          this.debug.received(address, formatDebugValue(msg.value as never));
+        }
         return; // stores notify their own subscribers
+      }
       case "lease":
         this.patch({ lease: msg.holder });
         this.applyMode();
@@ -257,9 +305,19 @@ export class Session {
         this.stores.get(msg.pult)?.bumpRev(msg.id);
         return;
       case "pong":
+        this.debug.pong(msg.at);
+        return;
       case "pairing":
         return;
     }
+  }
+}
+
+function safeMessages(...a: Parameters<typeof messagesFor>) {
+  try {
+    return messagesFor(...a);
+  } catch {
+    return [];
   }
 }
 

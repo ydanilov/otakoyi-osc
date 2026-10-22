@@ -120,6 +120,14 @@ OTAKOYI_PIN=2468 pnpm bridge --config /absolute/path/to/draft-config.json
 # OTAKOYI_DEBUG=1 logs every OSC packet in and out
 ```
 
+**Debug page.** In the app or the web pult: Installation › Debug (or Settings › Developer › Debug).
+It never covers the pult. It lists the connection (bridge, round trip, target, time since your last
+feedback, who is in control), the traffic (messages sent / received per second, the installation's
+FPS from your `/sys/fps`), every control on the current pult with its OSC address (or template), the
+last value sent and its send rate, a live log of the last 50 OSC events (→ sent, ← received, newest
+first) and the protocol / config / schema versions. The app pings the bridge and polls its health
+only while the page is open.
+
 The draft config is only for testing; the real one is exported from Figma. Start from
 `packages/schema/examples/demo-installation.json`: set `targets[0].port` / `feedbackPort` and
 replace the controls with your parameters. `parseConfig()` in `packages/schema` validates it, and
@@ -139,6 +147,21 @@ bridge serves the bundle from `assets/` next to the config file at `/brand/<path
 
 ```json
 "theme": { "mode": "dark", "primary": "#8DFF2E", "logo": "logo.png", "splash": "lobby.jpg" }
+```
+
+**Pad sizes and picture pads** (Figma `Size`, `Content=Image`). Pads (`button`, `toggle`) take
+`size: "regular"` (150×88 pt) or `"compact"` (104×64 pt); without `size` a pad fills its grid cell.
+A toggle with `image` is a **picture pad**: a square (168 pt regular / 120 pt compact) showing the
+image, the label bottom-left on a legibility gradient; off dims the picture, on adds the lit ring
+and LED. `image` is resolved like the brand assets (bundle path → `/brand/<path>`, or a URL).
+Knobs take `size: "compact"` for a ~0.7× dial (labels stay the same size). Sizes change nothing on
+the wire. A page whose rows would squeeze a picture pad or a sized pad below its size is split onto
+another screen.
+
+```json
+{ "id": "visual", "type": "toggle", "label": "Visual", "address": "/live/visual", "image": "visual.jpg" },
+{ "id": "flash", "type": "button", "label": "Flash", "address": "/fx/flash", "size": "compact" },
+{ "id": "zoom", "type": "knob", "label": "Zoom", "address": "/fx/zoom", "size": "compact" }
 ```
 
 ## 6. Write the OSC contract

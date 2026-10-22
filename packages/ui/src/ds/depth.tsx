@@ -1,12 +1,19 @@
-import { boxShadow, type Depth, type GlowTone } from "@osc/tokens";
+import { boxShadow, type Depth, type GlowLevel, type GlowTone } from "@osc/tokens";
 import * as React from "react";
-import { View, type GestureResponderEvent, type ViewProps } from "react-native";
+import {
+  Platform,
+  View,
+  type GestureResponderEvent,
+  type ViewProps,
+  type ViewStyle,
+} from "react-native";
 import { cn } from "../lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
 
-export type { Depth, GlowTone };
+export type { Depth, GlowLevel, GlowTone };
 
 const RADIUS = {
+  none: "rounded-none",
   sm: "rounded-sm",
   md: "rounded-md",
   lg: "rounded-lg",
@@ -14,6 +21,15 @@ const RADIUS = {
   full: "rounded-full",
 };
 export type Radius = keyof typeof RADIUS;
+
+/**
+ * Continuous (squircle) corners where the platform draws them (iOS); a no-op elsewhere. Every
+ * rounded DS surface sets it so corners read like the Figma (corner smoothing) shapes.
+ */
+export const CONTINUOUS: ViewStyle = Platform.select({
+  ios: { borderCurve: "continuous" },
+  default: {},
+});
 
 /** Default fill per depth: raised cards sit on `card`, beds are the recessed control track. */
 const FILL: Record<Depth, string> = {
@@ -25,9 +41,12 @@ const FILL: Record<Depth, string> = {
 };
 
 /** Box-shadow style for a depth, from the theme's elevation tokens. */
-export function useDepthStyle(depth: Depth, glow?: GlowTone | false) {
+export function useDepthStyle(depth: Depth, glow?: GlowTone | false, level: GlowLevel = "rest") {
   const t = useTheme();
-  return React.useMemo(() => ({ boxShadow: boxShadow(t, depth, glow) }), [t, depth, glow]);
+  return React.useMemo(
+    () => ({ boxShadow: boxShadow(t, depth, glow, level) }),
+    [t, depth, glow, level],
+  );
 }
 
 /**
@@ -38,6 +57,7 @@ export function useDepthStyle(depth: Depth, glow?: GlowTone | false) {
 export function Surface({
   depth = "raised",
   glow,
+  glowLevel = "rest",
   radius = "lg",
   fill = true,
   className,
@@ -46,16 +66,18 @@ export function Surface({
 }: ViewProps & {
   depth?: Depth;
   glow?: GlowTone | false;
+  /** Glow/Primary at rest, Glow/Primary Active while pressed or touched. */
+  glowLevel?: GlowLevel;
   radius?: Radius;
   /** Paint the default fill for the depth. Pass false to supply your own `bg-*` class. */
   fill?: boolean;
   className?: string;
 }) {
-  const shadow = useDepthStyle(depth, glow);
+  const shadow = useDepthStyle(depth, glow, glowLevel);
   return (
     <View
       className={cn(fill && FILL[depth], RADIUS[radius], className)}
-      style={[shadow, style]}
+      style={[CONTINUOUS, shadow, style]}
       {...props}
     />
   );

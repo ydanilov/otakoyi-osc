@@ -3,7 +3,9 @@ import { parseConfig } from "@osc/schema";
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import * as React from "react";
 import { View } from "react-native";
+import { ControlServicesProvider } from "../platform/services";
 import { componentDocs } from "../stories/docs";
+import { storyServices } from "../stories/services";
 import { PultPager, PultProvider } from "./PultRenderer";
 import { PultStore } from "./store";
 
@@ -14,11 +16,14 @@ function Demo({ pultIndex = 0, height = 700 }: { pultIndex?: number; height?: nu
     const pult = parsed.config.pults[pultIndex] ?? parsed.config.pults[0]!;
     return new PultStore(parsed.config, pult, { send: () => {} });
   }, [pultIndex]);
+  const services = React.useMemo(storyServices, []);
   return (
     <View style={{ height }}>
-      <PultProvider store={store}>
-        <PultPager pages={store.pult.pages} />
-      </PultProvider>
+      <ControlServicesProvider value={services}>
+        <PultProvider store={store}>
+          <PultPager pages={store.pult.pages} />
+        </PultProvider>
+      </ControlServicesProvider>
     </View>
   );
 }
@@ -65,3 +70,5 @@ type Story = StoryObj<typeof meta>;
 
 export const DemoPult: Story = {};
 export const Phone: Story = { globals: { viewport: { value: "phone" } } };
+/** The demo's live pult: picture pad, compact knobs and sized pads. */
+export const LivePult: Story = { args: { pultIndex: 2 } };

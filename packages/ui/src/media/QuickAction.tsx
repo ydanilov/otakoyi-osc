@@ -8,6 +8,7 @@ import type { PhosphorIcon } from "../ds/icons";
 import { holdFraction } from "../ds/logic";
 import { cn } from "../lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
+import { TouchLightView, usePressLight, useTouchLight } from "../controls/TouchLight";
 
 const SIZE = 64;
 const RING = 3;
@@ -63,7 +64,8 @@ export function QuickAction({
     };
     raf.current = requestAnimationFrame(tick);
   };
-  const press = usePressState(forced, {
+  const light = useTouchLight({ disabled: !!disabled });
+  const lit = usePressLight(light, {
     onPressIn: startHold,
     onPressOut: () => {
       if (!holdMs) return;
@@ -71,6 +73,7 @@ export function QuickAction({
       setProgress((p) => (p >= 1 ? p : 0));
     },
   });
+  const press = usePressState(forced, { onPressIn: lit.onPressIn, onPressOut: lit.onPressOut });
   const critical = tone === "critical";
   const shadow = useDepthStyle(
     disabled ? "flat" : press.pressed ? "pressed" : "raised",
@@ -86,8 +89,10 @@ export function QuickAction({
       style={disabled ? { opacity: t.control.disabledOpacity } : undefined}
     >
       <Pressable
+        ref={lit.ref}
         onPress={holdMs ? undefined : onAction}
         onPressIn={press.onPressIn}
+        onPressMove={lit.onPressMove}
         onPressOut={press.onPressOut}
         disabled={disabled}
         accessibilityRole="button"
@@ -103,6 +108,8 @@ export function QuickAction({
         )}
         style={[{ width: SIZE, height: SIZE }, shadow]}
       >
+        {/* Touch light: inside the disc, below the hold ring and the icon. */}
+        <TouchLightView light={light} radius={SIZE / 2} />
         {holdMs ? (
           <Svg width={SIZE} height={SIZE} style={{ position: "absolute" }} pointerEvents="none">
             <Circle

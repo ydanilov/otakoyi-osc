@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import { View } from "react-native";
+import { expect } from "storybook/test";
 import { componentDocs } from "../stories/docs";
 import { ControlFrame } from "./ControlFrame";
 
@@ -30,7 +31,11 @@ const meta = {
             "Value (Control/Value, mono)",
             "Body slot",
           ],
-          behaviour: ["`disabled` dims the whole control to 40 %."],
+          behaviour: [
+            "`align: split` (default): label left, value right — horizontal faders and other controls.",
+            "`align: center`: label and value centred above the body, 6 pt apart — vertical faders (and jog wheels) and knobs.",
+            "`disabled` dims the whole control to 40 %.",
+          ],
           a11y: ["The control body carries the role; the frame's text is visual."],
           content: ["Label truncates first, the value never."],
           figma: { component: "Header layers of every control set" },
@@ -46,3 +51,10 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 export const Fine: Story = { args: { badge: "FINE" } };
 export const Disabled: Story = { args: { disabled: true } };
+/** Vertical faders and knobs: label and value centred above the control, 6 pt apart. */
+export const Centered: Story = {
+  args: { align: "center" },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByTestId("control-header-center")).toBeVisible();
+  },
+};

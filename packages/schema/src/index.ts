@@ -158,10 +158,25 @@ const ranged = {
   fineFactor: z.number().min(0.01).max(1).default(0.2),
 };
 
+/**
+ * Pad size (Figma `Size`): regular 150×88 pt, compact 104×64 pt; a picture pad is a square
+ * 168 / 120 pt. Omitted: the pad fills its grid cell (configs from before sizes).
+ */
+export const PadSize = z.enum(["regular", "compact"]);
+export type PadSize = z.infer<typeof PadSize>;
+
+/** An image of the config's asset bundle (served by the bridge at `/brand/<path>`) or an http(s) URL. */
+const assetRef = z
+  .string()
+  .min(1)
+  .max(2048)
+  .refine((s) => !/^(javascript|data|file):/i.test(s.trim()), "an asset path or URL");
+
 export const Button = z.object({
   ...base,
   type: z.literal("button"),
   address,
+  size: PadSize.optional(),
   /** Values sent on press / release. `release: undefined` sends nothing on release. */
   press: z.array(oscValue).default([1]),
   release: z.array(oscValue).optional().default([0]),
@@ -180,6 +195,14 @@ export const Toggle = z.object({
    * Same messages either way.
    */
   style: z.enum(["button", "switch"]).default("button"),
+  /** Pad size (style `button`). See `PadSize`. */
+  size: PadSize.optional(),
+  /**
+   * Picture pad (style `button`): an image from the config's asset bundle or a URL. Drawn as a
+   * square (168 / 120 pt) with the label on a legibility gradient; off dims the picture, on adds
+   * the lit ring and LED. Ignored by `style: "switch"`.
+   */
+  image: assetRef.optional(),
 });
 
 export const Fader = z.object({
@@ -225,6 +248,8 @@ export const Knob = z.object({
   mode: z.enum(["absolute", "relative", "hue"]).default("absolute"),
   /** Degrees of rotation from min to max, gap centred at the bottom. Figma library: 240°. */
   travel: z.number().min(30).max(360).default(240),
+  /** Figma `Size`: compact draws the dial at ~0.7× (labels stay the same size). */
+  size: z.enum(["regular", "compact"]).default("regular"),
   /** @deprecated v1 name for `mode: "relative"`; still read (see `knobMode`). */
   endless: z.boolean().default(false),
   centered: z.boolean().default(false),
