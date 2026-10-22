@@ -12,7 +12,8 @@ Figma is the builder (ADR-014): there is no separate pult-builder app.
 | Patterns             | Compositions: Channel Strip, Fader Bank, Knob Group, Mix, Prompt Presets, Installation Actions…       | `packages/ui`          |
 | Guidelines           | Rules for composing a client pult: which control when, do/don’t, layout, annotating a build, copy     | —                      |
 | iOS 27 · System      | System parts from the iOS and iPadOS 27 library: status bar, home indicator, sheets, keyboards, menus | native                 |
-| Client · Phase One   | First client build: every app screen for phone and tablet, prototype flow                             | config + `apps/mobile` |
+| Client · Phase One   | First client build: 21 screens each for phone and tablet (same numbering), prototype flows            | config + `apps/mobile` |
+| Demo · Try the demo  | Demo-mode prototype (simulated installation) for App Review and prospects, phone + tablet             | `apps/mobile` demo     |
 | Research, References | Mobbin research board and visual references (Neumorphic Dark Knobs is the lead one)                   | —                      |
 
 ## Client pages are the pult builder
@@ -44,13 +45,22 @@ for state. Depth is meaningful (ADR-013):
   control's touch surface while it is held (iOS 26 text-field highlight). See Rules.
 
 Effect colours are bound to `elevation/*` variables, so shadows and highlights switch with the
-theme mode. Pult screens never scroll. Navigation follows the Apple HIG (ADR-013): Settings and
+theme mode. `Glow/*` is the resting glow of lit values; `Glow/* Active` is used while a control is
+touched or dragged (Fader/Knob `State=Active`, `State=Fine`, Button `State=Pressed`). While a finger is
+down, a Touch Light blooms under it inside the touch surface, follows it and fades on release.
+
+Shape follows Apple: continuous corners (corner smoothing 0.6), radius scale 8 / 12 / 22 / 28,
+nested corners are concentric (inner radius = outer radius − inset), tab bars and segmented
+controls are capsules, list separators are inset to the text (`Divider Type=Inset`).
+
+Pult screens never scroll; sheets may. Navigation follows the Apple HIG (ADR-013): Settings and
 Installation open from header buttons (edge swipes are shortcuts) as system sheets on iPhone; on iPad
-Settings is a form sheet and Installation a 390 pt trailing inspector. Dialogs are content inside the
-system sheet / form sheet. The scrim only dims (no blur). Debug never overlays the pult: it is a
-page pushed inside Installation (Phone / 20 Debug in the sheet, Tablet / 20 Debug in the inspector,
-with a back control) and from Settings › Developer › Debug. It is an inset-grouped list — Section +
-List Card of Debug Rows (Connection, Traffic, Controls, Versions) and the OSC Log.
+Settings is a form sheet and Installation a 390 pt trailing inspector, built from the **iOS 27 ·
+System** page (`Sheet - iPhone`, `Sheet - iPad`) with our content inside; context and pull-down menus
+use the iOS `Menu`. The scrim only dims (no blur). Debug never overlays the pult: it is a page pushed
+inside Installation (Phone / 20 Debug in the sheet, Tablet / 20 Debug in the inspector, with a back
+control) and from Settings › Developer › Debug. It is an inset-grouped list — Section + List Card of
+Debug Rows (Connection, Traffic, Controls, Versions) and the OSC Log.
 
 Control headers: vertical faders (and jog wheels) and knobs centre the label and value above the
 control, 6 pt apart; horizontal faders keep label left / value right (`ControlFrame align`).
@@ -75,17 +85,23 @@ Forms: Input, Value Input (label + recessed value with unit; Default / Focus / E
 Chrome: Button (Primary / Secondary / Ghost / Destructive × Default / Pressed / Disabled), Icon
 Button, Badge, Connection, Pult Select, Screen Tab, Tab Bar, Pult Header, Input, List Row, Switch,
 Status Bar, Home Indicator, Top Bar, Brand Mark, Wordmark, Stat Tile, Note, Info Card, Chip, Loader,
-Divider, Scrim, Page Dots, Nav Item, Viewfinder. Slot containers: List Card, Section, Console Panel,
-Dialog (Modal / Sheet), Release Card, Pult Card.
+Divider (Line / Inset / Label), Scrim, Page Dots, Nav Item, Viewfinder, Toast, Backdrop, Client Logo.
+Slot containers: List Card, Section, Console Panel, Dialog (content for system sheets), Release Card,
+Pult Card.
 
 Debug: Debug Row (Kind=Metric / Control), OSC Log, Debug Tag, Debug HUD.
 
-Controls: Fader (Absolute slot / Relative jog wheel × Vertical / Horizontal × Default / Fine / Off /
-Disabled), Knob (Absolute / Relative / Color-Hue × Vertical / Horizontal × Size Regular / Compact,
-240° travel), Pad (Size), Toggle (Size × Content=Text / Image), Thumbstick,
+Controls: Fader (Absolute / Relative jog wheel / Crossfade × Vertical / Horizontal × Default / Active /
+Fine “×0.2” / Off / Disabled), Knob (Absolute / Relative / Color-Hue × Vertical / Horizontal ×
+Default / Active / Fine / Disabled × Size Regular / Compact, 240° travel), Pad (Size), Toggle (Size ×
+Content=Text / Image), Thumbstick,
 XY Pad, Meter, Toggle, Pad, Hold to Confirm, Segmented (single-select), Group Button and Button
 Group (multi-select with LED strip), Button Grid, Scene List, Label, Color Picker, Unsupported,
 Touch Light (press response, 134:795; board "Touch light — press response" 134:15404).
+
+Prompts: Prompt Preset (Off / On / In blend / Disabled / Applying / Error / Editing), Prompt Field;
+patterns Prompt Presets (Active / Applying / All off / Editing / Empty / Error), Prompt Mix, Prompt
+Context Menu, Prompt Editor Sheet (New / Edit), Prompt Deleted Toast, Image Source Menu.
 
 Icons: Phosphor Regular as `Icon/<name>` components — use them for every glyph.
 
