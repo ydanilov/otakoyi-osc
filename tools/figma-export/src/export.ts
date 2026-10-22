@@ -103,7 +103,8 @@ function tabsOf(frame: FNode): { labels: string[]; active?: string } {
   return { labels, active };
 }
 
-function bodyOf(frame: FNode): FNode {
+/** The part of a pult frame that holds the controls (`Pult` / `Console` frame, else the frame). */
+export function bodyOf(frame: FNode): FNode {
   return (
     frame.children?.find(
       (c) => c.type !== "INSTANCE" && /^(pult|console|body|controls)$/i.test(c.name),

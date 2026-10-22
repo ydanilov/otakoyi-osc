@@ -440,6 +440,22 @@ importers:
         specifier: workspace:*
         version: link:../../packages/schema
 
+  tools/figma-plugin:
+    dependencies:
+      '@osc/figma-export':
+        specifier: workspace:*
+        version: link:../figma-export
+      '@osc/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+    devDependencies:
+      '@figma/plugin-typings':
+        specifier: ^1.142.0
+        version: 1.142.0
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+
 packages:
 
   2g@1.0.1:
@@ -1422,6 +1438,9 @@ packages:
   '@expo/xcpretty@4.4.7':
     resolution: {integrity: sha512-EbxYllZ7/ozONVZd425cm4XnolfW+AmSFT5aP7Jdno6oc3WrYQcHz2CO20z/2rwWwYgztmV2PXvYH+BQ8YFjqg==}
     hasBin: true
+
+  '@figma/plugin-typings@1.142.0':
+    resolution: {integrity: sha512-Loa9P4bUZi/pQejic8OYQSU4Zz9izJdIiDUkkKddq5Bfc5JPRV6pCeg3C8owovbX9lKshaFym86PlMhKZgLeBw==}
 
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
@@ -6497,6 +6516,8 @@ snapshots:
       '@babel/code-frame': 7.29.7
       chalk: 4.1.2
       js-yaml: 4.3.2
+
+  '@figma/plugin-typings@1.142.0': {}
 
   '@floating-ui/core@1.8.0':
     dependencies:
