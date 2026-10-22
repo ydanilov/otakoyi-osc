@@ -343,8 +343,14 @@ export const ColorPicker = z.object({
   address,
   format: z.enum(["rgbFloat", "rgbInt", "hsvFloat", "hex"]).default("rgbFloat"),
   default: hex.optional(),
-  /** Restrict to a palette (e.g. the client's brand colours). */
+  /** Restrict to a palette (e.g. the client's brand colours): swatches instead of the pickers. */
   swatches: z.array(hex).optional(),
+  /**
+   * Figma Color Picker `Style`: which picker shows first — hue ring + saturation / brightness knobs,
+   * a saturation × brightness square with a hue strip, or a hue × saturation wheel with a
+   * brightness slider. The user can switch; their choice is kept on the device. Same value in all.
+   */
+  pickerStyle: z.enum(["knobs", "square", "wheel"]).optional(),
 });
 
 /** Multi-select latching buttons: each button toggles on its own and has its own address. */

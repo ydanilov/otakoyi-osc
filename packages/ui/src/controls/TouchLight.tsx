@@ -236,6 +236,7 @@ export interface InnerLightProps {
   colors: string[];
   cx: SharedValue<number>;
   cy: SharedValue<number>;
+  c: SharedValue<{ x: number; y: number }>;
   r: SharedValue<number>;
   opacity: SharedValue<number>;
   clip: SharedValue<SkPath>;
@@ -262,9 +263,12 @@ export function useInnerLight(
   const px = pin?.x ?? 0.5;
   const py = pin?.y ?? 0.5;
   const pinned = !!pin;
-  const read = () => {
+  const isShared = !("kind" in shape);
+  const fixed = isShared ? null : (shape as LitShape);
+  const shared = isShared ? (shape as SharedValue<LitShape>) : null;
+  const read = (): LitShape => {
     "worklet";
-    return "value" in shape ? shape.value : shape;
+    return shared ? shared.value : fixed!;
   };
   const centre = useDerivedValue(() => {
     const s = read();
@@ -276,6 +280,7 @@ export function useInnerLight(
   });
   const cx = useDerivedValue(() => centre.value.x);
   const cy = useDerivedValue(() => centre.value.y);
+  const c = useDerivedValue(() => vec(centre.value.x, centre.value.y));
   const r = useDerivedValue(() => innerLightRadius(read()) * (pinned ? 1 : light.scale.value));
   const opacity = useDerivedValue(() => (pinned ? 1 : light.level.value));
   const clip = useDerivedValue(() => {
@@ -285,12 +290,11 @@ export function useInnerLight(
     else b.addRRect(Skia.RRectXY(Skia.XYWHRect(s.x, s.y, s.width, s.height), corner, corner));
     return b.build();
   });
-  return { allowed: light.allowed, colors, cx, cy, r, opacity, clip };
+  return { allowed: light.allowed, colors, cx, cy, c, r, opacity, clip };
 }
 
 /** The inner light in a Skia canvas: draw it right above the element's fill, below its marks. */
-export function InnerLight({ allowed, colors, cx, cy, r, opacity, clip }: InnerLightProps) {
-  const c = useDerivedValue(() => vec(cx.value, cy.value));
+export function InnerLight({ allowed, colors, cx, cy, c, r, opacity, clip }: InnerLightProps) {
   if (!allowed) return null;
   return (
     <Group clip={clip} opacity={opacity}>

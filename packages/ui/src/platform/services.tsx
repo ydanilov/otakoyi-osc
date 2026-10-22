@@ -81,6 +81,30 @@ export interface PromptPresets {
   reorder(pult: string, control: string, ids: string[]): Promise<PromptPresetDto[]>;
 }
 
+/**
+ * Per-device view preferences of controls (e.g. the Color Picker's style). Never sent, never part
+ * of the config; the app stores them on the device.
+ */
+export interface ViewPrefs {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string): Promise<void>;
+}
+
+/** View preferences kept in memory (stories, tests, and the default). */
+export function memoryViewPrefs(): ViewPrefs {
+  const m = new Map<string, string>();
+  return {
+    get: async (k) => m.get(k) ?? null,
+    set: async (k, v) => {
+      m.set(k, v);
+    },
+  };
+}
+
+/** Storage key of a control's view preference. */
+export const viewPrefKey = (pult: string, control: string, name: string) =>
+  `otakoyi.view.${pult || "-"}.${control}.${name}`;
+
 export interface ControlServices {
   /** Pult id the controls belong to (the HTTP API addresses controls by pult + id). */
   pult: string;
@@ -94,6 +118,8 @@ export interface ControlServices {
    * null = cannot be shown (the pad falls back to its plain look).
    */
   asset(path: string): ImageSourcePropType | null;
+  /** Per-device view preferences (Color Picker style). */
+  viewPrefs: ViewPrefs;
 }
 
 /** http(s) URLs only — what a pult without a bridge can show. */
@@ -106,6 +132,7 @@ const unavailable = () => Promise.reject(new Error("Not available on this device
 /** Defaults: nothing wired. Controls render and explain that the feature is not available here. */
 export const stubServices: ControlServices = {
   pult: "",
+  viewPrefs: memoryViewPrefs(),
   asset: urlAsset,
   imagePicker: { available: false, pick: async () => null },
   audio: {

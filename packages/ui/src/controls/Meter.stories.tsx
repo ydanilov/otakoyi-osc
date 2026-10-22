@@ -29,8 +29,8 @@ function MeterStory({
     <ControlHarness
       control={control}
       value={value}
-      width={vertical ? 80 : 300}
-      height={vertical ? 240 : 80}
+      width={vertical ? 100 : 300}
+      height={vertical ? 226 : 90}
       showOsc={false}
     />
   );
@@ -56,12 +56,15 @@ const meta = {
           dont: ["Don't brand the warning/critical colours — they are status tokens."],
           anatomy: [
             "Label + value",
-            "Inset bed",
-            "Fill: signal → warning → critical by level (`meterLevel`)",
+            "Recessed well (30 pt, radius 12)",
+            "24 LED segments: signal ≤ 70 %, warning 70–90 %, critical > 90 % (or `warnAt` / `criticalAt`); unlit = zone colour at 13 %",
+            "Top 3 lit segments glow",
+            "Peak-hold line (white)",
+            "dB scale 0 / −6 / −12 / −24 / −48, mono 9 pt (vertical: right; horizontal: below)",
           ],
           behaviour: [
             `Sends nothing (${OSC_SOURCE}); listens on \`feedback\`.`,
-            "Animates in `motion.duration.instant` (80 ms) to stay live, not decorative.",
+            "Peak hold: rises with the level, holds 1.5 s, then falls (`stepPeak`).",
           ],
           a11y: ["Value is read as text; status words come from the parent screen if needed."],
           content: ["Label ≤ 10 characters."],
@@ -83,7 +86,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Normal: Story = {};
-export const Warning: Story = { args: { value: 0.8 } };
-export const Critical: Story = { args: { value: 0.95 } };
+export const Normal: Story = { args: { value: 0.45 } };
+export const Warning: Story = { args: { value: 0.82 } };
+export const Critical: Story = { args: { value: 0.97 } };
+export const Silent: Story = { args: { value: 0 } };
 export const Horizontal: Story = { args: { orientation: "horizontal", value: 0.6 } };

@@ -19,8 +19,10 @@ import {
   fineBadge,
   formatDelta,
   formatValue,
+  hsbToHex,
   hsvToHex,
   hueDrag,
+  hueRingColors,
   jogDelta,
   knobMode,
   knobStart,
@@ -55,6 +57,23 @@ import { useLayout } from "./useLayout";
 /** Pixels of drag for a full sweep. Relative drag avoids jumps when the knob is touched. */
 const SWEEP_PX = 220;
 
+/**
+ * How the Color Picker (Style=Knobs) paints its knobs; plain knobs leave it out.
+ * - `hueRing`: the hue knob's ring segments and centre swatch are `hsb(hue, s, b)` — they
+ *   re-render with the current saturation and brightness (48 segments over the 240° face).
+ * - `gradient`: an absolute knob's arc is a gradient `from` → `to` (track: the full gradient at
+ *   ~22 %; value arc: the gradient up to the value); the indicator is white, not lit.
+ */
+export type KnobPaint =
+  { kind: "hueRing"; s: number; b: number } | { kind: "gradient"; from: string; to: string };
+
+export type KnobProps = ControlProps<"knob"> & { paint?: KnobPaint };
+
+/** Hue ring segments in the Color Picker (Figma: 48 over the 240° face). */
+const RING_SEGMENTS = 48;
+/** Opacity of a gradient knob's track (the full gradient, dimmed). */
+const GRADIENT_TRACK_OPACITY = 0.22;
+
 /** The hue ring's colours, computed (not hand-picked): 0°, 60°, … 360°. */
 const HUE_STOPS = Array.from({ length: 7 }, (_, i) => hsvToHex(i / 6, 1, 1));
 
@@ -67,7 +86,7 @@ const HUE_STOPS = Array.from({ length: 7 }, (_, i) => hsvToHex(i / 6, 1, 1));
  * spreads apart around the needle. Double-tap = back to default (absolute and hue). The lit arc
  * glows, fully while touched (`@osc/controls` states).
  */
-export function Knob(props: ControlProps<"knob">) {
+export function Knob(props: KnobProps) {
   const mode = knobMode(props.control);
   if (mode === "relative") return <EncoderKnob {...props} />;
   if (mode === "hue") return <HueKnob {...props} />;
@@ -191,7 +210,7 @@ const needle = (deg: number, cx: number, cy: number, from: number, to: number) =
   };
 };
 
-function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">) {
+function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
   const range: Range = React.useMemo(
@@ -316,6 +335,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   const dotX = useDerivedValue(() => dot.value.x);
   const dotY = useDerivedValue(() => dot.value.y);
   const lit = fine ? t.color.accent : t.control.fill;
+  const gradient = paint?.kind === "gradient" ? paint : null;
   const stops = stopsPath(dial, start, travel);
   const step = c.step ?? (c.max - c.min) / 100;
   return (
@@ -351,8 +371,37 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
                 <Shadow dx={0} dy={3} blur={4} color={t.elevation.insetShadow} inner />
                 <Shadow dx={0} dy={-1} blur={2} color={t.elevation.insetHighlight} inner />
               </Path>
-              {/* The lit value arc: full glow while touched, ~40 % at rest. */}
-              <LitStroke path={fillPath} color={lit} width={arcW} glow={glow} />
+              {gradient ? (
+                <>
+                  {/* Colour Picker: the full gradient dimmed on the track, then the value arc. */}
+                  <Path
+                    path={track}
+                    style="stroke"
+                    strokeWidth={arcW}
+                    opacity={GRADIENT_TRACK_OPACITY}
+                  >
+                    <SweepGradient
+                      c={vec(cx, cy)}
+                      colors={[gradient.from, gradient.to]}
+                      positions={[0, travel / 360]}
+                      transform={[{ rotate: (skStart * Math.PI) / 180 }]}
+                      origin={vec(cx, cy)}
+                    />
+                  </Path>
+                  <Path path={fillPath} style="stroke" strokeWidth={arcW}>
+                    <SweepGradient
+                      c={vec(cx, cy)}
+                      colors={[gradient.from, gradient.to]}
+                      positions={[0, travel / 360]}
+                      transform={[{ rotate: (skStart * Math.PI) / 180 }]}
+                      origin={vec(cx, cy)}
+                    />
+                  </Path>
+                </>
+              ) : (
+                /* The lit value arc: full glow while touched, ~40 % at rest. */
+                <LitStroke path={fillPath} color={lit} width={arcW} glow={glow} />
+              )}
               <Path
                 path={stops}
                 color={t.control.tick}
@@ -361,7 +410,11 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
                 strokeCap="round"
               />
               <DialBody dial={dial} t={t} light={<InnerLight {...lightProps} />} />
-              <LitCircle cx={dotX} cy={dotY} r={3.5 * k} color={lit} glow={glow} />
+              {gradient ? (
+                <Circle cx={dotX} cy={dotY} r={2.5 * k * 1.4} color={t.control.thumb} />
+              ) : (
+                <LitCircle cx={dotX} cy={dotY} r={3.5 * k} color={lit} glow={glow} />
+              )}
             </Canvas>
           )}
         </View>
@@ -537,7 +590,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
 }
 
 /** Colour wheel: hue ring, the cap shows the current colour, wraps past 360°. */
-function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">) {
+function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
   const initial = typeof value === "number" ? wrapHue(value) : wrapHue(c.default ?? 0);
@@ -637,7 +690,24 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
   const dotX = useDerivedValue(() => dot.value.x);
   const dotY = useDerivedValue(() => dot.value.y);
   const stops = stopsPath(dial, start, KNOB_TRAVEL);
-  const current = hsvToHex(display / 360, 1, 1);
+  // Colour Picker: the ring re-renders with the current saturation and brightness.
+  const tint = paint?.kind === "hueRing" ? paint : null;
+  const ring = React.useMemo(() => {
+    if (!tint || bandR <= 0) return null;
+    const colors = hueRingColors(RING_SEGMENTS, tint.s, tint.b);
+    const oval = Skia.XYWHRect(cx - bandR, cy - bandR, bandR * 2, bandR * 2);
+    const sweep = KNOB_TRAVEL / RING_SEGMENTS;
+    return colors.map((color, i) => ({
+      color,
+      // Slight overlap so no seams show between segments.
+      path: Skia.PathBuilder.Make()
+        .addArc(oval, start - 90 + i * sweep, sweep + 0.6)
+        .build(),
+    }));
+  }, [tint?.s, tint?.b, cx, cy, bandR, start]); // eslint-disable-line react-hooks/exhaustive-deps
+  const current = tint
+    ? hsbToHex({ h: display, s: tint.s, b: tint.b })
+    : hsvToHex(display / 360, 1, 1);
   return (
     <ControlFrame
       label={c.label}
@@ -664,15 +734,30 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
         >
           {d > 0 && (
             <Canvas style={{ width: w, height: h }}>
-              <Group transform={[{ rotate: ((start - 90) * Math.PI) / 180 }]} origin={vec(cx, cy)}>
-                <Path path={spectrum} style="stroke" strokeWidth={band}>
-                  <SweepGradient
-                    c={vec(cx, cy)}
-                    colors={HUE_STOPS}
-                    positions={HUE_STOPS.map((_, i) => ((i / 6) * KNOB_TRAVEL) / 360)}
+              {ring ? (
+                ring.map((seg, i) => (
+                  <Path
+                    key={i}
+                    path={seg.path}
+                    color={seg.color}
+                    style="stroke"
+                    strokeWidth={band}
                   />
-                </Path>
-              </Group>
+                ))
+              ) : (
+                <Group
+                  transform={[{ rotate: ((start - 90) * Math.PI) / 180 }]}
+                  origin={vec(cx, cy)}
+                >
+                  <Path path={spectrum} style="stroke" strokeWidth={band}>
+                    <SweepGradient
+                      c={vec(cx, cy)}
+                      colors={HUE_STOPS}
+                      positions={HUE_STOPS.map((_, i) => ((i / 6) * KNOB_TRAVEL) / 360)}
+                    />
+                  </Path>
+                </Group>
+              )}
               <Path
                 path={stops}
                 color={t.control.tick}

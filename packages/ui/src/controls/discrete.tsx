@@ -1,4 +1,4 @@
-import { formatValue, hexToRgb, isGroupValue, toggleInGroup } from "@osc/controls";
+import { formatValue, isGroupValue, toggleInGroup } from "@osc/controls";
 import type { UnsupportedControl } from "@osc/schema";
 import type { PadSize } from "@osc/schema";
 import * as React from "react";
@@ -589,54 +589,6 @@ export function LabelControl({ control: c, value }: ControlProps<"label">) {
           {text}
         </Text>
       </View>
-    </ControlFrame>
-  );
-}
-
-/** Colour picker: a palette of swatches (the client's brand colours by default). Free picking is planned for V2. */
-export function ColorPicker({
-  control: c,
-  value,
-  onChange,
-  disabled,
-}: ControlProps<"colorPicker">) {
-  const current = typeof value === "string" ? value.toUpperCase() : (c.default ?? "#FFFFFF");
-  const swatches = c.swatches ?? [
-    "#FFFFFF",
-    "#FF3B30",
-    "#FF9500",
-    "#FFCC00",
-    "#34C759",
-    "#00C7BE",
-    "#007AFF",
-    "#AF52DE",
-  ];
-  const [r, g, b] = hexToRgb(current);
-  return (
-    <ControlFrame label={c.label} value={current} disabled={disabled}>
-      <View className="flex-1 flex-row flex-wrap gap-2">
-        {swatches.map((hex) => {
-          const active = hex.toUpperCase() === current;
-          return (
-            <Pressable
-              key={hex}
-              disabled={disabled}
-              onPress={() => onChange(hex.toUpperCase())}
-              accessibilityRole="radio"
-              accessibilityLabel={hex}
-              accessibilityState={{ selected: active }}
-              style={{ backgroundColor: hex }}
-              className={cn(
-                "min-h-touch min-w-touch flex-1 rounded-md border-2",
-                active ? "border-foreground" : "border-transparent",
-              )}
-            />
-          );
-        })}
-      </View>
-      <Text className="text-muted-foreground mt-2 font-mono text-xs">
-        RGB {r} {g} {b}
-      </Text>
     </ControlFrame>
   );
 }

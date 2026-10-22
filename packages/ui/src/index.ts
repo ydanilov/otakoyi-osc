@@ -25,12 +25,17 @@ export {
   usePressLight,
   useTouchLight,
   useTouchLightSkia,
+  InnerLight,
+  useInnerLight,
 } from "./controls/TouchLight";
 export { ImageUpload, MicControl } from "./controls/media";
 export { PromptControl } from "./controls/Prompt";
 export {
   ControlServicesProvider,
   createMemoryServices,
+  memoryViewPrefs,
+  viewPrefKey,
+  type ViewPrefs,
   stubServices,
   urlAsset,
   useControlServices,
@@ -43,11 +48,11 @@ export {
   type PromptPresets,
 } from "./platform/services";
 export { HoldToConfirm } from "./controls/HoldToConfirm";
+export { ColorPicker } from "./controls/ColorPicker";
 export {
   ButtonControl,
   ButtonGrid,
   ButtonGroup,
-  ColorPicker,
   Led,
   LabelControl,
   SceneList,

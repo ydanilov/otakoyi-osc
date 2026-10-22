@@ -3,6 +3,7 @@ import { createMemoryServices, type ControlServices } from "@osc/ui";
 import { resolveAsset } from "./assets";
 import { DEMO_ASSETS } from "./demo";
 import { audioInput, imagePicker } from "./platform/media";
+import { prefsStorage } from "./platform/storage";
 
 /**
  * Services for a pult connected to a bridge — real or simulated, both answer the same HTTP API
@@ -18,6 +19,7 @@ export function bridgeServices(
     asset: (path) => resolveAsset(path, opts),
     imagePicker,
     audio: audioInput,
+    viewPrefs: prefsStorage,
     media: {
       remote: true,
       list: http.images.list,
@@ -36,6 +38,7 @@ export function galleryServices(): Omit<ControlServices, "pult"> {
     asset: (path) => resolveAsset(path, { bundled: DEMO_ASSETS }),
     imagePicker,
     audio: audioInput,
+    viewPrefs: prefsStorage,
     media,
     prompts,
   };
