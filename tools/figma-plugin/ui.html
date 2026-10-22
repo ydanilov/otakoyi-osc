@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Otakoyi Inspector</title>
+    <style>
+      :root {
+        --bg: var(--figma-color-bg, #ffffff);
+        --fg: var(--figma-color-text, #1e1e1e);
+        --muted: var(--figma-color-text-secondary, #6b6b6b);
+        --line: var(--figma-color-border, #e6e6e6);
+        --accent: var(--figma-color-bg-brand, #0d99ff);
+        --on-accent: var(--figma-color-text-onbrand, #ffffff);
+        --error: var(--figma-color-text-danger, #dc3412);
+        --warning: var(--figma-color-text-warning, #b86200);
+        --code: var(--figma-color-bg-secondary, #f5f5f5);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 12px;
+        font:
+          12px/1.45 Inter,
+          system-ui,
+          sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      h2 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        margin: 14px 0 6px;
+      }
+      .sel {
+        font-weight: 600;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+        margin-bottom: 6px;
+      }
+      .row {
+        display: flex;
+        gap: 6px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      .type {
+        font-weight: 600;
+      }
+      code,
+      pre {
+        font:
+          11px/1.4 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        background: var(--code);
+        border-radius: 4px;
+      }
+      code {
+        padding: 1px 4px;
+      }
+      pre {
+        padding: 6px;
+        margin: 6px 0 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 160px;
+        overflow: auto;
+      }
+      .issue {
+        margin: 2px 0;
+      }
+      .error {
+        color: var(--error);
+      }
+      .warning {
+        color: var(--warning);
+      }
+      textarea {
+        width: 100%;
+        min-height: 64px;
+        font:
+          11px/1.4 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        color: var(--fg);
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px;
+        resize: vertical;
+      }
+      button {
+        font: inherit;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--fg);
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--on-accent);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+        flex-wrap: wrap;
+      }
+      #status {
+        margin-top: 8px;
+        min-height: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="head" class="muted">Select a control instance (or a panel) on a client page.</div>
+
+    <h2>Exporter output</h2>
+    <div id="controls" class="muted">—</div>
+    <div id="issues"></div>
+
+    <h2>OSC</h2>
+    <textarea
+      id="osc"
+      spellcheck="false"
+      placeholder="**/wall/brightness** `float 0–1` · 60 Hz · feedback ✓"
+    ></textarea>
+    <h2>Depends on</h2>
+    <textarea
+      id="dependsOn"
+      spellcheck="false"
+      placeholder="when blackout is off&#10;Notes for people go on their own lines."
+    ></textarea>
+    <div class="actions">
+      <button id="check">Check</button>
+      <button id="save" class="primary">Save annotations</button>
+      <span style="flex: 1"></span>
+      <button id="snapshot" title="Download this page as an exporter snapshot">
+        Export snapshot
+      </button>
+    </div>
+    <div id="status" class="muted"></div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const send = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      let dirty = false;
+
+      $("osc").addEventListener("input", () => (dirty = true));
+      $("dependsOn").addEventListener("input", () => (dirty = true));
+      $("check").onclick = () =>
+        send({ type: "check", osc: $("osc").value, dependsOn: $("dependsOn").value });
+      $("save").onclick = () =>
+        send({ type: "save", osc: $("osc").value, dependsOn: $("dependsOn").value });
+      $("snapshot").onclick = () => {
+        $("status").textContent = "Serializing the page…";
+        send({ type: "snapshot" });
+      };
+
+      function render(d) {
+        if (!d) {
+          $("head").textContent = "Select a control instance (or a panel) on a client page.";
+          $("controls").innerHTML = "—";
+          $("issues").innerHTML = "";
+          return;
+        }
+        const s = d.selection;
+        $("head").innerHTML =
+          `<span class="sel">${esc(s.name)}</span> <span class="muted">${esc(s.component || s.type)}` +
+          (d.frame ? ` · ${esc(d.frame)}` : "") +
+          (d.preview ? " · preview" : "") +
+          "</span>";
+        $("controls").innerHTML = d.controls.length
+          ? d.controls
+              .map((c) => {
+                const addr = c.control.address || c.control.feedback || "";
+                const schema = c.schema.length
+                  ? c.schema.map((m) => `<div class="issue error">schema: ${esc(m)}</div>`).join("")
+                  : "";
+                return (
+                  `<div class="card"><div class="row"><span class="type">${esc(c.control.type)}</span>` +
+                  `<code>${esc(c.control.id)}</code>${addr ? `<code>${esc(addr)}</code>` : ""}` +
+                  `<span class="muted">${esc(c.component)} · id from ${esc(c.idFrom)}</span></div>` +
+                  schema +
+                  `<pre>${esc(JSON.stringify(c.control, null, 2))}</pre></div>`
+                );
+              })
+              .join("")
+          : '<span class="muted">No control from this selection.</span>';
+        $("issues").innerHTML = d.issues
+          .map(
+            (i) =>
+              `<div class="issue ${i.level}">${esc(i.level)} · <code>${esc(i.code)}</code> ${esc(i.message)}</div>`,
+          )
+          .join("");
+        if (!d.preview) {
+          $("osc").value = d.osc;
+          $("dependsOn").value = d.dependsOn;
+          dirty = false;
+        }
+        $("save").disabled = !d.canEdit;
+        $("save").title = d.canEdit ? "" : "Annotations are edited in Design mode";
+      }
+
+      onmessage = (e) => {
+        const m = e.data.pluginMessage;
+        if (!m) return;
+        if (m.type === "analysis") {
+          if (dirty && !m.data?.preview && m.data)
+            $("status").textContent = "Selection changed; unsaved edits were replaced.";
+          render(m.data);
+        } else if (m.type === "saved")
+          $("status").textContent = "Saved (annotations + plugin data).";
+        else if (m.type === "error")
+          $("status").innerHTML = `<span class="error">${esc(m.message)}</span>`;
+        else if (m.type === "snapshot") {
+          const url = URL.createObjectURL(new Blob([m.json], { type: "application/json" }));
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = m.name;
+          a.click();
+          URL.revokeObjectURL(url);
+          $("status").textContent = `Snapshot downloaded: ${m.name}`;
+        }
+      };
+    </script>
+  </body>
+</html>

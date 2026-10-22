@@ -1,0 +1,20 @@
+{
+  "name": "@osc/figma-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Otakoyi Inspector — Figma dev plugin: what the exporter makes of the selection, and the OSC / Depends on annotation editor (ADR-014).",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@osc/figma-export": "workspace:*",
+    "@osc/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.142.0",
+    "esbuild": "0.28.2"
+  }
+}

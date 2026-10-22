@@ -7,12 +7,13 @@ turns that into plain OSC for TouchDesigner or any other OSC software.
 
 ## Where to start
 
-| You are…                                                                                    | Read                                       |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Working on an installation** (TouchDesigner, browser engine, …) that must be controllable | [docs/integration.md](docs/integration.md) |
-| Working on this repo (app, bridge, schema, design system)                                   | [AGENTS.md](AGENTS.md)                     |
-| Looking for why something is the way it is                                                  | [docs/decisions](docs/decisions/README.md) |
-| Designing in Figma                                                                          | [docs/figma.md](docs/figma.md)             |
+| You are…                                                                                    | Read                                         |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **Working on an installation** (TouchDesigner, browser engine, …) that must be controllable | [docs/integration.md](docs/integration.md)   |
+| Working on this repo (app, bridge, schema, design system)                                   | [AGENTS.md](AGENTS.md)                       |
+| Looking for why something is the way it is                                                  | [docs/decisions](docs/decisions/README.md)   |
+| Designing in Figma                                                                          | [docs/figma.md](docs/figma.md)               |
+| Exporting a client page from Figma to a config (CLI, Otakoyi Inspector plugin)              | [docs/figma-export.md](docs/figma-export.md) |
 
 ## How it fits together
 
@@ -28,6 +29,8 @@ iPhone / iPad / browser ◀──WebSocket──▶ bridge (installation machine
 - `apps/mobile` — Expo app (iOS first) and the web pult
 - `apps/bridge` — the bridge: WebSocket for pults, OSC to the installation, lease, log, pairing
 - `packages/*` — OSC codec, config schema, protocol, tokens, control logic, design system
+- `tools/figma-export` — the exporter: Figma client page → installation config + report
+- `tools/figma-plugin` — Otakoyi Inspector, the studio's Figma dev plugin (annotations, preview)
 - `tools/touchdesigner` — reference TouchDesigner target and the pairing overlay `.tox`
 - `docs/osc-contract.schema.json` — what an installation declares it accepts over OSC
 
