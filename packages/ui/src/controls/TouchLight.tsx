@@ -1,11 +1,21 @@
-import { Circle, Group, RadialGradient, vec } from "@shopify/react-native-skia";
 import {
+  Circle,
+  Group,
+  RadialGradient,
+  Skia,
+  vec,
+  type SkPath,
+  type SkRRect,
+} from "@shopify/react-native-skia";
+import {
+  innerLightCenter,
+  innerLightRadius,
   pinMatches,
   pinPoint,
   touchLightAllowed,
   touchLightMotion,
   touchLightSize,
-  type TouchLightKind,
+  type LitShape,
   type TouchLightPin,
 } from "@osc/controls";
 import { withAlpha, type Theme } from "@osc/tokens";
@@ -31,11 +41,14 @@ import { CONTINUOUS } from "../ds/depth";
 import { useTheme } from "../theme/ThemeProvider";
 
 /**
- * Touch light (Figma `Touch Light`): a soft light under the finger while it is on a control.
- * One hook (`useTouchLight`) holds the touch point and the animated level; two layers draw it —
- * `TouchLightSkia` inside the Skia canvases (fader, knob, XY, thumbstick) and `TouchLightView` in
- * plain views (pads, toggles, buttons, segments, quick actions, hold to confirm). Sizes, opacities
- * and timings: `t.touchLight` (tokens.json); the maths: `@osc/controls` touchLight.ts.
+ * Touch light (Figma `Touch Light` 134:795), per Apple Liquid Glass: the touched element
+ * illuminates from within, starting under the fingertip — white only, clipped to the element.
+ * One hook (`useTouchLight`) holds the touch point and the animated level; three layers draw it:
+ * - `InnerLight` (Skia): the thumb / disc / stick / wheel itself gets a radial white gradient at the
+ *   touch point (faders, knobs, thumbstick, jog wheel) — no separate halo layer;
+ * - `TouchLightSkia` (Skia): halo + core clipped to a surface (XY pad);
+ * - `TouchLightView` (views): halo + core clipped to a pad, button, toggle, segment, quick action.
+ * Sizes, opacities and timings: `t.touchLight` (tokens.json); the maths: `@osc/controls`.
  */
 
 type Num = number | SharedValue<number>;
@@ -141,22 +154,13 @@ export function useTouchLight({
   return { allowed, pin: allowed ? pin : null, x, y, level, scale, down, move, up };
 }
 
-/** Halo + core colours with their opacities (a radial gradient to 0 each). */
+/** Halo + core colours (white) with their opacities (a radial gradient to 0 each). */
 function lightColors(t: Theme) {
   const tk = t.touchLight;
-  const halo = t.color.primary;
-  const core = tk.core;
+  const c = tk.color;
   return {
-    halo: [
-      withAlpha(halo, tk.haloOpacity),
-      withAlpha(halo, tk.haloOpacity * 0.45),
-      withAlpha(halo, 0),
-    ],
-    core: [
-      withAlpha(core, tk.coreOpacity),
-      withAlpha(core, tk.coreOpacity * 0.4),
-      withAlpha(core, 0),
-    ],
+    halo: [withAlpha(c, tk.haloOpacity), withAlpha(c, tk.haloOpacity * 0.45), withAlpha(c, 0)],
+    core: [withAlpha(c, tk.coreOpacity), withAlpha(c, tk.coreOpacity * 0.4), withAlpha(c, 0)],
   };
 }
 const STOPS = [0, 0.5, 1];
@@ -170,35 +174,39 @@ export interface TouchLightSkiaProps {
     Array<{ translateX: number } | { translateY: number } | { scale: number }>
   >;
   opacity: SharedValue<number>;
+  /** The surface's shape: the light never leaves it. */
+  clip: SkRRect;
 }
 
 /**
- * Drawing props for the light inside a Skia canvas, centred on (cx, cy) — the finger, the fader
- * thumb, the knob disc, the stick. `kind` + `measure` size it (`touchLightSize`). Call it in the
- * control (outside the Canvas: contexts do not cross into Skia) and render `<TouchLightSkia>`
- * where it belongs in the draw order — above the surface fill, below labels, LEDs and grips.
+ * Halo + core light in a Skia surface (XY pad) of `width` × `height`, clipped to its rounded shape
+ * (`radius`), centred on the finger (or the pin).
  */
 export function useTouchLightSkia(
   light: TouchLight,
-  cx: Num,
-  cy: Num,
-  kind: TouchLightKind,
-  measure = 0,
+  width: number,
+  height: number,
+  radius: number,
 ): TouchLightSkiaProps {
   const t = useTheme();
-  const { halo, core } = touchLightSize(kind, measure, t.touchLight);
+  const { halo, core } = touchLightSize(width, t.touchLight);
   const colors = React.useMemo(() => lightColors(t), [t]);
+  const at = useLightPoint(light, width, height);
   const pinned = !!light.pin;
-  const transform = useDerivedValue(() => {
-    const x = typeof cx === "number" ? cx : cx.value;
-    const y = typeof cy === "number" ? cy : cy.value;
-    return [{ translateX: x }, { translateY: y }, { scale: pinned ? 1 : light.scale.value }];
-  });
+  const transform = useDerivedValue(() => [
+    { translateX: at.x.value },
+    { translateY: at.y.value },
+    { scale: pinned ? 1 : light.scale.value },
+  ]);
   const opacity = useDerivedValue(() => (pinned ? 1 : light.level.value));
-  return { allowed: light.allowed, halo, core, colors, transform, opacity };
+  const clip = React.useMemo(
+    () => Skia.RRectXY(Skia.XYWHRect(0, 0, width, height), radius, radius),
+    [width, height, radius],
+  );
+  return { allowed: light.allowed, halo, core, colors, transform, opacity, clip };
 }
 
-/** The touch light in a Skia canvas (props from `useTouchLightSkia`). No hooks: safe in Canvas. */
+/** Halo + core in a Skia canvas (props from `useTouchLightSkia`). No hooks: safe in Canvas. */
 export function TouchLightSkia({
   allowed,
   halo,
@@ -206,21 +214,94 @@ export function TouchLightSkia({
   colors,
   transform,
   opacity,
+  clip,
 }: TouchLightSkiaProps) {
   if (!allowed || halo <= 0) return null;
   return (
-    <Group transform={transform} opacity={opacity}>
-      <Circle cx={0} cy={0} r={halo / 2}>
-        <RadialGradient c={vec(0, 0)} r={halo / 2} colors={colors.halo} positions={STOPS} />
-      </Circle>
-      <Circle cx={0} cy={0} r={core / 2}>
-        <RadialGradient c={vec(0, 0)} r={core / 2} colors={colors.core} positions={STOPS} />
+    <Group clip={clip}>
+      <Group transform={transform} opacity={opacity}>
+        <Circle cx={0} cy={0} r={halo / 2}>
+          <RadialGradient c={vec(0, 0)} r={halo / 2} colors={colors.halo} positions={STOPS} />
+        </Circle>
+        <Circle cx={0} cy={0} r={core / 2}>
+          <RadialGradient c={vec(0, 0)} r={core / 2} colors={colors.core} positions={STOPS} />
+        </Circle>
+      </Group>
+    </Group>
+  );
+}
+
+export interface InnerLightProps {
+  allowed: boolean;
+  colors: string[];
+  cx: SharedValue<number>;
+  cy: SharedValue<number>;
+  r: SharedValue<number>;
+  opacity: SharedValue<number>;
+  clip: SharedValue<SkPath>;
+}
+
+/**
+ * The element lit from within (faders' thumb, knob disc, stick, jog wheel): a radial white
+ * gradient (`innerOpacity` → 0) centred where the finger is on the element, clipped to the
+ * element's shape (`shape`, in canvas px; may move with the value). `corner` rounds a rect shape.
+ * A pinned light (stories) sits at the pin's fraction of the element.
+ */
+export function useInnerLight(
+  light: TouchLight,
+  shape: SharedValue<LitShape> | LitShape,
+  corner = 0,
+): InnerLightProps {
+  const t = useTheme();
+  const tk = t.touchLight;
+  const colors = React.useMemo(
+    () => [withAlpha(tk.color, tk.innerOpacity), withAlpha(tk.color, 0)],
+    [tk.color, tk.innerOpacity],
+  );
+  const pin = light.pin;
+  const px = pin?.x ?? 0.5;
+  const py = pin?.y ?? 0.5;
+  const pinned = !!pin;
+  const read = () => {
+    "worklet";
+    return "value" in shape ? shape.value : shape;
+  };
+  const centre = useDerivedValue(() => {
+    const s = read();
+    if (pinned) {
+      if (s.kind === "rect") return { x: s.x + s.width * px, y: s.y + s.height * py };
+      return { x: s.cx + (px - 0.5) * 2 * s.r, y: s.cy + (py - 0.5) * 2 * s.r };
+    }
+    return innerLightCenter({ x: light.x.value, y: light.y.value }, s);
+  });
+  const cx = useDerivedValue(() => centre.value.x);
+  const cy = useDerivedValue(() => centre.value.y);
+  const r = useDerivedValue(() => innerLightRadius(read()) * (pinned ? 1 : light.scale.value));
+  const opacity = useDerivedValue(() => (pinned ? 1 : light.level.value));
+  const clip = useDerivedValue(() => {
+    const s = read();
+    const b = Skia.PathBuilder.Make();
+    if (s.kind === "circle") b.addCircle(s.cx, s.cy, s.r);
+    else b.addRRect(Skia.RRectXY(Skia.XYWHRect(s.x, s.y, s.width, s.height), corner, corner));
+    return b.build();
+  });
+  return { allowed: light.allowed, colors, cx, cy, r, opacity, clip };
+}
+
+/** The inner light in a Skia canvas: draw it right above the element's fill, below its marks. */
+export function InnerLight({ allowed, colors, cx, cy, r, opacity, clip }: InnerLightProps) {
+  const c = useDerivedValue(() => vec(cx.value, cy.value));
+  if (!allowed) return null;
+  return (
+    <Group clip={clip} opacity={opacity}>
+      <Circle cx={cx} cy={cy} r={r}>
+        <RadialGradient c={c} r={r} colors={colors} />
       </Circle>
     </Group>
   );
 }
 
-/** Touch point of a Skia light: the pin (stories) or the finger. */
+/** Touch point of a light: the pin (stories, as a fraction of `width` × `height`) or the finger. */
 export function useLightPoint(light: TouchLight, width: number, height: number) {
   const pin = light.pin;
   const px = pin ? pinPoint(pin, width, height) : null;
@@ -230,7 +311,7 @@ export function useLightPoint(light: TouchLight, width: number, height: number) 
 }
 
 /**
- * The light in a plain view (pads, buttons, toggles, segments): fills its parent, clipped to the
+ * The light in a plain view (pads, buttons, toggles, segments): white halo + core, clipped to the
  * parent's rounded shape (`radius`), never takes touches. Render it as the parent's FIRST child so
  * labels and icons draw over it.
  */
@@ -241,7 +322,7 @@ export function TouchLightView({ light, radius }: { light: TouchLight; radius: n
     const { width, height } = e.nativeEvent.layout;
     if (width !== box.w || height !== box.h) setBox({ w: width, h: height });
   };
-  const { halo, core } = touchLightSize("surface", box.w, t.touchLight);
+  const { halo, core } = touchLightSize(box.w, t.touchLight);
   const colors = React.useMemo(() => lightColors(t), [t]);
   const pin = light.pin ? pinPoint(light.pin, box.w, box.h) : null;
   const style = useAnimatedStyle(() => {

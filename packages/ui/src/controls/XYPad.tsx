@@ -17,7 +17,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
-import { TouchLightSkia, useLightPoint, useTouchLight, useTouchLightSkia } from "./TouchLight";
+import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 type Point = { x: number; y: number };
@@ -63,8 +63,7 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
   const { width: w, height: h } = size;
   const spring = c.springBack;
   const light = useTouchLight({ disabled: !!disabled });
-  const lightAt = useLightPoint(light, w, h);
-  const lightProps = useTouchLightSkia(light, lightAt.x, lightAt.y, "stick");
+  const lightProps = useTouchLightSkia(light, w, h, t.radius.md);
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 0,

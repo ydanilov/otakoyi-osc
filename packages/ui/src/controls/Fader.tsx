@@ -4,8 +4,9 @@ import {
   crossfadeMix,
   crossfadePosition,
   FINE_POINTERS,
-  crossfadeShares,
+  crossfadeLabel,
   fineBadge,
+  type LitShape,
   formatValue,
   positionToValue,
   relativeDrag,
@@ -18,7 +19,6 @@ import {
 } from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
-import { Text } from "@osc/ui/components/ui/text";
 import {
   GestureDetector,
   usePanGesture,
@@ -32,11 +32,15 @@ import { InsetRRect, LitCircle, LitRRect, RaisedRRect } from "./skia";
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import { JogFader } from "./Jog";
-import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
+import { InnerLight, useInnerLight, useTouchLight } from "./TouchLight";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
 
 const asNumber = (v: unknown, fallback: number) => (typeof v === "number" ? v : fallback);
+
+/** Crossfade (Figma): the rail starts 28 pt in from each end; the A / B LEDs sit 11 pt in. */
+const CROSSFADE_INSET = 28;
+const CROSSFADE_LED = 11;
 
 /** Px the finger must travel before a relative drag starts, so a tap never moves the value. */
 const RELATIVE_SLOP = 4;
@@ -53,8 +57,8 @@ const RELATIVE_SLOP = 4;
  * The gesture runs on the UI thread and the canvas reads a shared value, so drawing never waits for
  * React. Values leave through a throttle (`throttleHz`); the last value is always sent on release.
  *
- * `mode: "crossfade"` (ADR-015) fills from the centre, holds a detent at 50 % and shows the A / B
- * labels with their shares; `mode: "relative"` is an endless jog wheel (`JogFader`).
+ * `mode: "crossfade"` (ADR-015) fills from the centre, holds a detent at 50 % and shows the shares
+ * in the header ("A 30 · B 70"); the ends carry LEDs only (no letters); `mode: "relative"` is an endless jog wheel (`JogFader`).
  */
 export function Fader(props: ControlProps<"fader">) {
   return props.control.mode === "relative" ? <JogFader {...props} /> : <PositionFader {...props} />;
@@ -159,6 +163,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     },
     onUpdate: (e) => {
       "worklet";
+      light.move(e.x, e.y);
       if (absolute) {
         const p = vertical ? 1 - e.y / h : e.x / w;
         pos.value = Math.min(1, Math.max(0, p));
@@ -206,12 +211,17 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   const across = vertical ? w : h;
   const capLong = Math.min(t.size.faderCapLong, Math.max(24, across - 4));
   const capShort = t.size.faderCapShort;
-  // The thumb's centre travels between half a thumb from each end.
-  const pad = (vertical ? capShort : t.size.faderCapShort - 4) / 2;
-  const travel = Math.max(1, along - pad * 2);
-  const mid = across / 2;
   const rail = t.size.faderRail;
   const line = t.size.faderLine;
+  const thumbW = vertical ? capLong : capShort - 4;
+  const thumbH = vertical ? capShort : capLong - 12;
+  // Crossfade (Figma Mode=Crossfade): the rail is inset 28 pt at both ends, with the A / B LEDs in
+  // the gap; the thumb's centre travels the rail. Otherwise it travels between half a thumb from
+  // each end of the full-length rail.
+  const railInset = crossfade && !vertical ? CROSSFADE_INSET : 0;
+  const pad = crossfade && !vertical ? CROSSFADE_INSET : (vertical ? capShort : thumbW) / 2;
+  const travel = Math.max(1, along - pad * 2);
+  const mid = across / 2;
   /** Pixel along the track (top→bottom for vertical, left→right for horizontal) of a position. */
   const at = (p: number) => {
     "worklet";
@@ -224,22 +234,26 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   const lineY = vertical ? fillA : mid - line / 2;
   const lineW = vertical ? line : fillLen;
   const lineH = vertical ? fillLen : line;
-  const thumbW = vertical ? capLong : capShort - 4;
-  const thumbH = vertical ? capShort : capLong - 12;
   const thumbX = useDerivedValue(() => (vertical ? mid - thumbW / 2 : thumbC.value - thumbW / 2));
   const thumbY = useDerivedValue(() => (vertical ? thumbC.value - thumbH / 2 : mid - thumbH / 2));
-  // Touch light: centred on the thumb (it follows the thumb, which follows the finger).
-  const lightX = useDerivedValue(() => (vertical ? mid : thumbC.value));
-  const lightY = useDerivedValue(() => (vertical ? thumbC.value : mid));
-  const lightProps = useTouchLightSkia(light, lightX, lightY, "fader");
-  // LED across the thumb, 10 pt before its centre; three grip lines after it.
-  const ledLen = Math.round((vertical ? thumbW : thumbH) * 0.6);
-  const gripLen = Math.round((vertical ? thumbW : thumbH) * 0.48);
-  const ledX = useDerivedValue(() => (vertical ? mid - ledLen / 2 : thumbC.value - 12));
+  // Touch light: the thumb itself lights up from where the finger is on it.
+  const thumbShape = useDerivedValue<LitShape>(() => ({
+    kind: "rect",
+    x: thumbX.value,
+    y: thumbY.value,
+    width: thumbW,
+    height: thumbH,
+  }));
+  const lightProps = useInnerLight(light, thumbShape, t.radius.sm);
+  // Vertical: LED across the thumb 12 pt before its centre, three grip lines after it.
+  // Horizontal (all modes): the LED in the centre with two grip lines on each side (Figma).
+  const ledLen = vertical ? Math.round(thumbW * 0.6) : Math.round(thumbH * 0.54);
+  const gripLen = vertical ? Math.round(thumbW * 0.48) : Math.round(thumbH / 3);
+  const ledX = useDerivedValue(() => (vertical ? mid - ledLen / 2 : thumbC.value - line / 2));
   const ledY = useDerivedValue(() => (vertical ? thumbC.value - 12 : mid - ledLen / 2));
   const grips = useDerivedValue(() => {
     const b = Skia.PathBuilder.Make();
-    for (const o of [2, 7, 12]) {
+    for (const o of vertical ? [2, 7, 12] : [-12.5, -7.5, 7.5, 12.5]) {
       const p = thumbC.value + o;
       if (vertical) b.moveTo(mid - gripLen / 2, p).lineTo(mid + gripLen / 2, p);
       else b.moveTo(p, mid - gripLen / 2).lineTo(p, mid + gripLen / 2);
@@ -247,7 +261,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     return b.build();
   });
   // Ticks every 10 % beside the rail (left of a vertical fader, under a crossfade); every 5th is
-  // long. Fine mode spreads them ×1.8 around the thumb.
+  // long on a vertical fader. Fine mode spreads them ×1.8 around the thumb.
   const showTicks = vertical || crossfade;
   const ticks = useDerivedValue(() => {
     const b = Skia.PathBuilder.Make();
@@ -261,8 +275,10 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
         const x1 = mid - 12;
         b.moveTo(x1 - (major ? 14 : 8), q).lineTo(x1, q);
       } else {
-        const y1 = mid + rail / 2 + 8;
-        b.moveTo(q, y1).lineTo(q, y1 + (major ? 6 : 4));
+        // Crossfade: 8 pt ticks, 5 pt under the rail; the centre is the lit detent instead.
+        if (k === 5 && Math.abs(p - 0.5) < 0.001) continue;
+        const y1 = mid + rail / 2 + 5;
+        b.moveTo(q, y1).lineTo(q, y1 + 8);
       }
     }
     return b.build();
@@ -275,7 +291,13 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     <ControlFrame
       label={c.label}
       align={vertical ? "center" : "split"}
-      value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
+      value={
+        !c.showValue
+          ? undefined
+          : crossfade
+            ? crossfadeLabel(c.labels, valueToPosition(display, range))
+            : formatValue(display, { unit: c.unit })
+      }
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
@@ -306,22 +328,22 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
               <InsetRRect
                 t={t}
                 color={t.control.track}
-                x={vertical ? mid - rail / 2 : 0}
+                x={vertical ? mid - rail / 2 : railInset}
                 y={vertical ? 0 : mid - rail / 2}
-                width={vertical ? rail : w}
+                width={vertical ? rail : w - railInset * 2}
                 height={vertical ? h : rail}
                 r={rail / 2}
               />
               {crossfade && (
                 <>
-                  {/* A / B end LEDs and the centre detent. */}
-                  <LitCircle cx={4} cy={mid} r={4} color={lit} glow={glow} />
-                  <LitCircle cx={w - 4} cy={mid} r={4} color={lit} glow={glow} />
+                  {/* A / B end LEDs (no letters) and the centre detent. */}
+                  <LitCircle cx={CROSSFADE_LED} cy={mid} r={4} color={lit} glow={glow} />
+                  <LitCircle cx={w - CROSSFADE_LED} cy={mid} r={4} color={lit} glow={glow} />
                   <LitRRect
                     x={at(0.5) - 1}
-                    y={mid - 6}
+                    y={mid - 11}
                     width={2}
-                    height={12}
+                    height={22}
                     r={1}
                     color={lit}
                     glow={glow}
@@ -356,8 +378,8 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
                 height={thumbH}
                 r={t.radius.sm}
               />
-              {/* Touch light: above the thumb, below its LED and grips. */}
-              <TouchLightSkia {...lightProps} />
+              {/* Touch light: the thumb lit from within, below its LED and grips. */}
+              <InnerLight {...lightProps} />
               {fine && (
                 <RoundedRect
                   x={thumbX}
@@ -401,28 +423,6 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
           )}
         </View>
       </GestureDetector>
-      {crossfade && <CrossfadeLabels control={c} mix={valueToPosition(display, range)} />}
     </ControlFrame>
-  );
-}
-
-/** A and B names with how much of each is in the mix. */
-function CrossfadeLabels({
-  control: c,
-  mix,
-}: {
-  control: ControlProps<"fader">["control"];
-  mix: number;
-}) {
-  const s = crossfadeShares(mix);
-  return (
-    <View className="mt-1 flex-row justify-between">
-      <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>
-        {c.labels?.a ?? "A"} {s.a}%
-      </Text>
-      <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>
-        {s.b}% {c.labels?.b ?? "B"}
-      </Text>
-    </View>
   );
 }

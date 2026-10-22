@@ -14,10 +14,10 @@ import type { Theme } from "@osc/tokens";
 import {
   FINE_POINTERS,
   KNOB_TRAVEL,
-  knobLightCenter,
   createDeltaAccumulator,
   createThrottle,
   fineBadge,
+  formatDelta,
   formatValue,
   hsvToHex,
   hueDrag,
@@ -46,13 +46,7 @@ import { useDerivedValue, useSharedValue, type SharedValue } from "react-native-
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
 import { InsetCircle, LitCircle, RaisedCircle } from "./skia";
-import {
-  TouchLightSkia,
-  useLightPoint,
-  useTouchLight,
-  useTouchLightSkia,
-  type TouchLight,
-} from "./TouchLight";
+import { InnerLight, useInnerLight, useTouchLight, type TouchLight } from "./TouchLight";
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
@@ -109,18 +103,10 @@ function useDial(size: { width: number; height: number }, compact: boolean) {
 
 type Dial = ReturnType<typeof useDial>;
 
-/** Knob touch light: on the disc, nudged toward the finger (`knobLightCenter`), ≈1.15 × the disc. */
+/** Knob touch light: the raised disc itself lights up from where the finger is on it. */
 function useKnobLight(light: TouchLight, dial: Dial) {
-  const t = useTheme();
-  const tk = t.touchLight;
-  const at = useLightPoint(light, dial.w, dial.h);
   const { cx, cy, disc } = dial;
-  const p = useDerivedValue(() =>
-    knobLightCenter({ x: at.x.value, y: at.y.value }, { x: cx, y: cy }, disc, tk),
-  );
-  const x = useDerivedValue(() => p.value.x);
-  const y = useDerivedValue(() => p.value.y);
-  return useTouchLightSkia(light, x, y, "knob", disc * 2);
+  return useInnerLight(light, { kind: "circle", cx, cy, r: disc });
 }
 
 /** End stops of the travel: short ticks just outside the arc (Figma `Stop`). */
@@ -374,7 +360,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
                 strokeWidth={2.5 * k}
                 strokeCap="round"
               />
-              <DialBody dial={dial} t={t} light={<TouchLightSkia {...lightProps} />} />
+              <DialBody dial={dial} t={t} light={<InnerLight {...lightProps} />} />
               <LitCircle cx={dotX} cy={dotY} r={3.5 * k} color={lit} glow={glow} />
             </Canvas>
           )}
@@ -391,6 +377,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
   const angle = useSharedValue(0);
   const last = useSharedValue(0);
   const [fine, setFine] = React.useState(false);
+  const [moved, setMoved] = React.useState(0);
   const glow = useGlow();
   const light = useTouchLight({ disabled: !!disabled });
   const spread = useFineSpread(fine);
@@ -408,7 +395,9 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
     (px: number, pointers: number) => {
       const isFine = pointers >= FINE_POINTERS;
       setFine(isFine);
-      acc.push(jogDelta(px, SWEEP_PX, span, isFine ? fineFactor : 1));
+      const d = jogDelta(px, SWEEP_PX, span, isFine ? fineFactor : 1);
+      setMoved((m) => m + d);
+      acc.push(d);
     },
     [acc, span, fineFactor],
   );
@@ -428,6 +417,8 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
     onActivate: () => {
       "worklet";
       last.value = 0;
+      // The header shows the change of the current (or last) turn.
+      scheduleOnRN(setMoved, 0);
     },
     onUpdate: (e) => {
       "worklet";
@@ -490,6 +481,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
     <ControlFrame
       label={c.label}
       align="center"
+      value={c.showValue ? formatDelta(moved, { unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       relative
       disabled={disabled}
@@ -526,7 +518,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
               <InsetCircle t={t} cx={cx} cy={cy} r={dial.well} color={t.color.background} />
               <RaisedCircle t={t} cx={cx} cy={cy} r={dial.disc} color={t.color.surfaceRaised} />
               {/* Touch light: on the disc, below the knurl, cap and indicator. */}
-              <TouchLightSkia {...lightProps} />
+              <InnerLight {...lightProps} />
               <Path
                 path={knurl}
                 color={t.control.track}
@@ -688,7 +680,7 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
                 strokeWidth={2.5 * k}
                 strokeCap="round"
               />
-              <DialBody dial={dial} t={t} light={<TouchLightSkia {...lightProps} />} />
+              <DialBody dial={dial} t={t} light={<InnerLight {...lightProps} />} />
               {/* The current colour is the lit value: it glows, fully while touched. */}
               <Circle cx={cx} cy={cy} r={20 * k} color={current} opacity={glow}>
                 <BlurMask blur={5} style="outer" />

@@ -10,6 +10,7 @@ import {
   createDeltaAccumulator,
   crossfadeMix,
   crossfadePosition,
+  crossfadeLabel,
   crossfadeShares,
   hueDrag,
   jogDelta,
@@ -62,6 +63,8 @@ describe("fader: crossfade", () => {
 
   it("shows A / B shares and sends the mix as a float", () => {
     expect(crossfadeShares(0.25)).toEqual({ a: 75, b: 25 });
+    expect(crossfadeLabel(undefined, 0.7)).toBe("A 30 · B 70");
+    expect(crossfadeLabel({ a: "Day", b: "Night" }, 0.5)).toBe("Day 50 · Night 50");
     const xf = get<"fader">("xfade");
     expect(initialValue(xf)).toBe(0.5);
     expect(wire(messagesFor(xf, 0.25))).toEqual([["/live/mix", 0.25]]);

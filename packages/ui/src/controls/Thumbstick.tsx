@@ -4,6 +4,7 @@ import {
   formatValue,
   thumbstickDeflection,
   type Deflection,
+  type LitShape,
 } from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
@@ -18,7 +19,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
-import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
+import { InnerLight, useInnerLight, useTouchLight } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 /**
@@ -96,6 +97,7 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
     },
     onUpdate: (e) => {
       "worklet";
+      light.move(e.x, e.y);
       const d = thumbstickDeflection({ x: e.x, y: e.y }, { width: w, height: h }, deadzone);
       dx.value = d.x;
       dy.value = d.y;
@@ -125,7 +127,13 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
   const capY = useDerivedValue(() => cy - dy.value * reach);
   const stem = useDerivedValue(() => vec(capX.value, capY.value));
   // Touch light: on the stick (it follows the finger within its reach).
-  const lightProps = useTouchLightSkia(light, capX, capY, "stick");
+  const stickShape = useDerivedValue<LitShape>(() => ({
+    kind: "circle",
+    cx: capX.value,
+    cy: capY.value,
+    r: t.size.xyDot / 2,
+  }));
+  const lightProps = useInnerLight(light, stickShape);
   return (
     <ControlFrame
       label={c.label}
@@ -159,7 +167,7 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
               />
               <Circle cx={capX} cy={capY} r={t.size.xyDot / 2} color={t.color.surfaceRaised} />
               {/* Touch light: above the stick, below its ring. */}
-              <TouchLightSkia {...lightProps} />
+              <InnerLight {...lightProps} />
               <Circle
                 cx={capX}
                 cy={capY}

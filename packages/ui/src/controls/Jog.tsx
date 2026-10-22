@@ -3,7 +3,7 @@ import {
   FINE_POINTERS,
   createDeltaAccumulator,
   fineBadge,
-  formatValue,
+  formatDelta,
   jogDelta,
 } from "@osc/controls";
 import * as React from "react";
@@ -16,7 +16,7 @@ import { InsetRRect, LitRRect } from "./skia";
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
-import { TouchLightSkia, useLightPoint, useTouchLight, useTouchLightSkia } from "./TouchLight";
+import { InnerLight, useInnerLight, useTouchLight } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 /** Angle between two ribs of the wheel (a cylinder seen from the front), degrees. */
@@ -43,8 +43,6 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   const glow = useGlow();
   const spread = useFineSpread(fine);
   const light = useTouchLight({ disabled: !!disabled });
-  const lightAt = useLightPoint(light, w, h);
-  const lightProps = useTouchLightSkia(light, lightAt.x, lightAt.y, "fader");
 
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
@@ -82,6 +80,8 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
     onActivate: () => {
       "worklet";
       last.value = 0;
+      // The header shows the change of the current (or last) drag.
+      scheduleOnRN(setMoved, 0);
     },
     onUpdate: (e) => {
       "worklet";
@@ -169,11 +169,13 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
       .lineTo(hi.x, hi.y + 5);
   }
   const signPath = signs.build();
+  // Touch light: the wheel itself lights up from where the finger is on it.
+  const lightProps = useInnerLight(light, { kind: "rect", x: wx, y: wy, width: ww, height: wh }, 6);
   return (
     <ControlFrame
       label={c.label}
       align={vertical ? "center" : "split"}
-      value={c.showValue ? formatValue(moved, { unit: c.unit }) : undefined}
+      value={c.showValue ? formatDelta(moved, { unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       relative
       disabled={disabled}
@@ -230,8 +232,8 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
                   ]}
                 />
               </RoundedRect>
-              {/* Touch light: under the finger, on the wheel, below the detent LEDs. */}
-              <TouchLightSkia {...lightProps} />
+              {/* Touch light: the wheel lit from within under the finger, below the detent LEDs. */}
+              <InnerLight {...lightProps} />
               {fine && (
                 <RoundedRect
                   x={hx + 0.75}

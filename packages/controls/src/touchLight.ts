@@ -1,20 +1,19 @@
 import type { TouchLightTokens } from "@osc/tokens";
 
 /**
- * Touch light (Figma `Touch Light`, board "Touch light — press response"): while a finger is on a
- * control a soft light blooms under it inside the touch surface, follows it 1:1 and fades on
- * release — the iOS 26 text-field touch highlight. Pure numbers here; `packages/ui` draws it
- * (Skia for the continuous controls, a view for the pads and buttons).
+ * Touch light (Figma `Touch Light` 134:795, board "Touch light — press response" 134:15404): the
+ * press response per Apple Liquid Glass — the touched element illuminates from within, starting
+ * under the fingertip. Pure numbers here; `packages/ui` draws it.
  *
- * - Halo: brand primary at `haloOpacity`, a radial gradient to 0. Core: `core` at `coreOpacity`,
- *   `coreScale` × the halo. Normal blend, below labels and icons.
- * - In: `inMs` ease-out, scale `fromScale` → 1 and opacity 0 → 1. Out: `outMs` ease-in.
- *   Reduce Motion: opacity only, no scale.
- * - Never shown on a disabled or view-only control.
+ * - WHITE light only, clipped to the touched element; it never spills onto the track or around it.
+ * - Faders, knobs, thumbstick, jog wheel (`inner`): no separate layer — the thumb / disc / stick /
+ *   wheel itself gets a radial white gradient (`innerOpacity` ≈ 16 % at the centre → 0) at the
+ *   touch point.
+ * - Pads, buttons, toggles, segments, quick actions, XY pad (`surface`): halo (`haloOpacity` 7 %)
+ *   + core (`coreOpacity` 12 %, `coreScale` × the halo), clipped to the surface.
+ * - In: `inMs` ease-out (scale `fromScale` → 1, opacity 0 → 1); follows the finger 1:1; out:
+ *   `outMs`. Reduce Motion: opacity only. Never on a disabled or view-only control.
  */
-
-/** Which surface the light sits in; decides its size. */
-export type TouchLightKind = "surface" | "fader" | "knob" | "stick";
 
 export interface TouchLightSize {
   /** Halo diameter, px. */
@@ -23,26 +22,11 @@ export interface TouchLightSize {
   core: number;
 }
 
-/**
- * Light size for a surface. `measure` is the surface width for `surface` (pads, buttons, toggles,
- * segments, quick actions), the disc diameter for `knob`, and ignored for `fader` (a fixed size
- * on the thumb) and `stick` (fixed, thumbstick and XY pad).
- */
-export function touchLightSize(
-  kind: TouchLightKind,
-  measure: number,
-  tk: TouchLightTokens,
-): TouchLightSize {
+/** Light size in a pad / button / segment / XY surface of `width` px. */
+export function touchLightSize(width: number, tk: TouchLightTokens): TouchLightSize {
   "worklet";
-  const m = Number.isFinite(measure) && measure > 0 ? measure : 0;
-  const halo =
-    kind === "fader"
-      ? tk.faderThumb
-      : kind === "stick"
-        ? tk.stick
-        : kind === "knob"
-          ? m * tk.knobScale
-          : m * tk.padScale;
+  const m = Number.isFinite(width) && width > 0 ? width : 0;
+  const halo = Math.min(m * tk.padScale, tk.haloMax);
   return { halo, core: halo * tk.coreScale };
 }
 
@@ -65,24 +49,39 @@ export function touchLightMotion(reduceMotion: boolean, tk: TouchLightTokens): T
   return { fromScale: reduceMotion ? 1 : tk.fromScale, inMs: tk.inMs, outMs: tk.outMs };
 }
 
+/** The shape an inner light is clipped to: a circle (knob disc, stick) or a rectangle (thumb, wheel). */
+export type LitShape =
+  | { kind: "circle"; cx: number; cy: number; r: number }
+  | { kind: "rect"; x: number; y: number; width: number; height: number };
+
 /**
- * Where the light sits on a knob: on the disc centre, nudged toward the finger by `knobOffset` ×
- * the finger's distance, at most `knobOffset` × the disc radius — so it reads as "lit from where
- * you touch" without leaving the disc.
+ * Where the inner light's centre sits: the touch point, kept inside the touched element. A finger
+ * that slides off the thumb keeps the light on the thumb's nearest edge.
  */
-export function knobLightCenter(
+export function innerLightCenter(
   touch: { x: number; y: number },
-  center: { x: number; y: number },
-  discR: number,
-  tk: TouchLightTokens,
+  shape: LitShape,
 ): { x: number; y: number } {
   "worklet";
-  const dx = touch.x - center.x;
-  const dy = touch.y - center.y;
+  const tx = Number.isFinite(touch.x) ? touch.x : 0;
+  const ty = Number.isFinite(touch.y) ? touch.y : 0;
+  if (shape.kind === "rect") {
+    return {
+      x: Math.min(shape.x + shape.width, Math.max(shape.x, tx)),
+      y: Math.min(shape.y + shape.height, Math.max(shape.y, ty)),
+    };
+  }
+  const dx = tx - shape.cx;
+  const dy = ty - shape.cy;
   const d = Math.hypot(dx, dy);
-  if (d === 0 || !(discR > 0)) return { x: center.x, y: center.y };
-  const shift = Math.min(d * tk.knobOffset, discR * tk.knobOffset);
-  return { x: center.x + (dx / d) * shift, y: center.y + (dy / d) * shift };
+  if (d <= shape.r || d === 0) return { x: shape.cx + (d === 0 ? 0 : dx), y: shape.cy + dy };
+  return { x: shape.cx + (dx / d) * shape.r, y: shape.cy + (dy / d) * shape.r };
+}
+
+/** Radius of the inner light's gradient: half the element's larger side (the Figma radial fill). */
+export function innerLightRadius(shape: LitShape): number {
+  "worklet";
+  return shape.kind === "circle" ? shape.r : Math.max(shape.width, shape.height) / 2;
 }
 
 /**

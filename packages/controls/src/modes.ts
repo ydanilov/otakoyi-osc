@@ -44,6 +44,18 @@ export function crossfadeShares(mix: number): { a: number; b: number } {
   return { a: 100 - b, b };
 }
 
+/**
+ * Crossfade header value (Figma Prompt Mix "A 30 · B 70"): each side's share, named by `labels`
+ * (A / B by default). The fader's ends carry LEDs only.
+ */
+export function crossfadeLabel(
+  labels: { a?: string | undefined; b?: string | undefined } | undefined,
+  mix: number,
+): string {
+  const s = crossfadeShares(mix);
+  return `${labels?.a ?? "A"} ${s.a} · ${labels?.b ?? "B"} ${s.b}`;
+}
+
 // ---------- relative (endless) ----------
 
 /**
