@@ -116,6 +116,7 @@ export { TextField, ValueInput, type FieldState } from "./forms/Field";
 export { Select, type SelectOption, type SelectProps } from "./forms/Select";
 export { Stepper } from "./forms/Stepper";
 export { LedSwitch } from "./forms/LedSwitch";
+export { MenuSwitch } from "./forms/MenuSwitch";
 export { ListRow, type ListRowTrailing } from "./forms/ListRow";
 export {
   ConsolePanel,
@@ -145,6 +146,7 @@ export {
   type ImageUploadState,
 } from "./media/Image";
 export * from "./patterns/Installation";
+export { Mix, PromptMix } from "./patterns/Mix";
 export {
   DebugHud,
   DebugTag,

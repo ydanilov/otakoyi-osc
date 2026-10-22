@@ -263,28 +263,31 @@ export function useInnerLight(
   const px = pin?.x ?? 0.5;
   const py = pin?.y ?? 0.5;
   const pinned = !!pin;
+  const lx = light.x;
+  const ly = light.y;
   const isShared = !("kind" in shape);
   const fixed = isShared ? null : (shape as LitShape);
   const shared = isShared ? (shape as SharedValue<LitShape>) : null;
-  const read = (): LitShape => {
-    "worklet";
-    return shared ? shared.value : fixed!;
-  };
+  // Each derived value reads `shared` itself: a mapper only follows shared values in its own closure.
   const centre = useDerivedValue(() => {
-    const s = read();
+    const s = shared ? shared.value : fixed!;
     if (pinned) {
       if (s.kind === "rect") return { x: s.x + s.width * px, y: s.y + s.height * py };
       return { x: s.cx + (px - 0.5) * 2 * s.r, y: s.cy + (py - 0.5) * 2 * s.r };
     }
-    return innerLightCenter({ x: light.x.value, y: light.y.value }, s);
+    return innerLightCenter({ x: lx.value, y: ly.value }, s);
   });
   const cx = useDerivedValue(() => centre.value.x);
   const cy = useDerivedValue(() => centre.value.y);
   const c = useDerivedValue(() => vec(centre.value.x, centre.value.y));
-  const r = useDerivedValue(() => innerLightRadius(read()) * (pinned ? 1 : light.scale.value));
-  const opacity = useDerivedValue(() => (pinned ? 1 : light.level.value));
+  const scale = light.scale;
+  const r = useDerivedValue(
+    () => innerLightRadius(shared ? shared.value : fixed!) * (pinned ? 1 : scale.value),
+  );
+  const level = light.level;
+  const opacity = useDerivedValue(() => (pinned ? 1 : level.value));
   const clip = useDerivedValue(() => {
-    const s = read();
+    const s = shared ? shared.value : fixed!;
     const b = Skia.PathBuilder.Make();
     if (s.kind === "circle") b.addCircle(s.cx, s.cy, s.r);
     else b.addRRect(Skia.RRectXY(Skia.XYWHRect(s.x, s.y, s.width, s.height), corner, corner));

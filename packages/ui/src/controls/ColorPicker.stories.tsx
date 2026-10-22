@@ -105,7 +105,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Knobs: Story = {
+export const Knobs: Story = {};
+/** Switching the style keeps the colour and sends nothing. */
+export const SwitchStyle: Story = {
   play: async ({ canvas }) => {
     await expect(await canvas.findByText("#3A4CA6")).toBeTruthy();
     // Switch the style: same colour, a different picker, nothing sent.

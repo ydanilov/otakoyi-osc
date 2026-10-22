@@ -25,11 +25,8 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "On/off for settings and installation modes, drawn as a hardware switch with two LEDs. Exported as `LedSwitch`.",
-          use: [
-            "Settings and installation modes (Idle mode, Haptics).",
-            'Inside List Rows (`trailing="switch"`).',
-          ],
+            'The big on-stage switch (hardware look, grips, LED): pult switch rows (Toggle `style: "switch"`). Exported as `LedSwitch`. Menus and lists use the Menu Switch.',
+          use: ["On-stage pult controls (Logo / Live data / Audio react)."],
           avoid: [
             "Sending OSC on the pult — use the Toggle control (it follows the lease and the config).",
           ],

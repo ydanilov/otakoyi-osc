@@ -5,7 +5,7 @@ import { Glyph } from "../ds/Glyph";
 import { CaretRightIcon, type PhosphorIcon } from "../ds/icons";
 import { cn } from "../lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
-import { LedSwitch } from "./LedSwitch";
+import { MenuSwitch } from "./MenuSwitch";
 
 export type ListRowTrailing = "chevron" | "value" | "switch" | "none" | "destructive";
 
@@ -13,7 +13,7 @@ export type ListRowTrailing = "chevron" | "value" | "switch" | "none" | "destruc
  * Figma `List Row`: one row in a List Card (settings, installation switcher).
  * - `chevron`: navigates (optional value shown before the chevron);
  * - `value`: read-only value;
- * - `switch`: LED switch, the whole row toggles;
+ * - `switch`: Menu Switch (iOS size, LED on the thumb), the whole row toggles;
  * - `destructive`: critical text and icon (Forget this installation, Remove);
  * - `none`: title only.
  */
@@ -74,14 +74,7 @@ export function ListRow({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          <LedSwitch
-            value={!!checked}
-            onValueChange={() => {}}
-            label={title}
-            showLabel={false}
-            offLed={false}
-            disabled={disabled}
-          />
+          <MenuSwitch value={!!checked} label={title} disabled={disabled} decorative />
         </View>
       )}
     </>
