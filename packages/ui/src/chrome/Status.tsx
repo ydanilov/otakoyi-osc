@@ -90,16 +90,22 @@ export function StatTile({
   label,
   value,
   size = "md",
+  block,
 }: {
   label: string;
   value: string;
   size?: "md" | "lg";
+  /** Fill the width it is given (Installation stats: four equal tiles). */
+  block?: boolean;
 }) {
   return (
     <Surface
       depth="flat"
       radius="md"
-      className={cn("self-start", size === "lg" ? "gap-1 px-3 py-2.5" : "gap-0.5 px-2 py-1.5")}
+      className={cn(
+        block ? "self-stretch" : "self-start",
+        size === "lg" || block ? "gap-0.5 px-3 py-2.5" : "gap-0.5 px-2 py-1.5",
+      )}
       accessible
       accessibilityLabel={`${label}: ${value}`}
     >

@@ -159,7 +159,7 @@ function Main({
         <View className="flex-row gap-3">
           {stats.map((st) => (
             <View key={st.key} className="flex-1">
-              <StatTile label={st.label} value={st.value} />
+              <StatTile label={st.label} value={st.value} block />
             </View>
           ))}
         </View>

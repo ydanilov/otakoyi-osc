@@ -455,9 +455,7 @@ function SegmentOption({
       {/* Touch light: inside the segment's capsule, below the label. */}
       <TouchLightView light={light} radius={t.radius.full} />
       {icon ? (
-        <View style={active ? iconGlow(t.control.fill) : undefined}>
-          <Glyph icon={icon} size={22} color={active ? t.control.fill : t.color.textMuted} />
-        </View>
+        <Glyph icon={icon} size={22} color={active ? t.control.fill : t.color.textMuted} />
       ) : (
         <Text
           className="text-sm"
@@ -479,14 +477,6 @@ function SegmentOption({
     </Pressable>
   );
 }
-
-/** Glow/Primary on a lit icon (web: drop-shadow filter; native: shadow). */
-const iconGlow = (color: string) => ({
-  shadowColor: color,
-  shadowOpacity: 0.9,
-  shadowRadius: 6,
-  shadowOffset: { width: 0, height: 0 },
-});
 
 /** Grid of pads. `radio` keeps one cell lit, `toggle` latches each cell, `momentary` lights while held. */
 export function ButtonGrid({ control: c, value, onChange, disabled }: ControlProps<"buttonGrid">) {
@@ -582,35 +572,40 @@ export function ButtonGroup({
         {c.buttons.map((b, i) => {
           const on = lit.has(b.id);
           return (
-            <Pad
-              key={b.id}
-              lightIndex={i}
-              disabled={disabled}
-              className="min-h-0 gap-1.5 px-1"
-              onPress={() => onChange(toggleInGroup(c, value, b.id))}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: on, disabled: !!disabled }}
-              accessibilityLabel={b.label}
-            >
-              {/* Figma Button Group: the key stays raised; the LED strip and the label light up. */}
-              <Text
-                className={cn(
-                  "text-center text-sm font-semibold uppercase",
-                  on ? "text-foreground" : "text-muted-foreground",
-                )}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
+            <View key={b.id} className="flex-1 gap-1.5">
+              <Pad
+                lightIndex={i}
+                disabled={disabled}
+                className="min-h-0 gap-1.5 px-1"
+                onPress={() => onChange(toggleInGroup(c, value, b.id))}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: on, disabled: !!disabled }}
+                accessibilityLabel={b.caption ? `${b.label}, ${b.caption}` : b.label}
               >
-                {b.label}
-              </Text>
-              <LedBar on={on} />
+                {/* Figma Group Button: the key stays raised; the LED strip and the label light up. */}
+                <Text
+                  className={cn(
+                    "text-center text-sm font-semibold uppercase",
+                    on ? "text-foreground" : "text-muted-foreground",
+                  )}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
+                  {b.label}
+                </Text>
+                <LedBar on={on} />
+              </Pad>
+              {/* The caption sits under the key (Figma Layer Toggles: BRAND, LIVE FEED…). */}
               {b.caption && (
-                <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>
+                <Text
+                  className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wider"
+                  numberOfLines={1}
+                >
                   {b.caption}
                 </Text>
               )}
-            </Pad>
+            </View>
           );
         })}
       </View>

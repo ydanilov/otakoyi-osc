@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@osc/ui";
 import * as React from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, useWindowDimensions } from "react-native";
 import {
   INSTALLATION_TITLE,
   InstallationContent,
@@ -8,6 +8,7 @@ import {
 } from "@/components/InstallationContent";
 import { SheetTop } from "@/components/SheetTop";
 import { useApp, useSessionState } from "@/lib/app-context";
+import { currentPult, formFactorOf } from "@/lib/nav";
 import { useBrand } from "@/lib/brand";
 import { closeSheet } from "@/lib/navigation";
 
@@ -17,6 +18,7 @@ export default function Installation() {
   const s = useSessionState();
   const brand = useBrand();
   const [view, setView] = React.useState<InstallationView>("main");
+  const ff = formFactorOf(useWindowDimensions().width);
   return (
     <ThemeProvider brand={brand.theme}>
       <SheetTop
@@ -28,7 +30,7 @@ export default function Installation() {
         <InstallationContent
           view={view}
           onView={setView}
-          pultId={app.pultId ?? s.config?.pults[0]?.id ?? null}
+          pultId={currentPult(s.config?.pults ?? [], app.pultId, ff)?.id ?? null}
           onPult={(id) => {
             app.setPultId(id);
             closeSheet();
