@@ -1,7 +1,7 @@
 # Otakoyi Control — agent guide
 
 Branded OSC controller for the studio's generative installations. The studio builds a pult (control
-surface) per installation; the client logs in with the installation's login and gets that pult on iOS
+surface) per installation; the client pairs a device by scanning the installation's QR (no accounts, ADR-012) and gets that pult on iOS
 (Android later) or in a browser. Commands go to TouchDesigner (or any OSC software) on Windows, macOS
 or Linux through a bridge on the installation computer.
 

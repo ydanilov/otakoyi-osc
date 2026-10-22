@@ -17,7 +17,7 @@ Consequences, and add a row below. Read the relevant ADR before proposing a diff
 | 009 | [Value snapshots (reserved, not in MVP)](009-value-snapshots-reserved-not-in-mvp.md)                                       | Proposed |
 | 010 | [Bridge protocol and lease](010-bridge-protocol-and-lease.md)                                                              | Accepted |
 | 011 | [One program on the installation machine: Otakoyi Runtime](011-one-program-on-the-installation-machine-otakoyi-runtime.md) | Accepted |
-| 012 | [Pairing by QR on the local network](012-pairing-by-qr-on-the-local-network.md)                                            | Accepted |
+| 012 | [Pairing by QR, no client accounts](012-pairing-by-qr-on-the-local-network.md)                                             | Accepted |
 | 013 | [Two use cases, two form factors](013-two-use-cases-two-form-factors.md)                                                   | Accepted |
 | 014 | [Figma is the builder](014-figma-is-the-builder.md)                                                                        | Accepted |
 | 015 | [New control types and schema v2](015-new-control-types-schema-v2.md)                                                      | Accepted |

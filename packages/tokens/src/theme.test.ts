@@ -52,7 +52,7 @@ describe("createTheme", () => {
   it("exposes shadcn-named CSS vars", () => {
     const vars = themeToCssVars(createTheme({ primary: "#1D4ED8" }));
     expect(vars["--primary"]).toBe("29 78 216");
-    expect(vars["--radius"]).toBe("10px");
+    expect(vars["--radius"]).toBe("12px");
     expect(vars["--accent"]).not.toBe(vars["--brand-accent"]); // shadcn accent stays a neutral surface
   });
 });
