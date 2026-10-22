@@ -246,6 +246,16 @@ export function formatValue(
   return opts.format ? opts.format.replace("{value}", withUnit) : withUnit;
 }
 
+/**
+ * Signed change of a relative (endless) control for its header (Figma "Relative indicator",
+ * option A): `+12`, `−0.02`, `0`. The ↻ glyph next to it marks the control as relative.
+ */
+export function formatDelta(delta: number, opts: { unit?: string | undefined } = {}): string {
+  if (!Number.isFinite(delta) || Math.abs(delta) < 1e-9) return formatValue(0, opts);
+  const text = formatValue(Math.abs(delta), opts);
+  return `${delta > 0 ? "+" : "\u2212"}${text}`;
+}
+
 export type MeterLevel = "normal" | "warning" | "critical";
 export function meterLevel(
   value: number,
