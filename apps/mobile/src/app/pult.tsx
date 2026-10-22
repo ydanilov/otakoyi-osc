@@ -7,11 +7,13 @@ import {
   PultProvider,
   ThemeProvider,
 } from "@osc/ui";
+import { httpBaseOf } from "@osc/protocol";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { router } from "expo-router";
 import * as React from "react";
 import { Platform, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { DebugPanel } from "@/components/DebugPanel";
 import { DemoBanner } from "@/components/DemoBanner";
 import { InstallationContent, type InstallationView } from "@/components/InstallationContent";
 import { PreviewPanel } from "@/components/PreviewPanel";
@@ -44,6 +46,14 @@ export default function PultScreen() {
     return () => void deactivateKeepAwake("pult").catch(() => {});
   }, [app.prefs.keepAwake]);
 
+  // Debug overlay (Settings › Developer): the session pings and polls health only while it is on.
+  const debugOn = app.prefs.debugOverlay;
+  React.useEffect(() => {
+    if (!session) return;
+    session.setDebug(debugOn);
+    return () => session.setDebug(false);
+  }, [session, debugOn]);
+
   // Connection lost: a dialog sheet (not an alert); it reconnects by itself meanwhile.
   React.useEffect(() => {
     if (s.lost && session?.kind === "bridge")
@@ -55,7 +65,16 @@ export default function PultScreen() {
     else if (!config) router.replace("/loading");
   }, [session, config]);
 
-  const services = React.useMemo(() => (session ? bridgeServices(session.http) : null), [session]);
+  const services = React.useMemo(
+    () =>
+      session
+        ? bridgeServices(session.http, {
+            httpBase: session.bridge ? httpBaseOf(session.bridge) : undefined,
+            demo: session.kind === "demo",
+          })
+        : null,
+    [session],
+  );
   const pult = config?.pults.find((p) => p.id === app.pultId) ?? config?.pults[0];
   const store = pult ? session?.stores.get(pult.id) : undefined;
   const pultServices = React.useMemo(
@@ -103,7 +122,8 @@ export default function PultScreen() {
                 <PreviewPanel sim={app.sim} />
               </View>
             )}
-            <PultPager key={pult.id} pages={pult.pages} />
+            <PultPager key={pult.id} pages={pult.pages} debug={debugOn ? session.debug : null} />
+            {debugOn && <DebugPanel session={session} state={s} tablet={ff === "tablet"} />}
           </SafeAreaView>
           {edgeTarget("left", ff) && <EdgeSwipe side="left" onOpen={() => open("settings")} />}
           <EdgeSwipe side="right" onOpen={() => open("installation")} />

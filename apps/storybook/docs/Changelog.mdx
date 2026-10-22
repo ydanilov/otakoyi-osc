@@ -7,6 +7,37 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-22 — code = Figma parity, sizes, picture pads, debug overlay
+
+**Changed**
+
+- Depth tokens are the Figma effect styles 1:1: Neu/Raised, Raised SM, Inset and Pressed are lit
+  from above (no diagonal offsets); glow is Glow/Primary (8 + 2) at rest and Glow/Primary Active
+  (12 + 3) while pressed / touched (was 14 + 4 everywhere). Continuous corners on iOS.
+- **Fader** (absolute / crossfade): recessed rail, thin lit value line, raised thumb with LED and
+  grips, ticks beside the rail (spread ×1.8 in fine mode); fine mode lights it in the accent with a
+  focus ring around the thumb. No more solid lime slot.
+- **Fader Mode=Relative**: a jog wheel — recessed housing, cylinder ribs that roll with the drag,
+  lit detent marks, − / +.
+- **Knob**: arc track, lit value arc, well, raised disc, cap and indicator dot, end stops
+  (Relative: dot ring with lit dots and a knurled disc; Color: spectrum over the 240° face and a
+  colour swatch). New `size: "compact"` (dial ≈ 0.7×).
+- **Tab Bar / Screen Tab** and the pult's screen tabs: a recessed capsule track with a raised
+  capsule tab. **Segmented**: raised capsule housing with the selected option as an inset capsule
+  and a glowing label — never a lit fill.
+- **Pads** (Pad, Toggle, Button Grid, Scene List, Button Group): raised keys; on = lit ring + soft
+  glow on a pressed-in key with a lit ON caption / LED strip; a momentary pad is lit only while
+  held. New `size` (150×88 / 104×64).
+- **List Card**: inset separators from the row text (50 pt). **List Row**: 20 pt icons, 14 pt gap.
+  **Switch**: Figma size (104×46 track, 58×40 thumb); in rows only the trailing LED.
+- Pult pager: page dots under the screens.
+
+**Added**
+
+- **Picture pad** (Toggle Content=Image): `image` from the config's asset bundle; label on a
+  legibility gradient, off dims the image, on adds the lit ring + LED.
+- **Debug Tag** and **Debug HUD** (Settings › Developer › Debug overlay), backed by `DebugStore`.
+
 ## 2026-10-22 — navigation per Apple HIG, no client login (ADR-012, ADR-013, ADR-004)
 
 **Changed**

@@ -51,6 +51,8 @@ export interface Theme {
     viewOnlyOverlay: string;
   };
   status: Record<StatusName, string>;
+  /** Debug overlay scrims (Figma Debug Tag / Debug HUD); the hairline is `status.warning`. */
+  debug: { tagBackground: string; hudBackground: string };
   /** Neumorphic shadow / highlight colours for the current mode (Figma `elevation/*`). See depth.ts. */
   elevation: Record<keyof typeof base.elevation.dark, string>;
   space: typeof base.space;
@@ -191,6 +193,7 @@ export function createTheme(brand: BrandInput = {}): Theme {
       viewOnlyOverlay: withAlpha(background, 0.55),
     },
     status,
+    debug: { tagBackground: base.debug.tagBackground, hudBackground: base.debug.hudBackground },
     elevation: { ...base.elevation[mode] },
     space: base.space,
     radius: base.radius,

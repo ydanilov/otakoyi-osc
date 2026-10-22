@@ -8,22 +8,32 @@ function ButtonStory({
   label,
   pressed,
   disabled,
+  size,
 }: {
   label: string;
   pressed: boolean;
   disabled: boolean;
+  size?: "regular" | "compact" | undefined;
 }) {
   const control = React.useMemo(
-    () => makeControl({ type: "button", id: "flash", address: "/fx/flash", label }),
-    [label],
+    () =>
+      makeControl({
+        type: "button",
+        id: "flash",
+        address: "/fx/flash",
+        label,
+        ...(size ? { size } : {}),
+      }),
+    [label, size],
   );
+  // A sized pad keeps its Figma size inside a larger cell.
   return (
     <ControlHarness
       control={control}
       value={{ pressed }}
       disabled={disabled}
-      width={150}
-      height={88}
+      width={size ? 200 : 150}
+      height={size ? 120 : 88}
     />
   );
 }
@@ -56,6 +66,8 @@ const meta = {
               ["State=Idle", "—"],
               ["State=Pressed", "value { pressed: true }"],
               ["State=Disabled", "disabled"],
+              ["Size=Regular", 'size: "regular" (150×88)'],
+              ["Size=Compact", 'size: "compact" (104×64)'],
             ],
           },
         }),
@@ -70,3 +82,6 @@ type Story = StoryObj<typeof meta>;
 export const Idle: Story = {};
 export const Pressed: Story = { args: { pressed: true } };
 export const Disabled: Story = { args: { disabled: true } };
+export const Regular: Story = { args: { size: "regular" } };
+export const Compact: Story = { args: { size: "compact" } };
+export const CompactPressed: Story = { args: { size: "compact", pressed: true } };

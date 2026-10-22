@@ -1,15 +1,17 @@
-import type { ControlValue } from "@osc/controls";
+import { debugAddress, formatRate, type ControlValue, type DebugStore } from "@osc/controls";
 import type { AnyControl, Control, Page } from "@osc/schema";
 import * as React from "react";
-import { Pressable, ScrollView, View, type ScrollViewInstance } from "react-native";
-import { Text } from "@osc/ui/components/ui/text";
-import { cn } from "@osc/ui/lib/utils";
+import { ScrollView, View, type ScrollViewInstance } from "react-native";
+import { ScreenTab } from "../chrome/Navigation";
+import { PageDots } from "../chrome/Status";
 import { UnsupportedPlaceholder } from "../controls/discrete";
+import { DebugTag, useTicker } from "../debug/Debug";
+import { Surface } from "../ds/depth";
 import { controlRegistry } from "../controls/registry";
 import type { ControlProps } from "../controls/types";
 import { useLayout } from "../controls/useLayout";
 import { useTheme } from "../theme/ThemeProvider";
-import { PHONE_BREAKPOINT, paginate, type Cell, type Screen } from "./layout";
+import { PHONE_BREAKPOINT, minHeightFor, paginate, type Cell, type Screen } from "./layout";
 
 import { useControlMode, useControlValue, usePultStore } from "./context";
 
@@ -45,6 +47,20 @@ function ConnectedControl({ control, studio }: { control: AnyControl; studio: bo
   );
 }
 
+/** Debug tag of one control: address, last value sent, send rate (re-read a few times a second). */
+function ControlDebugTag({ control, debug }: { control: AnyControl; debug: DebugStore }) {
+  useTicker(250);
+  if (control.type === "unsupported") return null;
+  const s = debug.control(control.id);
+  return (
+    <DebugTag
+      address={debugAddress(control)}
+      value={s?.value}
+      rate={`${formatRate(s?.rate ?? 0)}/s`}
+    />
+  );
+}
+
 /** Minimum row height (pt) before a page is split into another screen. */
 const MIN_ROW = 40;
 
@@ -61,7 +77,16 @@ interface PagerScreen {
  * does not fit at the minimum row height is split into several screens. All screens of all pages
  * sit in one horizontal pager; tabs above jump to a screen and follow the swipe.
  */
-export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: boolean }) {
+export function PultPager({
+  pages,
+  studio = false,
+  debug,
+}: {
+  pages: Page[];
+  studio?: boolean;
+  /** Debug overlay on: every control shows its DebugTag (Settings › Developer). */
+  debug?: DebugStore | null | undefined;
+}) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
   const pad = t.space[4];
@@ -78,7 +103,14 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
     return pages.flatMap((page) => {
       // Schema v2: each page carries its own phone and tablet layout (ADR-014).
       const cells = new Map<string, Cell>(Object.entries(page.layout[phone ? "phone" : "tablet"]));
-      const split = paginate(cells, maxRows);
+      // Picture pads and sized pads keep their Figma size: a band that would squeeze them moves
+      // to the next screen.
+      const minHeight = new Map<string, number>();
+      for (const c of page.controls) {
+        const m = minHeightFor(c, t.size);
+        if (m !== undefined) minHeight.set(c.id, m);
+      }
+      const split = paginate(cells, maxRows, { height: innerH, gap, minHeight });
       return split.map((screen, i) => ({
         key: `${page.id}:${i}`,
         label: split.length > 1 ? `${page.title} ${i + 1}` : page.title,
@@ -87,7 +119,7 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
         cells,
       }));
     });
-  }, [pages, phone, innerH, gap]);
+  }, [pages, phone, innerH, gap, t.size]);
 
   const scroller = React.useRef<ScrollViewInstance>(null);
   const [index, setIndex] = React.useState(0);
@@ -107,7 +139,7 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
   return (
     <View className="flex-1">
       {screens.length > 1 && (
-        <ScreenTabs labels={screens.map((s) => s.label)} index={index} onSelect={go} />
+        <ScreenTabs labels={screens.map((s) => s.label)} index={index} onSelect={go} fill={phone} />
       )}
       <View className="flex-1" onLayout={onLayout}>
         {W > 0 && (
@@ -126,12 +158,24 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
           >
             {screens.map((s) => (
               <View key={s.key} style={{ width: W, height: H, padding: pad }}>
-                <ScreenGrid screen={s} width={innerW} height={innerH} gap={gap} studio={studio} />
+                <ScreenGrid
+                  screen={s}
+                  width={innerW}
+                  height={innerH}
+                  gap={gap}
+                  studio={studio}
+                  debug={debug}
+                />
               </View>
             ))}
           </ScrollView>
         )}
       </View>
+      {screens.length > 1 && (
+        <View className="items-center pb-2" pointerEvents="none">
+          <PageDots count={screens.length} active={Math.min(index, screens.length - 1)} />
+        </View>
+      )}
     </View>
   );
 }
@@ -142,12 +186,14 @@ function ScreenGrid({
   height,
   gap,
   studio,
+  debug,
 }: {
   screen: PagerScreen;
   width: number;
   height: number;
   gap: number;
   studio: boolean;
+  debug?: DebugStore | null | undefined;
 }) {
   const cols = screen.page.columns;
   const colW = (width - gap * (cols - 1)) / cols;
@@ -172,6 +218,14 @@ function ScreenGrid({
             }}
           >
             <ConnectedControl control={c} studio={studio} />
+            {debug && (
+              <View
+                pointerEvents="none"
+                style={{ position: "absolute", left: -2, top: -4, right: 0 }}
+              >
+                <ControlDebugTag control={c} debug={debug} />
+              </View>
+            )}
           </View>
         );
       })}
@@ -179,47 +233,52 @@ function ScreenGrid({
   );
 }
 
-/** Tab strip for the screens; scrolls sideways itself when there are many tabs. */
+/**
+ * Screen tabs: the DS Tab Bar — a recessed capsule track with an inset capsule thumb. Phone: the
+ * tabs share the full width; tablet: the bar hugs its tabs. Scrolls sideways when there are many.
+ */
 function ScreenTabs({
   labels,
   index,
   onSelect,
+  fill,
 }: {
   labels: string[];
   index: number;
   onSelect: (i: number) => void;
+  fill: boolean;
 }) {
+  const many = labels.length > (fill ? 4 : 8);
+  const tabs = labels.map((label, i) => (
+    <View key={label + i} style={fill && !many ? { flex: 1, minWidth: 0 } : { minWidth: 96 }}>
+      <ScreenTab
+        label={label}
+        active={i === index}
+        onPress={() => onSelect(i)}
+        fill={fill && !many}
+      />
+    </View>
+  ));
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="grow-0"
-      contentContainerClassName="gap-1 px-4 pt-3"
-    >
-      {labels.map((label, i) => {
-        const active = i === index;
-        return (
-          <Pressable
-            key={label + i}
-            onPress={() => onSelect(i)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-            className={cn(
-              "min-h-10 justify-center rounded-md px-4",
-              active ? "bg-secondary" : "active:bg-muted",
-            )}
+    <View className="px-4 pt-3">
+      <Surface
+        depth="inset"
+        radius="full"
+        className={fill ? "self-stretch" : "self-start"}
+        accessibilityRole="tablist"
+      >
+        {many ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="gap-1 p-1"
           >
-            <Text
-              className={cn(
-                "text-sm font-medium",
-                active ? "text-foreground" : "text-muted-foreground",
-              )}
-            >
-              {label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+            {tabs}
+          </ScrollView>
+        ) : (
+          <View className="flex-row gap-1 p-1">{tabs}</View>
+        )}
+      </Surface>
+    </View>
   );
 }

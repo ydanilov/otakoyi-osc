@@ -101,6 +101,22 @@ export function SettingsContent({
           </Note>
         </Section>
 
+        <Section title="Developer">
+          <ListCard>
+            <ListRow
+              icon={InfoIcon}
+              title="Debug overlay"
+              trailing="switch"
+              checked={prefs.debugOverlay}
+              onCheckedChange={(v) => setPrefs({ debugOverlay: v })}
+            />
+          </ListCard>
+          <Note>
+            Shows each control's OSC address, last value and send rate, and a HUD with the bridge,
+            round-trip time, message rates and a live OSC log. This device only.
+          </Note>
+        </Section>
+
         <ListCard>
           <ListRow icon={BellIcon} title="What's new" onPress={() => setAbout("whatsNew")} />
           <ListRow icon={LifebuoyIcon} title="Help" onPress={() => setAbout("help")} />

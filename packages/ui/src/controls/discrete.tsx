@@ -1,32 +1,79 @@
 import { formatValue, hexToRgb, isGroupValue, toggleInGroup } from "@osc/controls";
 import type { UnsupportedControl } from "@osc/schema";
+import type { PadSize } from "@osc/schema";
 import * as React from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ImageSourcePropType,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
+import { CONTINUOUS, useDepthStyle, usePressState } from "../ds/depth";
+import { LedSwitch } from "../forms/LedSwitch";
+import { useControlServices } from "../platform/services";
+import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
+import { useLayout } from "./useLayout";
 
-/** Shared pad: the big tappable surface used by buttons, toggles, grid cells and scenes. */
+type PadLook = "rest" | "on" | "pressed";
+
+/**
+ * Shared pad (Figma `Pad` / `Toggle`): a raised key. `on` (latched) = lit ring + soft glow on a
+ * pressed-in key — never a solid fill; `pressed` (a momentary key under the finger) = the lit key
+ * with the active glow. Glow appears only on lit / pressed keys.
+ */
 function Pad({
-  active,
+  look = "rest",
   disabled,
   children,
   className,
+  style,
+  onPressIn,
+  onPressOut,
   ...props
-}: React.ComponentProps<typeof Pressable> & {
-  active?: boolean;
+}: Omit<React.ComponentProps<typeof Pressable>, "style"> & {
+  look?: PadLook;
   className?: string;
+  style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 }) {
+  const t = useTheme();
+  const press = usePressState(undefined, { onPressIn, onPressOut });
+  // A latched pad under the finger sinks a little more; a resting one goes Neu/Pressed.
+  const depth = look === "pressed" ? "flat" : look === "on" || press.pressed ? "pressed" : "raised";
+  const shadow = useDepthStyle(
+    disabled ? "flat" : depth,
+    !disabled && look !== "rest" ? "signal" : false,
+    look === "pressed" ? "active" : "rest",
+  );
   return (
     <Pressable
       disabled={disabled}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       className={cn(
-        "min-h-touch flex-1 items-center justify-center rounded-md border px-3",
-        active ? "border-primary bg-primary" : "border-border bg-card active:bg-secondary",
+        "min-h-touch flex-1 items-center justify-center px-3",
+        look === "pressed" ? "bg-primary" : "bg-card",
         className,
       )}
+      style={[
+        CONTINUOUS,
+        {
+          borderRadius: t.size.padRadius,
+          borderWidth: look === "on" ? 1.5 : 0,
+          borderColor: t.control.fill,
+        },
+        shadow,
+        style,
+      ]}
       {...props}
     >
       {children}
@@ -34,12 +81,12 @@ function Pad({
   );
 }
 
-function PadLabel({ active, children }: { active?: boolean; children: React.ReactNode }) {
+function PadLabel({ pressed, children }: { pressed?: boolean; children: React.ReactNode }) {
   return (
     <Text
       className={cn(
         "text-center text-sm font-semibold",
-        active ? "text-primary-foreground" : "text-foreground",
+        pressed ? "text-primary-foreground" : "text-foreground",
       )}
       numberOfLines={1}
       adjustsFontSizeToFit
@@ -50,31 +97,83 @@ function PadLabel({ active, children }: { active?: boolean; children: React.Reac
   );
 }
 
-/** Momentary button: sends `press` on touch down and `release` on touch up. */
+/** Pad caption: ON lit in the signal colour (the pad's LED), OFF muted. Figma Control/Label. */
+function PadState({ on }: { on: boolean }) {
+  const t = useTheme();
+  return (
+    <Text
+      className="text-xs font-medium uppercase tracking-wider"
+      style={
+        on
+          ? {
+              color: t.control.fill,
+              textShadowColor: t.control.fill,
+              textShadowRadius: 6,
+              textShadowOffset: { width: 0, height: 0 },
+            }
+          : { color: t.color.textMuted }
+      }
+    >
+      {on ? "ON" : "OFF"}
+    </Text>
+  );
+}
+
+/** Fixed Figma size of a sized pad (regular 150×88, compact 104×64), centred in its cell. */
+function useSizedBox(size: PadSize | undefined) {
+  const t = useTheme();
+  if (!size) return null;
+  return size === "compact"
+    ? { maxWidth: t.size.padCompactW, maxHeight: t.size.padCompactH }
+    : { maxWidth: t.size.padRegularW, maxHeight: t.size.padRegularH };
+}
+
+/** Momentary pad: sends `press` on touch down and `release` on touch up. Lit only while held. */
 export function ButtonControl({ control: c, value, onChange, disabled }: ControlProps<"button">) {
   const pressed =
     typeof value === "object" && value !== null && "pressed" in value && value.pressed;
+  const box = useSizedBox(c.size);
   return (
     <ControlFrame disabled={disabled}>
-      <Pad
-        active={!!pressed}
-        disabled={disabled}
-        onPressIn={() => onChange({ pressed: true })}
-        onPressOut={() => onChange({ pressed: false })}
-        accessibilityRole="button"
-        accessibilityLabel={c.label ?? c.id}
-      >
-        <PadLabel active={!!pressed}>{c.label ?? c.id}</PadLabel>
-      </Pad>
+      <View className={cn("flex-1", box && "items-center justify-center")}>
+        <Pad
+          look={pressed ? "pressed" : "rest"}
+          disabled={disabled}
+          onPressIn={() => onChange({ pressed: true })}
+          onPressOut={() => onChange({ pressed: false })}
+          accessibilityRole="button"
+          accessibilityLabel={c.label ?? c.id}
+          style={box ? [{ width: "100%", height: "100%", flex: 0 }, box] : undefined}
+        >
+          <PadLabel pressed={!!pressed}>{c.label ?? c.id}</PadLabel>
+        </Pad>
+      </View>
     </ControlFrame>
   );
 }
 
-/** Status LED: lit (control signal colour) or dark (inset bed). */
+/** Status LED: lit (control signal colour, glowing) or dark (tick colour). */
 export function Led({ on, className }: { on: boolean; className?: string }) {
+  const glow = useDepthStyle("flat", on ? "signal" : false);
   return (
     <View
       className={cn("h-2 w-2 rounded-full", on ? "bg-control-fill" : "bg-control-track", className)}
+      style={on ? glow : undefined}
+    />
+  );
+}
+
+/** Figma Button Group LED strip: a short bar under the label, lit when the button is on. */
+function LedBar({ on }: { on: boolean }) {
+  const t = useTheme();
+  const glow = useDepthStyle("flat", on ? "signal" : false);
+  return (
+    <View
+      style={[
+        { width: 40, height: 4, borderRadius: 2 },
+        { backgroundColor: on ? t.control.fill : t.control.tick },
+        on ? glow : undefined,
+      ]}
     />
   );
 }
@@ -87,106 +186,201 @@ export function ToggleControl(props: ControlProps<"toggle">) {
   );
 }
 
-/** Hardware-style latching switch with ON and OFF LEDs (toggle `style: "switch"`). */
+/**
+ * Hardware-style latching switch (toggle `style: "switch"`): the DS LED Switch on a raised card
+ * row (Figma pult: Logo / Live data / Audio react).
+ */
 function SwitchToggle({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
   const on = value === true;
+  const t = useTheme();
+  const shadow = useDepthStyle("raised");
   return (
-    <ControlFrame label={c.label} disabled={disabled}>
-      <Pressable
-        disabled={disabled}
-        onPress={() => onChange(!on)}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: on, disabled: !!disabled }}
-        accessibilityLabel={c.label ?? c.id}
-        className="bg-card border-border min-h-touch flex-1 flex-row items-center gap-3 rounded-md border px-3"
-      >
-        <View className="bg-muted h-8 w-14 justify-center rounded-full p-1">
-          <View
-            className={cn(
-              "h-6 w-6 rounded-full",
-              on ? "bg-primary translate-x-6" : "bg-secondary translate-x-0",
-            )}
+    <ControlFrame disabled={disabled}>
+      <View className="flex-1 justify-center">
+        <View
+          className="bg-card min-h-16 flex-row items-center gap-3 px-4"
+          style={[CONTINUOUS, { borderRadius: t.radius.lg }, shadow]}
+        >
+          <Text className="text-foreground text-md flex-1" numberOfLines={1}>
+            {c.label ?? c.id}
+          </Text>
+          <LedSwitch
+            value={on}
+            onValueChange={(v) => onChange(v)}
+            label={c.label ?? c.id}
+            showLabel={false}
+            offLed={false}
+            disabled={disabled}
           />
         </View>
-        <View className="gap-1">
-          <View className="flex-row items-center gap-2">
-            <Led on={on} />
-            <Text className={cn("text-xs", on ? "text-foreground" : "text-muted-foreground")}>
-              ON
-            </Text>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <Led on={!on} />
-            <Text className={cn("text-xs", on ? "text-muted-foreground" : "text-foreground")}>
-              OFF
-            </Text>
-          </View>
-        </View>
-      </Pressable>
+      </View>
     </ControlFrame>
   );
 }
 
-function ButtonToggle({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
+function ButtonToggle(props: ControlProps<"toggle">) {
+  const { control: c, value, onChange, disabled } = props;
+  const services = useControlServices();
+  const source = c.image ? services.asset(c.image) : null;
+  const box = useSizedBox(c.size);
+  if (source) return <PicturePad {...props} source={source} />;
   const on = value === true;
   return (
     <ControlFrame disabled={disabled}>
-      <Pad
-        active={on}
-        disabled={disabled}
-        onPress={() => onChange(!on)}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: on, disabled: !!disabled }}
-        accessibilityLabel={c.label ?? c.id}
-      >
-        <PadLabel active={on}>{c.label ?? c.id}</PadLabel>
-        <Text
-          className={cn(
-            "mt-1 text-xs",
-            on ? "text-primary-foreground/80" : "text-muted-foreground",
-          )}
+      <View className={cn("flex-1", box && "items-center justify-center")}>
+        <Pad
+          look={on ? "on" : "rest"}
+          disabled={disabled}
+          onPress={() => onChange(!on)}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: on, disabled: !!disabled }}
+          accessibilityLabel={c.label ?? c.id}
+          className="gap-1"
+          style={box ? [{ width: "100%", height: "100%", flex: 0 }, box] : undefined}
         >
-          {on ? "ON" : "OFF"}
-        </Text>
-      </Pad>
+          <PadLabel>{c.label ?? c.id}</PadLabel>
+          <PadState on={on} />
+        </Pad>
+      </View>
     </ControlFrame>
   );
 }
 
+/**
+ * Picture pad (toggle with `image`, Figma Toggle Content=Image): a square key showing the image
+ * (168 pt regular / 120 pt compact, smaller if the cell is). The label sits bottom-left on a
+ * legibility gradient. Off: the picture at ~45 % opacity; on: full opacity, lit ring + LED.
+ */
+function PicturePad({
+  control: c,
+  value,
+  onChange,
+  disabled,
+  source,
+}: ControlProps<"toggle"> & { source: ImageSourcePropType }) {
+  const t = useTheme();
+  const { size, onLayout } = useLayout();
+  const on = value === true;
+  const target = c.size === "compact" ? t.size.picturePadCompact : t.size.picturePadRegular;
+  const side = size.width > 0 ? Math.min(target, size.width, size.height) : 0;
+  const r = t.size.padRadius;
+  const press = usePressState(undefined);
+  const shadow = useDepthStyle(
+    disabled ? "flat" : on || press.pressed ? "pressed" : "raised",
+    !disabled && on ? "signal" : false,
+  );
+  return (
+    <ControlFrame disabled={disabled}>
+      <View className="flex-1 items-center justify-center" onLayout={onLayout}>
+        {side > 0 && (
+          <Pressable
+            disabled={disabled}
+            onPress={() => onChange(!on)}
+            onPressIn={press.onPressIn}
+            onPressOut={press.onPressOut}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: on, disabled: !!disabled }}
+            accessibilityLabel={c.label ?? c.id}
+            className="bg-card"
+            style={[CONTINUOUS, { width: side, height: side, borderRadius: r }, shadow]}
+          >
+            <View
+              className="flex-1 justify-end overflow-hidden px-3 pb-2.5"
+              style={[CONTINUOUS, { borderRadius: r }]}
+            >
+              <Image
+                source={source}
+                resizeMode="cover"
+                style={[StyleSheet.absoluteFill, { opacity: on ? 1 : PICTURE_OFF_OPACITY }]}
+                accessibilityIgnoresInvertColors
+              />
+              {/* Legibility gradient: clear above 45 %, background colour at the bottom. */}
+              <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
+                <Defs>
+                  <LinearGradient id={`pad-${c.id}`} x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0.45" stopColor={t.color.background} stopOpacity={0} />
+                    <Stop offset="1" stopColor={t.color.background} stopOpacity={0.85} />
+                  </LinearGradient>
+                </Defs>
+                <Rect x="0" y="0" width="100%" height="100%" fill={`url(#pad-${c.id})`} />
+              </Svg>
+              <Text className="text-foreground text-sm font-semibold" numberOfLines={1}>
+                {c.label ?? c.id}
+              </Text>
+              <PadState on={on} />
+            </View>
+            {on && (
+              <View
+                pointerEvents="none"
+                style={[
+                  CONTINUOUS,
+                  StyleSheet.absoluteFill,
+                  { borderRadius: r, borderWidth: 1.5, borderColor: t.control.fill },
+                ]}
+              />
+            )}
+          </Pressable>
+        )}
+      </View>
+    </ControlFrame>
+  );
+}
+
+/** Off picture pads show their image dimmed (Figma: ~45 %). */
+const PICTURE_OFF_OPACITY = 0.45;
+
+/**
+ * Figma `Segmented`: a raised capsule housing (4 pt padding) with the selected option as an inset
+ * capsule — its label glows in the signal colour. Never a lit fill.
+ */
 export function Segmented({ control: c, value, onChange, disabled }: ControlProps<"segmented">) {
+  const t = useTheme();
   const selected = typeof value === "number" ? value : c.default;
+  const housing = useDepthStyle("raised");
+  const well = useDepthStyle("pressed");
   return (
     <ControlFrame label={c.label} disabled={disabled}>
-      <View
-        className="bg-muted flex-1 flex-row gap-1 rounded-md p-1"
-        accessibilityRole="radiogroup"
-      >
-        {c.options.map((o, i) => {
-          const active = i === selected;
-          return (
-            <Pressable
-              key={i}
-              disabled={disabled}
-              onPress={() => onChange(i)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: active }}
-              className={cn(
-                "min-h-touch flex-1 items-center justify-center rounded-sm px-2",
-                active ? "bg-primary" : "active:bg-secondary",
-              )}
-            >
-              <Text
+      <View className="flex-1 justify-center">
+        <View
+          className="bg-card h-14 flex-row gap-0.5 rounded-full p-1"
+          style={[CONTINUOUS, { borderWidth: 1, borderColor: t.control.trackBorder }, housing]}
+          accessibilityRole="radiogroup"
+        >
+          {c.options.map((o, i) => {
+            const active = i === selected;
+            return (
+              <Pressable
+                key={i}
+                disabled={disabled}
+                onPress={() => onChange(i)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
                 className={cn(
-                  "text-sm font-medium",
-                  active ? "text-primary-foreground" : "text-muted-foreground",
+                  "flex-1 items-center justify-center rounded-full px-2",
+                  active && "bg-control-track",
                 )}
-                numberOfLines={1}
+                style={[CONTINUOUS, active ? well : undefined]}
               >
-                {o.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <Text
+                  className="text-sm"
+                  style={
+                    active
+                      ? {
+                          color: t.control.fill,
+                          textShadowColor: t.control.fill,
+                          textShadowRadius: 8,
+                          textShadowOffset: { width: 0, height: 0 },
+                        }
+                      : { color: t.color.textMuted }
+                  }
+                  numberOfLines={1}
+                >
+                  {o.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </ControlFrame>
   );
@@ -224,7 +418,7 @@ export function ButtonGrid({ control: c, value, onChange, disabled }: ControlPro
               return (
                 <Pad
                   key={k}
-                  active={on}
+                  look={on ? (c.mode === "momentary" ? "pressed" : "on") : "rest"}
                   disabled={disabled}
                   className="min-h-0 px-1"
                   onPressIn={press}
@@ -233,7 +427,7 @@ export function ButtonGrid({ control: c, value, onChange, disabled }: ControlPro
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={`${c.label ?? c.id} ${label}`}
                 >
-                  <PadLabel active={on}>{label}</PadLabel>
+                  <PadLabel pressed={on && c.mode === "momentary"}>{label}</PadLabel>
                 </Pad>
               );
             })}
@@ -253,17 +447,15 @@ export function SceneList({ control: c, value, onChange, disabled }: ControlProp
           return (
             <Pad
               key={s.id}
-              active={active}
+              look={active ? "on" : "rest"}
               disabled={disabled}
               onPress={() => onChange(s.id)}
               className="min-h-14 flex-none flex-row justify-between"
               accessibilityRole="radio"
               accessibilityState={{ selected: active }}
             >
-              <PadLabel active={active}>{s.label}</PadLabel>
-              {active && (
-                <Text className="text-primary-foreground text-xs font-medium uppercase">Live</Text>
-              )}
+              <PadLabel>{s.label}</PadLabel>
+              {active && <Led on />}
             </Pad>
           );
         })}
@@ -288,24 +480,28 @@ export function ButtonGroup({
           return (
             <Pad
               key={b.id}
-              active={on}
               disabled={disabled}
-              className="min-h-0 gap-1 px-1"
+              className="min-h-0 gap-1.5 px-1"
               onPress={() => onChange(toggleInGroup(c, value, b.id))}
               accessibilityRole="switch"
               accessibilityState={{ checked: on, disabled: !!disabled }}
               accessibilityLabel={b.label}
             >
-              <Led on={on} className={on ? "bg-primary-foreground" : undefined} />
-              <PadLabel active={on}>{b.label}</PadLabel>
+              {/* Figma Button Group: the key stays raised; the LED strip and the label light up. */}
+              <Text
+                className={cn(
+                  "text-center text-sm font-semibold uppercase",
+                  on ? "text-foreground" : "text-muted-foreground",
+                )}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
+                {b.label}
+              </Text>
+              <LedBar on={on} />
               {b.caption && (
-                <Text
-                  className={cn(
-                    "font-mono text-xs",
-                    on ? "text-primary-foreground/80" : "text-muted-foreground",
-                  )}
-                  numberOfLines={1}
-                >
+                <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>
                   {b.caption}
                 </Text>
               )}

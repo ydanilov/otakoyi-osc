@@ -24,6 +24,7 @@ export {
   ControlServicesProvider,
   createMemoryServices,
   stubServices,
+  urlAsset,
   useControlServices,
   type AudioInput,
   type ControlServices,
@@ -46,11 +47,28 @@ export {
   ToggleControl,
   UnsupportedPlaceholder,
 } from "./controls/discrete";
-export { paginate, reflowForPhone, PHONE_BREAKPOINT, type Cell, type Screen } from "./pult/layout";
+export {
+  minHeightFor,
+  paginate,
+  reflowForPhone,
+  PHONE_BREAKPOINT,
+  type Cell,
+  type ControlSizes,
+  type Fit,
+  type Screen,
+} from "./pult/layout";
 export { PultSelect } from "./pult/PultSelect";
 
 // Design system (Figma library → code; mapping in docs/figma.md, docs in Storybook)
-export { Surface, useDepthStyle, usePressState, type Depth, type GlowTone } from "./ds/depth";
+export {
+  CONTINUOUS,
+  Surface,
+  useDepthStyle,
+  usePressState,
+  type Depth,
+  type GlowLevel,
+  type GlowTone,
+} from "./ds/depth";
 export { Glyph, toneColor, type Tone } from "./ds/Glyph";
 export { StatusLed } from "./ds/Led";
 export * from "./ds/icons";
@@ -114,3 +132,10 @@ export {
   type ImageUploadState,
 } from "./media/Image";
 export * from "./patterns/Installation";
+export {
+  DebugHud,
+  DebugTag,
+  useTicker,
+  type DebugHudLogLine,
+  type DebugHudMetric,
+} from "./debug/Debug";

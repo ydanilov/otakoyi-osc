@@ -46,7 +46,7 @@ export function ListRow({
   const press = isSwitch ? () => onCheckedChange?.(!checked) : onPress;
   const body = (
     <>
-      {icon && <Glyph icon={icon} tone={destructive ? "critical" : "muted"} size={18} />}
+      {icon && <Glyph icon={icon} tone={destructive ? "critical" : "muted"} size={20} />}
       <View className="flex-1 gap-0.5">
         <Text
           className={cn("text-md", destructive ? "text-destructive" : "text-foreground")}
@@ -79,13 +79,14 @@ export function ListRow({
             onValueChange={() => {}}
             label={title}
             showLabel={false}
+            offLed={false}
             disabled={disabled}
           />
         </View>
       )}
     </>
   );
-  const className = "min-h-14 flex-row items-center gap-3 px-4 py-2";
+  const className = "min-h-14 flex-row items-center gap-3.5 px-4 py-2";
   if (!press || trailing === "value" || trailing === "none")
     return (
       <View

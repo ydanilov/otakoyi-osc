@@ -10,19 +10,42 @@ function ToggleStory({
   disabled,
   label,
   style = "button",
+  size,
+  image,
 }: {
   on: boolean;
   disabled: boolean;
   label: string;
   style?: "button" | "switch";
+  size?: "regular" | "compact" | undefined;
+  /** Picture pad: an asset path (the story services serve the demo's `demo-pad.jpg`). */
+  image?: string | undefined;
 }) {
   const control = React.useMemo(
-    () => makeControl({ type: "toggle", id: "strobe", address: "/fx/strobe", label, style }),
-    [label, style],
+    () =>
+      makeControl({
+        type: "toggle",
+        id: "strobe",
+        address: "/fx/strobe",
+        label,
+        style,
+        ...(size ? { size } : {}),
+        ...(image ? { image } : {}),
+      }),
+    [label, style, size, image],
   );
-  return (
-    <ControlHarness control={control} value={on} disabled={disabled} width={150} height={88} />
-  );
+  const box = image
+    ? size === "compact"
+      ? 120
+      : 168
+    : style === "switch"
+      ? { w: 300, h: 56 }
+      : size
+        ? { w: 200, h: 120 }
+        : { w: 150, h: 88 };
+  const w = typeof box === "number" ? box : box.w;
+  const h = typeof box === "number" ? box : box.h;
+  return <ControlHarness control={control} value={on} disabled={disabled} width={w} height={h} />;
 }
 
 const meta = {
@@ -40,8 +63,9 @@ const meta = {
           do: ["Label the thing, not the action (“Strobe”, not “Turn strobe on”)."],
           dont: ["Don't use two toggles for mutually exclusive options — Segmented."],
           anatomy: [
-            "style button: pad (lit fill when on), label, ON / OFF caption",
-            "style switch: hardware switch with ON and OFF LEDs (same messages)",
+            "style button: raised pad; on = pressed-in key with a lit ring and soft glow (never a solid fill), label, ON (lit) / OFF caption",
+            "picture pad (`image`): square image (168 / 120 pt), label bottom-left on a legibility gradient; off dims the image to ~45 %, on adds the lit ring + LED",
+            "style switch: a raised row with the LED Switch (same messages)",
           ],
           behaviour: [
             `Sends \`on\` args when switched on and \`off\` args when switched off — ${OSC_SOURCE}.`,
@@ -56,6 +80,8 @@ const meta = {
               ["State=Off", "value false"],
               ["State=On", "value true"],
               ["State=Disabled", "disabled"],
+              ["Size=Regular | Compact", 'size: "regular" (150×88) | "compact" (104×64)'],
+              ["Content=Image", "image: <asset path or URL> (square 168 / 120 pt)"],
             ],
           },
         }),
@@ -76,3 +102,15 @@ export const Off: Story = {
 export const On: Story = { args: { on: true } };
 export const SwitchStyle: Story = { args: { style: "switch", on: true } };
 export const Disabled: Story = { args: { disabled: true } };
+export const Compact: Story = { args: { size: "compact", on: true } };
+export const PictureOff: Story = { args: { image: "demo-pad.jpg", label: "Logo" } };
+export const PictureOn: Story = {
+  args: { image: "demo-pad.jpg", label: "Logo", on: true },
+  play: async ({ canvas }) => {
+    await userEvent.click(await canvas.findByRole("switch", { name: "Logo" }));
+    await expect(await canvas.findByText("OSC → /fx/strobe 0")).toBeVisible();
+  },
+};
+export const PictureCompact: Story = {
+  args: { image: "demo-pad.jpg", label: "Logo", size: "compact", on: true },
+};

@@ -219,6 +219,22 @@ describe("new control types (ADR-015)", () => {
     expect(find<"toggle">(cfg, "logo").style).toBe("button");
   });
 
+  it("pad sizes, picture pads and compact knobs (Figma Size / Content=Image)", () => {
+    expect(find<"toggle">(cfg, "visual")).toMatchObject({ image: "demo-pad.jpg", style: "button" });
+    expect(find<"toggle">(cfg, "visual").size).toBeUndefined();
+    expect(find<"button">(cfg, "flash").size).toBe("regular");
+    expect(find<"knob">(cfg, "zoom").size).toBe("compact");
+    expect(find<"knob">(cfg, "hue").size).toBe("regular");
+    const parse = (c: object) => Control.safeParse({ id: "p", address: "/p", ...c }).success;
+    expect(parse({ type: "button", size: "compact" })).toBe(true);
+    expect(parse({ type: "button", size: "huge" })).toBe(false);
+    expect(parse({ type: "toggle", image: "https://cdn.example.com/a.jpg", size: "compact" })).toBe(
+      true,
+    );
+    expect(parse({ type: "toggle", image: "javascript:alert(1)" })).toBe(false);
+    expect(parse({ type: "knob", size: "compact" })).toBe(true);
+  });
+
   it("buttonGroup: unique button ids, defaults must exist", () => {
     expect(find<"buttonGroup">(cfg, "layers").default).toEqual(["particles"]);
     const r = Control.safeParse({

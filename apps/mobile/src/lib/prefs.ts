@@ -4,9 +4,12 @@ import type { KeyValueStore } from "./pairing";
 export interface Prefs {
   haptics: boolean;
   keepAwake: boolean;
+  /** Settings › Developer › Debug overlay: OSC tags on every control and the debug HUD. */
+  debugOverlay: boolean;
 }
 
-export const DEFAULT_PREFS: Prefs = { haptics: true, keepAwake: true };
+/** Fine mode has no setting: it is always two fingers (ADR-007, ADR-013). */
+export const DEFAULT_PREFS: Prefs = { haptics: true, keepAwake: true, debugOverlay: false };
 const KEY = "otakoyi.prefs";
 
 export async function loadPrefs(kv: KeyValueStore): Promise<Prefs> {
@@ -16,6 +19,8 @@ export async function loadPrefs(kv: KeyValueStore): Promise<Prefs> {
     return {
       haptics: typeof v.haptics === "boolean" ? v.haptics : DEFAULT_PREFS.haptics,
       keepAwake: typeof v.keepAwake === "boolean" ? v.keepAwake : DEFAULT_PREFS.keepAwake,
+      debugOverlay:
+        typeof v.debugOverlay === "boolean" ? v.debugOverlay : DEFAULT_PREFS.debugOverlay,
     };
   } catch {
     return { ...DEFAULT_PREFS };

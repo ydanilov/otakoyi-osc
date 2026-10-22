@@ -1,6 +1,7 @@
 import type { AudioBlock } from "@osc/controls";
 import type { ImageAssetDto, PromptPresetDto } from "@osc/protocol";
 import * as React from "react";
+import type { ImageSourcePropType } from "react-native";
 
 /**
  * Platform seams for controls that need more than touches (ADR-015, AGENTS rule 5). Components
@@ -87,6 +88,17 @@ export interface ControlServices {
   audio: AudioInput;
   media: MediaLibrary;
   prompts: PromptPresets;
+  /**
+   * Images of the config's asset bundle (picture pads): a relative path is served by the bridge
+   * at `/brand/<path>` (or bundled with the app for the demo); an http(s) URL is used as is.
+   * null = cannot be shown (the pad falls back to its plain look).
+   */
+  asset(path: string): ImageSourcePropType | null;
+}
+
+/** http(s) URLs only — what a pult without a bridge can show. */
+export function urlAsset(path: string): ImageSourcePropType | null {
+  return /^https?:\/\//i.test(path.trim()) ? { uri: path.trim() } : null;
 }
 
 const unavailable = () => Promise.reject(new Error("Not available on this device yet"));
@@ -94,6 +106,7 @@ const unavailable = () => Promise.reject(new Error("Not available on this device
 /** Defaults: nothing wired. Controls render and explain that the feature is not available here. */
 export const stubServices: ControlServices = {
   pult: "",
+  asset: urlAsset,
   imagePicker: { available: false, pick: async () => null },
   audio: {
     available: false,

@@ -69,6 +69,7 @@ export function Button({
   const shadow = useDepthStyle(
     depthFor(variant, press.pressed, isDisabled),
     glowFor(variant, press.pressed, isDisabled),
+    "active",
   );
   const ink =
     variant === "primary"

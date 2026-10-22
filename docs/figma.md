@@ -71,7 +71,8 @@ Divider, Scrim, Page Dots, Nav Item, Viewfinder. Slot containers: List Card, Sec
 Dialog (Modal / Sheet), Release Card, Pult Card.
 
 Controls: Fader (Absolute slot / Relative jog wheel × Vertical / Horizontal × Default / Fine / Off /
-Disabled), Knob (Absolute / Relative / Color-Hue × Vertical / Horizontal, 240° travel), Thumbstick,
+Disabled), Knob (Absolute / Relative / Color-Hue × Vertical / Horizontal × Size Regular / Compact,
+240° travel), Pad (Size), Toggle (Size × Content=Text / Image), Thumbstick,
 XY Pad, Meter, Toggle, Pad, Hold to Confirm, Segmented (single-select), Group Button and Button
 Group (multi-select with LED strip), Button Grid, Scene List, Label, Color Picker, Unsupported.
 
@@ -118,6 +119,9 @@ are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 | Viewfinder (Size)                                                                                     | `Viewfinder size`                                                             | `containers/Viewfinder.tsx`                                           |
 | Fader · Knob · XY Pad · Meter · Hold to Confirm                                                       | `Fader` · `Knob` · `XYPad` · `Meter` · `HoldToConfirm`                        | `controls/*.tsx`                                                      |
 | Toggle · Pad · Segmented · Button Grid · Scene List · Label · Color Picker · Unsupported              | `discrete.tsx` exports                                                        | `controls/discrete.tsx`                                               |
+| Pad (Size) · Toggle (Size × Content=Text / Image)                                                     | `size: regular \| compact`, toggle `image` (picture pad)                      | `controls/discrete.tsx`, `pult/layout.ts` (`minHeightFor`)            |
+| Knob (Size=Regular / Compact)                                                                         | `size: regular \| compact`                                                    | `controls/Knob.tsx`                                                   |
+| Debug Tag · Debug HUD                                                                                 | `DebugTag` · `DebugHud` (+ `DebugStore` in `@osc/controls`)                   | `debug/Debug.tsx`                                                     |
 | Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log, Stepper Group | same names                                                                    | `patterns/Installation.tsx`                                           |
 
 New control types (ADR-015) — Fader Mode=Relative/Crossfade, Knob Mode=Relative/Color,

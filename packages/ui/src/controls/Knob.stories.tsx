@@ -13,8 +13,10 @@ function KnobStory({
   min,
   max,
   mode,
+  size,
 }: {
   mode: "absolute" | "relative" | "hue";
+  size: "regular" | "compact";
   value: number;
   disabled: boolean;
   label: string;
@@ -35,8 +37,9 @@ function KnobStory({
         min,
         max,
         mode,
+        size,
       }),
-    [label, centered, unit, min, max, mode],
+    [label, centered, unit, min, max, mode, size],
   );
   return (
     <ControlHarness control={control} value={value} disabled={disabled} width={180} height={180} />
@@ -55,9 +58,11 @@ const meta = {
     unit: "",
     min: 0,
     max: 1,
+    size: "regular",
   },
   argTypes: {
     mode: { control: "inline-radio", options: ["absolute", "relative", "hue"] },
+    size: { control: "inline-radio", options: ["regular", "compact"] },
     value: { control: { type: "range", min: 0, max: 1, step: 0.01 } },
   },
   parameters: {
@@ -96,6 +101,7 @@ const meta = {
               ["Mode=Absolute", "default"],
               ["Mode=Relative", 'mode: "relative"'],
               ["Mode=Color", 'mode: "hue"'],
+              ["Size=Regular | Compact", 'size: "regular" | "compact" (dial ≈ 0.7×, same labels)'],
               ["Orientation=Vertical | Horizontal", "label placement in the cell"],
               ["State=Fine", "two-finger drag (runtime)"],
               ["State=Disabled", "disabled"],
@@ -120,5 +126,9 @@ export const WithUnit: Story = {
 export const Relative: Story = { args: { mode: "relative", label: "Scrub" } };
 export const Hue: Story = {
   args: { mode: "hue", label: "Hue", value: 200, min: 0, max: 360, unit: "°" },
+};
+export const Compact: Story = { args: { size: "compact" } };
+export const CompactRelative: Story = {
+  args: { size: "compact", mode: "relative", label: "Scrub" },
 };
 export const Disabled: Story = { args: { disabled: true } };

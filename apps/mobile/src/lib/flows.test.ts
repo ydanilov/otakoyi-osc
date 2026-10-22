@@ -180,8 +180,12 @@ describe("pairing storage and preferences", () => {
   it("preferences default to on and survive a reload", async () => {
     const kv = memoryKeyValue();
     expect(await loadPrefs(kv)).toEqual(DEFAULT_PREFS);
-    await savePrefs(kv, { haptics: false, keepAwake: true });
-    expect(await loadPrefs(kv)).toEqual({ haptics: false, keepAwake: true });
+    expect(DEFAULT_PREFS.debugOverlay).toBe(false);
+    await savePrefs(kv, { haptics: false, keepAwake: true, debugOverlay: true });
+    expect(await loadPrefs(kv)).toEqual({ haptics: false, keepAwake: true, debugOverlay: true });
+    // Prefs saved before the debug overlay existed: off.
+    await kv.set("otakoyi.prefs", JSON.stringify({ haptics: true, keepAwake: false }));
+    expect((await loadPrefs(kv)).debugOverlay).toBe(false);
   });
 });
 

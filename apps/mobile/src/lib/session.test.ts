@@ -107,4 +107,28 @@ describe("Session over a transport (here: the in-app simulator)", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(s.state.error).toEqual({ code: "auth", message: "Wrong PIN" });
   });
+
+  it("feeds the debug overlay: OSC out per control, RTT of the ping, FPS from telemetry", async () => {
+    const s = demoSession();
+    s.start();
+    await vi.advanceTimersByTimeAsync(0);
+    const lobby = s.stores.get("lobby")!;
+    const intensity = lobby.control("intensity")!;
+    lobby.interact(intensity, 0.25);
+    const tag = s.debug.control("intensity");
+    expect(tag?.value).toBe("0.250");
+    expect(s.debug.entries().at(-1)).toMatchObject({
+      dir: "out",
+      address: (intensity as { address: string }).address,
+    });
+    expect(s.debug.rtt).toBeNull();
+    s.setDebug(true);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(s.debug.rtt).not.toBeNull();
+    expect(s.debug.fps).toBeGreaterThan(50);
+    // Feedback that changes a value (the demo's audio meter) is logged as received.
+    await vi.advanceTimersByTimeAsync(500);
+    expect(s.debug.entries().some((e) => e.dir === "in")).toBe(true);
+    s.stop();
+  });
 });

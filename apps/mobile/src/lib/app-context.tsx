@@ -147,6 +147,7 @@ const EMPTY: SessionState = {
   error: null,
   lost: false,
   welcomedAt: null,
+  protocol: null,
 };
 
 /** The current session's state (re-renders on every change). */
