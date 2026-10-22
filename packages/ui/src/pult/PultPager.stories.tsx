@@ -64,7 +64,7 @@ const meta = {
             "Panels: Fader Bank, Knob Group, Knob Row, Layer Toggles, Camera Control, Scene Bar, Show Actions, List — max width 640 / 480 / 560, centred when capped, never shorter than their content",
           ],
           behaviour: [
-            "Rows fill the height; below the 40 pt minimum row height a page splits (`paginate`, unit-tested).",
+            "Controls are packed from the top at their Figma heights (phone 18 pt gaps, free space below; tablet 16 pt gaps, each column's last item to the bottom); a page that does not fit splits into screens (`layoutPage`, unit-tested, ADR-006).",
             "Phones re-flow controls to half/full width (`reflowForPhone`).",
             "Controls read/write the PultStore; view-only disables them.",
           ],

@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { baseTokens } from "@osc/tokens";
 import type { AnyControl } from "@osc/schema";
+import { parseConfig, type Page } from "@osc/schema";
+import demo from "../../../schema/examples/try-the-demo.json";
 import {
-  minHeightFor,
-  paginate,
+  itemsFor,
+  layoutPage,
+  naturalHeightFor,
   panelMaxWidth,
   panelMinHeight,
+  pultMetrics,
   reflowForPhone,
   type Cell,
+  type Item,
 } from "./layout";
 
 const overlaps = (a: Cell, b: Cell) =>
@@ -46,38 +51,114 @@ describe("reflowForPhone", () => {
   });
 });
 
-describe("paginate", () => {
-  const cells = new Map<string, Cell>([
-    ["a", { x: 0, y: 0, w: 6, h: 6 }],
-    ["b", { x: 6, y: 0, w: 6, h: 4 }],
-    ["c", { x: 6, y: 4, w: 6, h: 3 }], // overlaps a's rows → same band as a and b
-    ["d", { x: 0, y: 7, w: 12, h: 2 }],
-    ["e", { x: 0, y: 9, w: 6, h: 2 }],
-  ]);
+const sizes = baseTokens.control;
+const phone = pultMetrics("phone", sizes);
+const tablet = pultMetrics("tablet", sizes);
+const parsed = parseConfig(demo);
+if (!parsed.ok) throw new Error("demo config does not parse");
+const config = parsed.config;
+const page = (pult: string, id: string): Page =>
+  config.pults.find((p) => p.id === pult)!.pages.find((g) => g.id === id)!;
+const round = (r: { x: number; y: number; w: number; h: number }) =>
+  [r.x, r.y, r.w, r.h].map((v) => Math.round(v * 100) / 100);
 
-  it("keeps a page on one screen when it fits", () => {
-    expect(paginate(cells, 20)).toEqual([{ ids: ["a", "b", "c", "d", "e"], top: 0, rows: 11 }]);
+describe("layoutPage = Figma Demo · Try the demo (ADR-006)", () => {
+  it("phone Lobby › Live: packed from the top, 12 pt in, 18 pt gaps, free space below", () => {
+    const g = page("lobby", "live");
+    // Figma Phone / 03 Demo pult: the Pult frame is 402 × 596.
+    const screens = layoutPage(
+      new Map(Object.entries(g.layout.phone)),
+      itemsFor(g.controls, g.panels, sizes),
+      402,
+      596,
+      phone,
+    );
+    expect(screens).toHaveLength(2);
+    const r = screens[0]!.rects;
+    expect(screens[0]!.ids).toEqual([
+      "wall-scene",
+      "wall-switches",
+      "wall-brightness",
+      "hue-drift",
+    ]);
+    expect(round(r.get("wall-scene")!)).toEqual([16, 12, 370, 78]);
+    expect(round(r.get("wall-switches")!)).toEqual([16, 108, 370, 170]);
+    expect(round(r.get("wall-brightness")!)).toEqual([16, 296, 370, 82]);
+    expect(round(r.get("hue-drift")!)).toEqual([16, 396, 370, 82]);
   });
 
-  it("splits between bands, never through one", () => {
-    const screens = paginate(cells, 9);
-    expect(screens.map((s) => s.ids)).toEqual([["a", "b", "c", "d"], ["e"]]);
-    expect(screens[1]).toMatchObject({ top: 9, rows: 2 });
-  });
-
-  it("gives an oversized band its own screen", () => {
-    const screens = paginate(cells, 4);
-    expect(screens[0]).toEqual({ ids: ["a", "b", "c"], top: 0, rows: 7 });
-    expect(screens.every((s) => s.ids.length > 0)).toBe(true);
-  });
-
-  it("returns one empty screen for an empty page", () => {
-    expect(paginate(new Map(), 10)).toEqual([{ ids: [], top: 0, rows: 1 }]);
+  it("tablet VJ › Mix: Console columns, 20 / 10 pt in, 16 pt gaps, last item to the bottom", () => {
+    const g = page("vj", "mix");
+    // Figma Tablet / 03 Demo pult: the Console frame is 1210 × 603.
+    const screens = layoutPage(
+      new Map(Object.entries(g.layout.tablet)),
+      itemsFor(g.controls, g.panels, sizes),
+      1210,
+      603,
+      tablet,
+    );
+    expect(screens).toHaveLength(1);
+    const r = screens[0]!.rects;
+    expect(round(r.get("mix")!)).toEqual([20, 10, 379.33, 583]);
+    expect(round(r.get("shape")!)).toEqual([415.33, 10, 379.33, 442]);
+    expect(round(r.get("layers-panel")!)).toEqual([415.33, 468, 379.33, 136]);
+    expect(round(r.get("camera")!)).toEqual([810.67, 10, 379.33, 366]);
+    expect(round(r.get("scene-bar")!)).toEqual([810.67, 392, 379.33, 201]);
   });
 });
 
-describe("picture pads and sized pads", () => {
-  const sizes = baseTokens.control;
+describe("layoutPage", () => {
+  const fixed = (height: number): Item => ({ height });
+  it("splits between bands, never through one", () => {
+    const cells = new Map<string, Cell>([
+      ["a", { x: 0, y: 0, w: 6, h: 2 }],
+      ["b", { x: 6, y: 0, w: 6, h: 2 }],
+      ["c", { x: 0, y: 2, w: 12, h: 2 }],
+    ]);
+    const items = new Map([
+      ["a", fixed(200)],
+      ["b", fixed(100)],
+      ["c", fixed(200)],
+    ]);
+    // 12 + 200 + 18 + 200 = 430 > 400 − 24 → c moves to screen 2.
+    const s = layoutPage(cells, items, 400, 400, phone);
+    expect(s.map((x) => x.ids)).toEqual([["a", "b"], ["c"]]);
+    expect(s[1]!.rects.get("c")!.y).toBe(12);
+    expect(layoutPage(cells, items, 400, 600, phone)).toHaveLength(1);
+  });
+
+  it("shares the free height among stretchable items by grid rows", () => {
+    const cells = new Map<string, Cell>([
+      ["list", { x: 0, y: 0, w: 12, h: 6 }],
+      ["fader", { x: 0, y: 6, w: 12, h: 2 }],
+    ]);
+    const s = layoutPage(cells, new Map([["fader", fixed(82)]]), 400, 524, phone);
+    // inner 500: the list takes 500 − 18 − 82 = 400.
+    expect(round(s[0]!.rects.get("list")!)).toEqual([16, 12, 368, 400]);
+    expect(round(s[0]!.rects.get("fader")!)).toEqual([16, 430, 368, 82]);
+  });
+
+  it("stretches a column's last item on a tablet only", () => {
+    const cells = new Map<string, Cell>([["k", { x: 0, y: 0, w: 4, h: 4 }]]);
+    const items = new Map([["k", fixed(186)]]);
+    expect(layoutPage(cells, items, 800, 500, tablet)[0]!.rects.get("k")!.h).toBe(480);
+    expect(layoutPage(cells, items, 400, 500, phone)[0]!.rects.get("k")!.h).toBe(186);
+  });
+
+  it("scales a single band taller than the screen to fit", () => {
+    const cells = new Map<string, Cell>([["k", { x: 0, y: 0, w: 4, h: 4 }]]);
+    const s = layoutPage(cells, new Map([["k", fixed(900)]]), 400, 524, phone);
+    expect(s[0]!.rects.get("k")!.h).toBe(500);
+  });
+
+  it("returns one empty screen for an empty page", () => {
+    expect(layoutPage(new Map(), new Map(), 400, 400, phone)).toEqual([
+      { ids: [], rects: new Map() },
+    ]);
+  });
+});
+
+describe("Figma heights", () => {
   const pad = (extra: Record<string, unknown>) =>
     ({
       id: "p",
@@ -87,42 +168,20 @@ describe("picture pads and sized pads", () => {
       ...extra,
     }) as unknown as AnyControl;
 
-  it("knows the Figma sizes", () => {
-    expect(minHeightFor(pad({ image: "logo.jpg" }), sizes)).toBe(168);
-    expect(minHeightFor(pad({ image: "logo.jpg", size: "compact" }), sizes)).toBe(120);
-    expect(minHeightFor(pad({ size: "regular" }), sizes)).toBe(88);
-    expect(minHeightFor(pad({ size: "compact" }), sizes)).toBe(64);
-    expect(minHeightFor({ ...pad({ size: "compact" }), type: "button" } as AnyControl, sizes)).toBe(
-      64,
-    );
-    // No size: the pad stretches with its cell; switches never use pad sizes.
-    expect(minHeightFor(pad({}), sizes)).toBeUndefined();
-    expect(minHeightFor(pad({ style: "switch", image: "x.jpg" }), sizes)).toBeUndefined();
-  });
-
-  // Rows: header band (2 rows) and a band with a picture pad (2 rows); 8 pt gaps.
-  const cells = new Map<string, Cell>([
-    ["mode", { x: 0, y: 0, w: 12, h: 2 }],
-    ["fader", { x: 0, y: 2, w: 12, h: 2 }],
-    ["picture", { x: 0, y: 4, w: 6, h: 2 }],
-  ]);
-
-  it("moves a band to the next screen when the rows would squeeze a picture pad", () => {
-    // 360 pt / 6 rows ≈ 53 pt rows → the 2-row picture pad gets 114 pt < 168.
-    const fit = { height: 360, gap: 8, minHeight: new Map([["picture", 168]]) };
-    const screens = paginate(cells, 20, fit);
-    expect(screens.map((s) => s.ids)).toEqual([["mode", "fader"], ["picture"]]);
-    // On its own screen the band is 2 rows of 176 pt: it fits.
-    expect(screens[1]).toMatchObject({ top: 4, rows: 2 });
-  });
-
-  it("keeps one screen when there is room", () => {
-    const fit = { height: 800, gap: 8, minHeight: new Map([["picture", 168]]) };
-    expect(paginate(cells, 20, fit)).toHaveLength(1);
-  });
-
-  it("without fit behaves as before", () => {
-    expect(paginate(cells, 20)).toHaveLength(1);
+  it("knows the pad, picture pad and control sizes", () => {
+    expect(naturalHeightFor(pad({ image: "logo.jpg" }), sizes)).toBe(168);
+    expect(naturalHeightFor(pad({ image: "logo.jpg", size: "compact" }), sizes)).toBe(120);
+    expect(naturalHeightFor(pad({}), sizes)).toBe(88);
+    expect(naturalHeightFor(pad({ size: "compact" }), sizes)).toBe(64);
+    expect(naturalHeightFor(pad({ style: "switch", image: "x.jpg" }), sizes)).toBe(46);
+    const c = (x: Record<string, unknown>) => x as unknown as AnyControl;
+    expect(naturalHeightFor(c({ type: "fader", orientation: "horizontal" }), sizes)).toBe(82);
+    expect(naturalHeightFor(c({ type: "fader", orientation: "vertical" }), sizes)).toBeUndefined();
+    expect(naturalHeightFor(c({ type: "knob", size: "regular" }), sizes)).toBe(186);
+    expect(naturalHeightFor(c({ type: "knob", size: "compact" }), sizes)).toBe(138);
+    expect(naturalHeightFor(c({ type: "segmented", label: "Scene" }), sizes)).toBe(78);
+    expect(naturalHeightFor(c({ type: "segmented" }), sizes)).toBe(56);
+    expect(naturalHeightFor(c({ type: "xy" }), sizes)).toBeUndefined();
   });
 });
 
@@ -141,25 +200,12 @@ describe("Console Panel patterns (Figma Patterns, responsive)", () => {
     ] as const)
       expect(panelMaxWidth(p)).toBe(560);
   });
-  it("never gets shorter than its content (Figma heights)", () => {
+  it("has the Figma heights", () => {
     expect(panelMinHeight("faderBank", 8)).toBe(466);
     expect(panelMinHeight("knobGroup", 4)).toBe(442);
     expect(panelMinHeight("cameraControl", 2)).toBe(366);
     expect(panelMinHeight("layerToggles", 1)).toBe(136);
     expect(panelMinHeight("sceneBar", 1)).toBe(114);
     expect(panelMinHeight("list", 3)).toBe(170);
-  });
-  it("moves a band to the next screen rather than squeezing a panel", () => {
-    const cells = new Map<string, Cell>([
-      ["bank", { x: 0, y: 0, w: 12, h: 6 }],
-      ["scene", { x: 0, y: 6, w: 12, h: 2 }],
-    ]);
-    const minHeight = new Map([
-      ["bank", panelMinHeight("faderBank", 8)],
-      ["scene", panelMinHeight("sceneBar", 1)],
-    ]);
-    // 600 pt: 8 rows of 68 — the bank gets 6 rows (448) < 466 → it is squeezed alone on screen 1.
-    const s = paginate(cells, 13, { height: 600, gap: 8, minHeight });
-    expect(s.map((x) => x.ids)).toEqual([["bank"], ["scene"]]);
   });
 });

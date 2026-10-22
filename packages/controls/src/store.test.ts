@@ -16,6 +16,22 @@ function setup() {
 }
 
 describe("PultStore", () => {
+  it("accumulates a relative control's change since the session started", () => {
+    const { store, control } = setup();
+    const jog = { ...control("intensity"), mode: "relative" } as ReturnType<typeof control>;
+    let notified = 0;
+    store.subscribeMeta(jog.id, () => notified++);
+    expect(store.offset(jog.id)).toBe(0);
+    store.interact(jog, { delta: 0.015 });
+    store.interact(jog, { delta: 0.005 });
+    expect(store.offset(jog.id)).toBeCloseTo(0.02);
+    expect(notified).toBe(2);
+    store.setMode("view");
+    store.interact(jog, { delta: 1 });
+    expect(store.offset(jog.id)).toBeCloseTo(0.02);
+    expect(store.offset("speed")).toBe(0);
+  });
+
   it("starts every control at its initial value", () => {
     const { store } = setup();
     expect(store.get("speed")).toBe(1);

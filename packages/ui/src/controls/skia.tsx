@@ -16,7 +16,7 @@ import type { SharedValue } from "react-native-reanimated";
 
 type Num = number | SharedValue<number>;
 
-const sigma = (cssBlur: number) => cssBlur / 2;
+export const sigma = (cssBlur: number) => cssBlur / 2;
 
 export interface Box {
   x: Num;

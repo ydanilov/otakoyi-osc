@@ -109,7 +109,7 @@ export function StatTile({
       accessible
       accessibilityLabel={`${label}: ${value}`}
     >
-      <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+      <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
         {label}
       </Text>
       <Text

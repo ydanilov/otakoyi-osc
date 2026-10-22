@@ -74,7 +74,7 @@ export function Stepper({
       style={disabled ? { opacity: t.control.disabledOpacity } : undefined}
     >
       <View className="min-h-5 flex-row items-center justify-between">
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
           {label}
         </Text>
         {changed && !disabled && (

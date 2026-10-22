@@ -48,3 +48,24 @@ export function useControlMode(): ControlMode {
     () => store.mode,
   );
 }
+
+/**
+ * A relative control's accumulated change since the session started (Figma `+12`, `+0.02`). In a
+ * pult it comes from the store (it survives page swipes while the pult is open); outside one
+ * (Storybook, the gallery) the control keeps it itself through `add`.
+ */
+export function useRelativeOffset(id: string): { value: number; add: (d: number) => void } {
+  const store = React.useContext(StoreContext);
+  const [local, setLocal] = React.useState(0);
+  const fromStore = React.useSyncExternalStore(
+    (fn) => store?.subscribeMeta(id, fn) ?? (() => {}),
+    () => store?.offset(id) ?? 0,
+  );
+  const add = React.useCallback(
+    (d: number) => {
+      if (!store) setLocal((v) => v + d);
+    },
+    [store],
+  );
+  return { value: store ? fromStore : local, add };
+}

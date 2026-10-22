@@ -114,7 +114,7 @@ export function PromptMix({
             ] as const
           ).map(([side, value, on]) => (
             <View key={side} className="flex-1 gap-1.5">
-              <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+              <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
                 {side}
               </Text>
               <Select

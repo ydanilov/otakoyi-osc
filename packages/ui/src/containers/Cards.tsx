@@ -56,7 +56,7 @@ export function Section({
     <View className={cn("gap-2 self-stretch", className)}>
       <View className="min-h-5 flex-row items-center justify-between px-1">
         <Text
-          className="text-muted-foreground text-xs font-medium uppercase tracking-wider"
+          className="text-muted-foreground text-xs font-medium uppercase tracking-overline"
           accessibilityRole="header"
         >
           {title}
@@ -89,7 +89,7 @@ export function ConsolePanel({
         <View className="min-h-5 flex-row items-center justify-between">
           {title ? (
             <Text
-              className="text-muted-foreground text-xs font-medium uppercase tracking-wider"
+              className="text-muted-foreground text-xs font-medium uppercase tracking-overline"
               accessibilityRole="header"
             >
               {title}

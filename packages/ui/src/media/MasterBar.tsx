@@ -66,7 +66,7 @@ export function MasterBar({
       />
       <View className="flex-1 gap-1.5">
         <View className="flex-row items-baseline justify-between">
-          <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
             {label}
           </Text>
           <Text className="text-foreground font-mono text-sm">

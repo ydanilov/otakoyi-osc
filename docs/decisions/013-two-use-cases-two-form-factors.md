@@ -17,7 +17,7 @@ each of them.
   designs that one first.
 
 **Consequences.** Pult layouts are defined per form factor (phone portrait, tablet landscape) in the
-config; `paginate` runs per form factor. Figma has a phone and a tablet frame for every screen of
+config; `layoutPage` runs per form factor. Figma has a phone and a tablet frame for every screen of
 the app and for every client pult. QA checks both before a delivery.
 
 **Navigation (Apple HIG, iOS / iPadOS 26+).**

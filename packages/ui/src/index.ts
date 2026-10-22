@@ -61,13 +61,17 @@ export {
   UnsupportedPlaceholder,
 } from "./controls/discrete";
 export {
-  minHeightFor,
-  paginate,
+  itemsFor,
+  layoutPage,
+  naturalHeightFor,
+  pultMetrics,
   reflowForPhone,
   PHONE_BREAKPOINT,
   type Cell,
   type ControlSizes,
-  type Fit,
+  type Item,
+  type PultMetrics,
+  type Rect,
   type Screen,
 } from "./pult/layout";
 export { PultSelect } from "./pult/PultSelect";

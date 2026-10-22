@@ -78,7 +78,7 @@ export function ImageTile({
       {state === "add" ? (
         <View className="items-center gap-1">
           <Glyph icon={PlusIcon} tone="muted" size={24} />
-          <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+          <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
             Upload
           </Text>
         </View>
@@ -108,7 +108,7 @@ export function ImageTile({
           {state === "failed" && (
             <View className="items-center gap-1">
               <Glyph icon={ArrowClockwiseIcon} tone="critical" size={22} />
-              <Text className="text-destructive text-xs font-medium uppercase tracking-wider">
+              <Text className="text-destructive text-xs font-medium uppercase tracking-overline">
                 Retry
               </Text>
             </View>
@@ -205,7 +205,7 @@ export function ImageUploadView({
       style={disabled ? { opacity: t.control.disabledOpacity } : undefined}
     >
       <View className="flex-row items-baseline justify-between gap-2">
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
           {title}
         </Text>
         <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>

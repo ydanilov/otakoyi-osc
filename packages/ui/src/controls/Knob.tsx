@@ -17,7 +17,7 @@ import {
   createDeltaAccumulator,
   createThrottle,
   fineBadge,
-  formatDelta,
+  formatOffset,
   formatValue,
   hsbToHex,
   hsvToHex,
@@ -53,6 +53,7 @@ import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
+import { useRelativeOffset } from "../pult/context";
 
 /** Pixels of drag for a full sweep. Relative drag avoids jumps when the knob is touched. */
 const SWEEP_PX = 220;
@@ -430,7 +431,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
   const angle = useSharedValue(0);
   const last = useSharedValue(0);
   const [fine, setFine] = React.useState(false);
-  const [moved, setMoved] = React.useState(0);
+  const total = useRelativeOffset(c.id);
   const glow = useGlow();
   const light = useTouchLight({ disabled: !!disabled });
   const spread = useFineSpread(fine);
@@ -449,10 +450,10 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
       const isFine = pointers >= FINE_POINTERS;
       setFine(isFine);
       const d = jogDelta(px, SWEEP_PX, span, isFine ? fineFactor : 1);
-      setMoved((m) => m + d);
+      total.add(d);
       acc.push(d);
     },
-    [acc, span, fineFactor],
+    [acc, span, fineFactor, total.add],
   );
   const end = React.useCallback(() => {
     setFine(false);
@@ -470,8 +471,6 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
     onActivate: () => {
       "worklet";
       last.value = 0;
-      // The header shows the change of the current (or last) turn.
-      scheduleOnRN(setMoved, 0);
     },
     onUpdate: (e) => {
       "worklet";
@@ -534,7 +533,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
     <ControlFrame
       label={c.label}
       align="center"
-      value={c.showValue ? formatDelta(moved, { unit: c.unit }) : undefined}
+      value={c.showValue ? formatOffset(total.value, { int: c.int, unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       relative
       disabled={disabled}

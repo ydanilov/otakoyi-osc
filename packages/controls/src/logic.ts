@@ -256,6 +256,23 @@ export function formatDelta(delta: number, opts: { unit?: string | undefined } =
   return `${delta > 0 ? "+" : "\u2212"}${text}`;
 }
 
+/**
+ * Accumulated change of a relative control since the session started, for its header at rest
+ * (Figma: `+12` for an integer knob, `+0.02` / `0.00` / `−0.15` otherwise). The sign is shown
+ * unless the rounded change is zero.
+ */
+export function formatOffset(
+  total: number,
+  opts: { int?: boolean | undefined; unit?: string | undefined } = {},
+): string {
+  const v = Number.isFinite(total) ? total : 0;
+  const abs = Math.abs(v);
+  const text = opts.int ? String(Math.round(abs)) : abs.toFixed(abs >= 100 ? 0 : abs >= 10 ? 1 : 2);
+  const withUnit = opts.unit ? `${text}${/^[°%×]/.test(opts.unit) ? "" : " "}${opts.unit}` : text;
+  if (Number(text) === 0) return withUnit;
+  return `${v > 0 ? "+" : "\u2212"}${withUnit}`;
+}
+
 export type MeterLevel = "normal" | "warning" | "critical";
 export function meterLevel(
   value: number,

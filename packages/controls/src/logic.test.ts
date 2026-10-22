@@ -3,6 +3,7 @@ import { encodeMessage } from "@osc/core";
 import { parseConfig, type Control } from "@osc/schema";
 import demo from "../../schema/examples/demo-installation.json";
 import {
+  formatOffset,
   createThrottle,
   faderPosition,
   formatValue,
@@ -212,5 +213,18 @@ describe("relative drag", () => {
     expect(resetValue({ default: 0.6, min: 0, max: 1 })).toBe(0.6);
     expect(resetValue({ centered: true, min: -180, max: 180 })).toBe(0);
     expect(resetValue({ min: 0, max: 4 })).toBe(0);
+  });
+});
+
+describe("formatOffset", () => {
+  it("formats the accumulated change like Figma", () => {
+    expect(formatOffset(12, { int: true })).toBe("+12");
+    expect(formatOffset(11.6, { int: true })).toBe("+12");
+    expect(formatOffset(0.0213)).toBe("+0.02");
+    expect(formatOffset(-0.15)).toBe("\u22120.15");
+    expect(formatOffset(0)).toBe("0.00");
+    expect(formatOffset(0.001)).toBe("0.00");
+    expect(formatOffset(0, { int: true })).toBe("0");
+    expect(formatOffset(-3, { int: true, unit: "°" })).toBe("\u22123°");
   });
 });

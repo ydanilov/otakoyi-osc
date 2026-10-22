@@ -85,6 +85,9 @@ const preset = {
         ]),
       ),
       fontFamily: { sans: [base.font.family.sans], mono: [base.font.family.mono] },
+      letterSpacing: Object.fromEntries(
+        Object.entries(base.font.tracking).map(([k, v]) => [k, `${v}em`]),
+      ),
       minHeight: { touch: `${base.touch.min}px` },
       minWidth: { touch: `${base.touch.min}px` },
     },

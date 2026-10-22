@@ -163,7 +163,7 @@ are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 | Viewfinder (Size)                                                                                         | `Viewfinder size`                                                             | `containers/Viewfinder.tsx`                                                                    |
 | Fader · Knob · XY Pad · Meter · Hold to Confirm                                                           | `Fader` · `Knob` · `XYPad` · `Meter` · `HoldToConfirm`                        | `controls/*.tsx`                                                                               |
 | Toggle · Pad · Segmented · Button Grid · Scene List · Label · Unsupported                                 | `discrete.tsx` exports                                                        | `controls/discrete.tsx`                                                                        |
-| Pad (Size) · Toggle (Size × Content=Text / Image)                                                         | `size: regular \| compact`, toggle `image` (picture pad)                      | `controls/discrete.tsx`, `pult/layout.ts` (`minHeightFor`)                                     |
+| Pad (Size) · Toggle (Size × Content=Text / Image)                                                         | `size: regular \| compact`, toggle `image` (picture pad)                      | `controls/discrete.tsx`, `pult/layout.ts` (`naturalHeightFor`)                                 |
 | Knob (Size=Regular / Compact)                                                                             | `size: regular \| compact`                                                    | `controls/Knob.tsx`                                                                            |
 | Debug Row (Kind=Metric / Control) · OSC Log — the Debug page (Phone / Tablet 20 Debug)                    | `DebugRow kind` · `OscLog` (+ `DebugStore` in `@osc/controls`)                | `debug/DebugRow.tsx`, `debug/OscLog.tsx`; page: `apps/mobile/src/components/DebugContent.tsx`  |
 | Debug Tag · Debug HUD (in the library, not used in the app now)                                           | `DebugTag` · `DebugHud`                                                       | `debug/Debug.tsx`                                                                              |
@@ -197,9 +197,13 @@ The "Try the demo" installation (`packages/schema/examples/try-the-demo.json`) i
 - **Relative controls** (jog wheel, encoder knob): the ↻ glyph next to a signed value (`+12`,
   `−0.02`) — the change of the current / last drag. No REL badge (board "Relative indicator —
   options", 131:406).
+- **Pult layout** (ADR-006): controls and panels are packed from the top at their component
+  height — phone 16 pt sides, 12 pt top, 18 pt gaps, free space left at the bottom; tablet Console
+  20 pt sides, 10 pt top / bottom, 16 pt gaps, the last item of each column stretched to the
+  bottom. Stretchable controls (vertical faders, XY pad, meter, grids, lists) share the free height.
 - **Responsive panels**: Console-Panel patterns fill their column's width up to a maximum (Fader
-  Bank 640, Knob Row / Camera Control 480, others 560; centred when capped) and its height, never
-  below their content height. Vertical knobs / faders centre their body when stretched; Group
+  Bank 640, Knob Row / Camera Control 480, others 560; centred when capped), never below their
+  content height. Vertical knobs / faders centre their body when stretched; Group
   Buttons share the row (LED stays 40 wide, centred); Knob Group spaces knobs evenly; Scene Bar,
   Layer Toggles and Show Actions centre their content vertically.
 

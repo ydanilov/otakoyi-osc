@@ -41,6 +41,8 @@ export class PultStore {
   /** Per control: confirmation of the last prompt sent, and a revision of its server-side data. */
   private acks = new Map<string, PromptAck>();
   private revs = new Map<string, number>();
+  /** Relative (endless) controls: the change sent since this store was created (session start). */
+  private offsets = new Map<string, number>();
   private metaListeners = new Map<string, Set<Listener>>();
   private localSeq = 0;
   mode: ControlMode = "control";
@@ -121,6 +123,14 @@ export class PultStore {
     this.metaListeners.get(id)?.forEach((f) => f());
   }
 
+  /**
+   * Accumulated change of a relative control (jog wheel, encoder knob) since the session started —
+   * what its header shows at rest (Figma `+12`, `+0.02`).
+   */
+  offset(id: string): number {
+    return this.offsets.get(id) ?? 0;
+  }
+
   subscribeMeta(id: string, fn: Listener): () => void {
     const set = this.metaListeners.get(id) ?? new Set();
     set.add(fn);
@@ -140,6 +150,10 @@ export class PultStore {
   /** A local interaction: update state and send OSC. Ignored unless this device holds control. */
   interact(control: AnyControl, value: ControlValue): boolean {
     if (control.type === "unsupported" || !this.canSend) return false;
+    if (isDelta(value)) {
+      this.offsets.set(control.id, this.offset(control.id) + value.delta);
+      this.metaListeners.get(control.id)?.forEach((f) => f());
+    }
     this.set(control.id, value);
     if (this.transport.interact) {
       this.transport.interact(this.pult.id, control, value);
@@ -170,6 +184,9 @@ export class PultStore {
     }
   }
 }
+
+const isDelta = (v: ControlValue): v is { delta: number } =>
+  typeof v === "object" && v !== null && "delta" in v && typeof v.delta === "number";
 
 function feedbackValue(
   c: Control,

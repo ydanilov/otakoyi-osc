@@ -104,6 +104,9 @@ module.exports = {
           "JetBrains Mono"
         ]
       },
+      "letterSpacing": {
+        "overline": "0.08em"
+      },
       "minHeight": {
         "touch": "44px"
       },

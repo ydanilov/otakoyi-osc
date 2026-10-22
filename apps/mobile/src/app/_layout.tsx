@@ -1,6 +1,4 @@
 import "@osc/tokens/global.css";
-import { Inter_400Regular } from "@expo-google-fonts/inter";
-import { JetBrainsMono_500Medium } from "@expo-google-fonts/jetbrains-mono";
 import { PortalHost } from "@rn-primitives/portal";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -11,6 +9,8 @@ import { presentationFor } from "@osc/ui";
 import { useWindowDimensions } from "react-native";
 import { AppProvider } from "@/lib/app-context";
 import { useBrand } from "@/lib/brand";
+import { BASE_FONTS, loadFontWeights } from "@/lib/fonts";
+import * as React from "react";
 
 /**
  * Font families are registered under the names the tokens use (`font.family` in tokens.json),
@@ -20,8 +20,12 @@ import { useBrand } from "@/lib/brand";
  * (iPhone), "Enter address and PIN" and dialogs are system sheets; the scanner is full screen.
  */
 export default function RootLayout() {
-  const [loaded] = useFonts({ Inter: Inter_400Regular, "JetBrains Mono": JetBrainsMono_500Medium });
-  if (!loaded) return null;
+  const [loaded] = useFonts(BASE_FONTS);
+  const [weights, setWeights] = React.useState(false);
+  React.useEffect(() => {
+    void loadFontWeights().finally(() => setWeights(true));
+  }, []);
+  if (!loaded || !weights) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

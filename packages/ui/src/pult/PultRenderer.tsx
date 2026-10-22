@@ -9,9 +9,9 @@ import { useTheme } from "../theme/ThemeProvider";
 import { ConnectedControl } from "./ConnectedControl";
 import {
   PHONE_BREAKPOINT,
-  minHeightFor,
-  paginate,
-  panelMinHeight,
+  itemsFor,
+  layoutPage,
+  pultMetrics,
   type Cell,
   type Screen,
 } from "./layout";
@@ -25,60 +25,43 @@ export {
   usePultStore,
 } from "./context";
 
-/** Minimum row height (pt) before a page is split into another screen. */
-const MIN_ROW = 40;
-
 interface PagerScreen {
   key: string;
   label: string;
   page: Page;
   screen: Screen;
-  cells: Map<string, Cell>;
 }
 
 /**
- * The pult body. Pages never scroll vertically: rows stretch to fill the height, and a page that
- * does not fit at the minimum row height is split into several screens. All screens of all pages
- * sit in one horizontal pager; tabs above jump to a screen and follow the swipe.
+ * The pult body. Pages never scroll vertically (ADR-006): controls are packed from the top with
+ * the form factor's gaps at their Figma heights (stretchable ones share the free height; on a
+ * tablet each column's last item reaches the bottom), and a page that does not fit is split into
+ * several screens. All screens of all pages sit in one horizontal pager; tabs above jump to a
+ * screen and follow the swipe.
  */
 export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: boolean }) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
-  const pad = t.space[4];
-  const gap = t.size.gridGap;
   const W = size.width;
   const H = size.height;
-  const innerW = Math.max(0, W - pad * 2);
-  const innerH = Math.max(0, H - pad * 2);
   const phone = W > 0 && W < PHONE_BREAKPOINT;
 
   const screens = React.useMemo<PagerScreen[]>(() => {
-    if (!innerH) return [];
-    const maxRows = Math.max(1, Math.floor((innerH + gap) / (MIN_ROW + gap)));
+    if (!H || !W) return [];
+    const m = pultMetrics(phone ? "phone" : "tablet", t.size);
     return pages.flatMap((page) => {
       // Schema v2: each page carries its own phone and tablet layout (ADR-014).
       const cells = new Map<string, Cell>(Object.entries(page.layout[phone ? "phone" : "tablet"]));
-      // Picture pads and sized pads keep their Figma size: a band that would squeeze them moves
-      // to the next screen.
-      const minHeight = new Map<string, number>();
-      for (const c of page.controls) {
-        const m = minHeightFor(c, t.size);
-        if (m !== undefined) minHeight.set(c.id, m);
-      }
-      // Console-Panel patterns never get shorter than their content (Figma heights).
-      for (const p of page.panels)
-        minHeight.set(p.id, panelMinHeight(p.pattern, p.controls.length));
-      const split = paginate(cells, maxRows, { height: innerH, gap, minHeight });
+      const items = itemsFor(page.controls, page.panels, t.size);
+      const split = layoutPage(cells, items, W, H, m, page.columns);
       return split.map((screen, i) => ({
         key: `${page.id}:${i}`,
         label: split.length > 1 ? `${page.title} ${i + 1}` : page.title,
         page,
         screen,
-        cells,
       }));
     });
-  }, [pages, phone, innerH, gap, t.size]);
-
+  }, [pages, phone, W, H, t.size]);
   const scroller = React.useRef<ScrollViewInstance>(null);
   const [index, setIndex] = React.useState(0);
   const go = (i: number) => {
@@ -115,19 +98,17 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
             scrollEventThrottle={64}
           >
             {screens.map((s, i) => (
-              <View key={s.key} style={{ width: W, height: H, padding: pad }}>
+              <View key={s.key} style={{ width: W, height: H }}>
                 {/* Only the screen on show and its neighbours are mounted: every continuous
                     control is a canvas, and browsers cap live WebGL contexts (~16). */}
-                {Math.abs(i - index) <= 1 && (
-                  <ScreenGrid screen={s} width={innerW} height={innerH} gap={gap} studio={studio} />
-                )}
+                {Math.abs(i - index) <= 1 && <ScreenGrid screen={s} studio={studio} />}
               </View>
             ))}
           </ScrollView>
         )}
       </View>
       {screens.length > 1 && (
-        <View className="items-center pb-2" pointerEvents="none">
+        <View className="items-center" pointerEvents="none">
           <PageDots count={screens.length} active={Math.min(index, screens.length - 1)} />
         </View>
       )}
@@ -135,42 +116,20 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
   );
 }
 
-function ScreenGrid({
-  screen,
-  width,
-  height,
-  gap,
-  studio,
-}: {
-  screen: PagerScreen;
-  width: number;
-  height: number;
-  gap: number;
-  studio: boolean;
-}) {
-  const cols = screen.page.columns;
-  const colW = (width - gap * (cols - 1)) / cols;
-  const rows = screen.screen.rows;
-  const rowH = (height - gap * (rows - 1)) / rows;
+function ScreenGrid({ screen, studio }: { screen: PagerScreen; studio: boolean }) {
   const byId = new Map(screen.page.controls.map((c) => [c.id, c]));
   const panels = new Map(screen.page.panels.map((p) => [p.id, p]));
   return (
-    <View style={{ width, height }}>
+    <View style={{ flex: 1 }}>
       {screen.screen.ids.map((id) => {
         const c = byId.get(id);
         const panel = panels.get(id);
-        const g = screen.cells.get(id);
-        if ((!c && !panel) || !g) return null;
+        const r = screen.screen.rects.get(id);
+        if ((!c && !panel) || !r) return null;
         return (
           <View
             key={id}
-            style={{
-              position: "absolute",
-              left: g.x * (colW + gap),
-              top: (g.y - screen.screen.top) * (rowH + gap),
-              width: g.w * colW + (g.w - 1) * gap,
-              height: g.h * rowH + (g.h - 1) * gap,
-            }}
+            style={{ position: "absolute", left: r.x, top: r.y, width: r.w, height: r.h }}
           >
             {panel ? (
               <PanelView panel={panel} controls={byId} studio={studio} />
@@ -214,7 +173,7 @@ function ScreenTabs({
     </View>
   ));
   return (
-    <View className="px-4 pt-3">
+    <View className={fill ? "px-4 py-2" : "px-5 py-1.5"}>
       <Surface
         depth="inset"
         radius="full"
