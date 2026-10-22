@@ -1,0 +1,5918 @@
+{
+ "format": "otakoyi-figma-snapshot",
+ "version": 1,
+ "source": "Figma plugin API (use_figma, read-only), 2026-10-22. Pult frames 04/05/12 (phone) and 04/12 (tablet) are dumped in full; the other screens are frame shells (name and bounds only). Vectors and shapes are dropped; icon, status bar, home indicator, page dots and pult header instances are kept without children.",
+ "fileKey": "D2HHS8lt7PxZqxibv9PlOQ",
+ "page": {
+  "id": "36:2",
+  "name": "Client · Phase One"
+ },
+ "nodes": [
+  {
+   "id": "109:18968",
+   "name": "Phone — lobby controller (primary for permanent installations)",
+   "type": "SECTION",
+   "box": [
+    0,
+    0,
+    10684,
+    1154
+   ],
+   "children": [
+    {
+     "id": "48:1988",
+     "name": "Phone / 01 Splash",
+     "type": "FRAME",
+     "box": [
+      80,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "48:2010",
+     "name": "Phone / 02 Connect",
+     "type": "FRAME",
+     "box": [
+      562,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "103:5400",
+     "name": "Phone / 02a Loading — client brand",
+     "type": "FRAME",
+     "box": [
+      1044,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "104:10084",
+     "name": "Phone / 02b Enter address (sheet)",
+     "type": "FRAME",
+     "box": [
+      1526,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "48:2061",
+     "name": "Phone / 03 Scan QR",
+     "type": "FRAME",
+     "box": [
+      2008,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "52:1209",
+     "name": "Phone / 04 Pult — in control",
+     "type": "FRAME",
+     "box": [
+      2490,
+      160,
+      402,
+      874
+     ],
+     "children": [
+      {
+       "id": "52:1210",
+       "name": "Status Bar",
+       "type": "INSTANCE",
+       "box": [
+        2490,
+        160,
+        402,
+        62
+       ],
+       "component": "Status Bar",
+       "props": {
+        "Device": "Phone"
+       }
+      },
+      {
+       "id": "52:1214",
+       "name": "Pult Header",
+       "type": "INSTANCE",
+       "box": [
+        2490,
+        222,
+        402,
+        64
+       ],
+       "component": "Pult Header",
+       "props": {
+        "Mode": "Control"
+       }
+      },
+      {
+       "id": "52:1225",
+       "name": "Tabs",
+       "type": "FRAME",
+       "box": [
+        2490,
+        286,
+        402,
+        64
+       ],
+       "children": [
+        {
+         "id": "52:1226",
+         "name": "Tab Bar",
+         "type": "INSTANCE",
+         "box": [
+          2506,
+          294,
+          370,
+          48
+         ],
+         "component": "Tab Bar",
+         "props": {},
+         "children": [
+          {
+           "id": "I52:1226;47:269",
+           "name": "Tabs",
+           "type": "SLOT",
+           "children": [
+            {
+             "id": "I52:1226;47:269;109:18926",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              2510,
+              298,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Live 1",
+              "State": "Active"
+             },
+             "children": [
+              {
+               "id": "I52:1226;47:269;109:18926;10:36",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Live 1"
+              }
+             ]
+            },
+            {
+             "id": "I52:1226;47:269;109:18927",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              2632,
+              298,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Live 2",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I52:1226;47:269;109:18927;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Live 2"
+              }
+             ]
+            },
+            {
+             "id": "I52:1226;47:269;109:18928",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              2754,
+              298,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Scenes",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I52:1226;47:269;109:18928;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Scenes"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "52:1234",
+       "name": "Pult",
+       "type": "FRAME",
+       "box": [
+        2490,
+        350,
+        402,
+        644
+       ],
+       "children": [
+        {
+         "id": "52:1235",
+         "name": "Segmented",
+         "type": "INSTANCE",
+         "box": [
+          2506,
+          362,
+          370,
+          78
+         ],
+         "component": "Segmented",
+         "props": {
+          "Content": "Icon",
+          "State": "Default"
+         },
+         "annotations": [
+          {
+           "category": "OSC",
+           "text": "**/wall/mode** `\"ambient\" | \"react\" | \"show\"` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+          },
+          {
+           "category": "Depends on",
+           "text": "Single-select: exactly one mode is lit. Icons map 1:1 to the option values."
+          }
+         ],
+         "children": [
+          {
+           "id": "I52:1235;30:523",
+           "name": "Header",
+           "type": "FRAME",
+           "box": [
+            2506,
+            362,
+            370,
+            14
+           ],
+           "children": [
+            {
+             "id": "I52:1235;30:524",
+             "name": "Label",
+             "type": "TEXT",
+             "text": "Scene"
+            },
+            {
+             "id": "I52:1235;30:525",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2555,
+              369,
+              321,
+              1
+             ]
+            }
+           ]
+          },
+          {
+           "id": "I52:1235;30:526",
+           "name": "Options",
+           "type": "FRAME",
+           "box": [
+            2506,
+            384,
+            370,
+            56
+           ],
+           "children": [
+            {
+             "id": "I52:1235;30:527",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2511,
+              389,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1235;30:535",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                2544,
+                401,
+                22,
+                22
+               ],
+               "component": "Icon/lightning"
+              }
+             ]
+            },
+            {
+             "id": "I52:1235;30:529",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2602,
+              389,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1235;30:537",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                2635,
+                401,
+                22,
+                22
+               ],
+               "component": "Icon/sun"
+              }
+             ]
+            },
+            {
+             "id": "I52:1235;30:531",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2692,
+              389,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1235;30:539",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                2725,
+                401,
+                22,
+                22
+               ],
+               "component": "Icon/moon"
+              }
+             ]
+            },
+            {
+             "id": "I52:1235;30:533",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2783,
+              389,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1235;30:541",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                2816,
+                401,
+                22,
+                22
+               ],
+               "component": "Icon/circle-half"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "52:1252",
+         "name": "List Card",
+         "type": "INSTANCE",
+         "box": [
+          2506,
+          458,
+          370,
+          170
+         ],
+         "component": "List Card",
+         "props": {},
+         "annotations": [
+          {
+           "category": "OSC",
+           "text": "**/wall/logo**, **/wall/live-data**, **/wall/audio-react** → `1 | 0` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+          },
+          {
+           "category": "Depends on",
+           "text": "Each row is an independent toggle. *Audio react* needs the installation’s audio input; without it the row is hidden."
+          }
+         ],
+         "children": [
+          {
+           "id": "I52:1252;47:102",
+           "name": "Rows",
+           "type": "SLOT",
+           "children": [
+            {
+             "id": "I52:1252;47:102;52:1347",
+             "name": "List Row",
+             "type": "INSTANCE",
+             "box": [
+              2506,
+              458,
+              370,
+              56
+             ],
+             "component": "List Row",
+             "props": {
+              "Value": "Value",
+              "Title": "Logo",
+              "Trailing": "Switch"
+             },
+             "children": [
+              {
+               "id": "I52:1252;47:102;52:1347;32:105",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                2522,
+                476,
+                20,
+                20
+               ],
+               "component": "Icon/device-mobile"
+              },
+              {
+               "id": "I52:1252;47:102;52:1347;32:107",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "Logo"
+              },
+              {
+               "id": "I52:1252;47:102;52:1347;32:108",
+               "name": "Switch",
+               "type": "INSTANCE",
+               "box": [
+                2738,
+                463,
+                122,
+                46
+               ],
+               "component": "Switch",
+               "props": {
+                "showLabel": false,
+                "Label": "Logo",
+                "State": "On"
+               },
+               "children": [
+                {
+                 "id": "I52:1252;47:102;52:1347;32:108;26:213",
+                 "name": "Track",
+                 "type": "FRAME",
+                 "box": [
+                  2738,
+                  463,
+                  104,
+                  46
+                 ],
+                 "children": [
+                  {
+                   "id": "I52:1252;47:102;52:1347;32:108;26:214",
+                   "name": "Thumb",
+                   "type": "FRAME",
+                   "box": [
+                    2781,
+                    466,
+                    58,
+                    40
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "I52:1252;47:102;52:1349",
+             "name": "Divider",
+             "type": "INSTANCE",
+             "box": [
+              2506,
+              514,
+              370,
+              1
+             ],
+             "component": "Divider",
+             "props": {
+              "Type": "Inset"
+             }
+            },
+            {
+             "id": "I52:1252;47:102;52:1350",
+             "name": "List Row",
+             "type": "INSTANCE",
+             "box": [
+              2506,
+              515,
+              370,
+              56
+             ],
+             "component": "List Row",
+             "props": {
+              "Value": "Value",
+              "Title": "Live data",
+              "Trailing": "Switch"
+             },
+             "children": [
+              {
+               "id": "I52:1252;47:102;52:1350;32:105",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                2522,
+                533,
+                20,
+                20
+               ],
+               "component": "Icon/sliders-horizontal"
+              },
+              {
+               "id": "I52:1252;47:102;52:1350;32:107",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "Live data"
+              },
+              {
+               "id": "I52:1252;47:102;52:1350;32:108",
+               "name": "Switch",
+               "type": "INSTANCE",
+               "box": [
+                2738,
+                520,
+                122,
+                46
+               ],
+               "component": "Switch",
+               "props": {
+                "showLabel": false,
+                "Label": "Logo",
+                "State": "On"
+               },
+               "children": [
+                {
+                 "id": "I52:1252;47:102;52:1350;32:108;26:213",
+                 "name": "Track",
+                 "type": "FRAME",
+                 "box": [
+                  2738,
+                  520,
+                  104,
+                  46
+                 ],
+                 "children": [
+                  {
+                   "id": "I52:1252;47:102;52:1350;32:108;26:214",
+                   "name": "Thumb",
+                   "type": "FRAME",
+                   "box": [
+                    2781,
+                    523,
+                    58,
+                    40
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "I52:1252;47:102;52:1352",
+             "name": "Divider",
+             "type": "INSTANCE",
+             "box": [
+              2506,
+              571,
+              370,
+              1
+             ],
+             "component": "Divider",
+             "props": {
+              "Type": "Inset"
+             }
+            },
+            {
+             "id": "I52:1252;47:102;52:1353",
+             "name": "List Row",
+             "type": "INSTANCE",
+             "box": [
+              2506,
+              572,
+              370,
+              56
+             ],
+             "component": "List Row",
+             "props": {
+              "Value": "Value",
+              "Title": "Audio react",
+              "Trailing": "Switch"
+             },
+             "children": [
+              {
+               "id": "I52:1252;47:102;52:1353;32:105",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                2522,
+                590,
+                20,
+                20
+               ],
+               "component": "Icon/waveform"
+              },
+              {
+               "id": "I52:1252;47:102;52:1353;32:107",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "Audio react"
+              },
+              {
+               "id": "I52:1252;47:102;52:1353;32:108",
+               "name": "Switch",
+               "type": "INSTANCE",
+               "box": [
+                2738,
+                577,
+                122,
+                46
+               ],
+               "component": "Switch",
+               "props": {
+                "showLabel": false,
+                "Label": "Logo",
+                "State": "On"
+               },
+               "children": [
+                {
+                 "id": "I52:1252;47:102;52:1353;32:108;26:213",
+                 "name": "Track",
+                 "type": "FRAME",
+                 "box": [
+                  2738,
+                  577,
+                  104,
+                  46
+                 ],
+                 "children": [
+                  {
+                   "id": "I52:1252;47:102;52:1353;32:108;26:214",
+                   "name": "Thumb",
+                   "type": "FRAME",
+                   "box": [
+                    2781,
+                    580,
+                    58,
+                    40
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "52:1355",
+         "name": "Fader",
+         "type": "INSTANCE",
+         "box": [
+          2506,
+          646,
+          370,
+          82
+         ],
+         "component": "Fader",
+         "props": {
+          "Value": "0.60",
+          "Label": "Brightness",
+          "Mode": "Absolute",
+          "Orientation": "Horizontal",
+          "State": "Default"
+         },
+         "annotations": [
+          {
+           "category": "OSC",
+           "text": "**/wall/brightness** `float 0–1` · absolute · 60 Hz · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+          },
+          {
+           "category": "Depends on",
+           "text": "Double-tap resets to default 0.6. Hidden while Blackout is on."
+          }
+         ],
+         "children": [
+          {
+           "id": "I52:1355;11:48",
+           "name": "Header",
+           "type": "FRAME",
+           "box": [
+            2506,
+            646,
+            370,
+            18
+           ],
+           "children": [
+            {
+             "id": "I52:1355;11:49",
+             "name": "Label",
+             "type": "TEXT",
+             "text": "Brightness"
+            },
+            {
+             "id": "I52:1355;11:50",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2592,
+              655,
+              244,
+              1
+             ]
+            },
+            {
+             "id": "I52:1355;11:51",
+             "name": "Value",
+             "type": "TEXT",
+             "text": "0.60"
+            }
+           ]
+          },
+          {
+           "id": "I52:1355;11:52",
+           "name": "Body",
+           "type": "FRAME",
+           "box": [
+            2506,
+            672,
+            370,
+            56
+           ]
+          }
+         ]
+        },
+        {
+         "id": "52:1368",
+         "name": "Fader",
+         "type": "INSTANCE",
+         "box": [
+          2506,
+          746,
+          370,
+          82
+         ],
+         "component": "Fader",
+         "props": {
+          "Value": "+0.02",
+          "Label": "Hue drift",
+          "Mode": "Relative",
+          "Orientation": "Horizontal",
+          "State": "Default"
+         },
+         "annotations": [
+          {
+           "category": "OSC",
+           "text": "**/wall/hue-drift** `float 0–1` · relative (drag moves by distance) · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+          },
+          {
+           "category": "Depends on",
+           "text": "Value comes back from the installation; the pult never jumps to the finger."
+          }
+         ],
+         "children": [
+          {
+           "id": "I52:1368;25:128",
+           "name": "Header",
+           "type": "FRAME",
+           "box": [
+            2506,
+            746,
+            370,
+            18
+           ],
+           "children": [
+            {
+             "id": "I52:1368;25:129",
+             "name": "Label",
+             "type": "TEXT",
+             "text": "Hue drift"
+            },
+            {
+             "id": "I52:1368;25:130",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2579,
+              755,
+              228,
+              1
+             ]
+            },
+            {
+             "id": "I52:1368;25:160",
+             "name": "Icon",
+             "type": "INSTANCE",
+             "box": [
+              2815,
+              748,
+              14,
+              14
+             ],
+             "component": "Icon/arrows-clockwise"
+            },
+            {
+             "id": "I52:1368;25:131",
+             "name": "Value",
+             "type": "TEXT",
+             "text": "+0.02"
+            }
+           ]
+          },
+          {
+           "id": "I52:1368;25:132",
+           "name": "Body",
+           "type": "FRAME",
+           "box": [
+            2506,
+            772,
+            370,
+            56
+           ],
+           "children": [
+            {
+             "id": "I52:1368;30:212",
+             "name": "Wheel",
+             "type": "FRAME",
+             "box": [
+              2512,
+              782,
+              358,
+              36
+             ]
+            },
+            {
+             "id": "I52:1368;30:241",
+             "name": "Icon",
+             "type": "INSTANCE",
+             "box": [
+              2506,
+              824,
+              14,
+              14
+             ],
+             "component": "Icon/minus"
+            },
+            {
+             "id": "I52:1368;30:243",
+             "name": "Icon",
+             "type": "INSTANCE",
+             "box": [
+              2862,
+              824,
+              14,
+              14
+             ],
+             "component": "Icon/plus"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "52:1473",
+       "name": "Page Dots",
+       "type": "INSTANCE",
+       "box": [
+        2490,
+        994,
+        402,
+        6
+       ],
+       "component": "Page Dots",
+       "props": {
+        "Count": "3"
+       }
+      },
+      {
+       "id": "52:1477",
+       "name": "Home Indicator",
+       "type": "INSTANCE",
+       "box": [
+        2490,
+        1000,
+        402,
+        34
+       ],
+       "component": "Home Indicator",
+       "props": {
+        "Device": "Phone"
+       }
+      }
+     ]
+    },
+    {
+     "id": "52:1479",
+     "name": "Phone / 05 Pult — view only",
+     "type": "FRAME",
+     "box": [
+      2972,
+      160,
+      402,
+      874
+     ],
+     "children": [
+      {
+       "id": "52:1480",
+       "name": "Status Bar",
+       "type": "INSTANCE",
+       "box": [
+        2972,
+        160,
+        402,
+        62
+       ],
+       "component": "Status Bar",
+       "props": {
+        "Device": "Phone"
+       }
+      },
+      {
+       "id": "52:1484",
+       "name": "Pult Header",
+       "type": "INSTANCE",
+       "box": [
+        2972,
+        222,
+        402,
+        128
+       ],
+       "component": "Pult Header",
+       "props": {
+        "Mode": "View"
+       }
+      },
+      {
+       "id": "52:1499",
+       "name": "Tabs",
+       "type": "FRAME",
+       "box": [
+        2972,
+        350,
+        402,
+        64
+       ],
+       "children": [
+        {
+         "id": "52:1500",
+         "name": "Tab Bar",
+         "type": "INSTANCE",
+         "box": [
+          2988,
+          358,
+          370,
+          48
+         ],
+         "component": "Tab Bar",
+         "props": {},
+         "children": [
+          {
+           "id": "I52:1500;47:269",
+           "name": "Tabs",
+           "type": "SLOT",
+           "children": [
+            {
+             "id": "I52:1500;47:270",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              2992,
+              362,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Live 1",
+              "State": "Active"
+             },
+             "children": [
+              {
+               "id": "I52:1500;47:270;10:36",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Live 1"
+              }
+             ]
+            },
+            {
+             "id": "I52:1500;47:272",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              3114,
+              362,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Live 2",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I52:1500;47:272;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Live 2"
+              }
+             ]
+            },
+            {
+             "id": "I52:1500;47:274",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              3236,
+              362,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Scenes",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I52:1500;47:274;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Scenes"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "52:1508",
+       "name": "Pult",
+       "type": "FRAME",
+       "box": [
+        2972,
+        414,
+        402,
+        580
+       ],
+       "children": [
+        {
+         "id": "52:1509",
+         "name": "Segmented",
+         "type": "INSTANCE",
+         "box": [
+          2988,
+          426,
+          370,
+          78
+         ],
+         "component": "Segmented",
+         "props": {
+          "Content": "Icon",
+          "State": "Default"
+         },
+         "children": [
+          {
+           "id": "I52:1509;30:523",
+           "name": "Header",
+           "type": "FRAME",
+           "box": [
+            2988,
+            426,
+            370,
+            14
+           ],
+           "children": [
+            {
+             "id": "I52:1509;30:524",
+             "name": "Label",
+             "type": "TEXT",
+             "text": "Scene"
+            },
+            {
+             "id": "I52:1509;30:525",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              3037,
+              433,
+              321,
+              1
+             ]
+            }
+           ]
+          },
+          {
+           "id": "I52:1509;30:526",
+           "name": "Options",
+           "type": "FRAME",
+           "box": [
+            2988,
+            448,
+            370,
+            56
+           ],
+           "children": [
+            {
+             "id": "I52:1509;30:527",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              2993,
+              453,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1509;30:535",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                3026,
+                465,
+                22,
+                22
+               ],
+               "component": "Icon/lightning"
+              }
+             ]
+            },
+            {
+             "id": "I52:1509;30:529",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              3084,
+              453,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1509;30:537",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                3117,
+                465,
+                22,
+                22
+               ],
+               "component": "Icon/sun"
+              }
+             ]
+            },
+            {
+             "id": "I52:1509;30:531",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              3174,
+              453,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1509;30:539",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                3207,
+                465,
+                22,
+                22
+               ],
+               "component": "Icon/moon"
+              }
+             ]
+            },
+            {
+             "id": "I52:1509;30:533",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              3265,
+              453,
+              89,
+              46
+             ],
+             "children": [
+              {
+               "id": "I52:1509;30:541",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                3298,
+                465,
+                22,
+                22
+               ],
+               "component": "Icon/circle-half"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "52:1526",
+         "name": "List Card",
+         "type": "INSTANCE",
+         "box": [
+          2988,
+          522,
+          370,
+          170
+         ],
+         "component": "List Card",
+         "props": {},
+         "children": [
+          {
+           "id": "I52:1526;47:102",
+           "name": "Rows",
+           "type": "SLOT",
+           "children": [
+            {
+             "id": "I52:1526;47:102;52:1601",
+             "name": "List Row",
+             "type": "INSTANCE",
+             "box": [
+              2988,
+              522,
+              370,
+              56
+             ],
+             "component": "List Row",
+             "props": {
+              "Value": "Value",
+              "Title": "Logo",
+              "Trailing": "Switch"
+             },
+             "children": [
+              {
+               "id": "I52:1526;47:102;52:1601;32:105",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                3004,
+                540,
+                20,
+                20
+               ],
+               "component": "Icon/device-mobile"
+              },
+              {
+               "id": "I52:1526;47:102;52:1601;32:107",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "Logo"
+              },
+              {
+               "id": "I52:1526;47:102;52:1601;32:108",
+               "name": "Switch",
+               "type": "INSTANCE",
+               "box": [
+                3220,
+                527,
+                122,
+                46
+               ],
+               "component": "Switch",
+               "props": {
+                "showLabel": false,
+                "Label": "Logo",
+                "State": "On"
+               },
+               "children": [
+                {
+                 "id": "I52:1526;47:102;52:1601;32:108;26:213",
+                 "name": "Track",
+                 "type": "FRAME",
+                 "box": [
+                  3220,
+                  527,
+                  104,
+                  46
+                 ],
+                 "children": [
+                  {
+                   "id": "I52:1526;47:102;52:1601;32:108;26:214",
+                   "name": "Thumb",
+                   "type": "FRAME",
+                   "box": [
+                    3263,
+                    530,
+                    58,
+                    40
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "I52:1526;47:102;52:1603",
+             "name": "Divider",
+             "type": "INSTANCE",
+             "box": [
+              2988,
+              578,
+              370,
+              1
+             ],
+             "component": "Divider",
+             "props": {
+              "Type": "Inset"
+             }
+            },
+            {
+             "id": "I52:1526;47:102;52:1604",
+             "name": "List Row",
+             "type": "INSTANCE",
+             "box": [
+              2988,
+              579,
+              370,
+              56
+             ],
+             "component": "List Row",
+             "props": {
+              "Value": "Value",
+              "Title": "Live data",
+              "Trailing": "Switch"
+             },
+             "children": [
+              {
+               "id": "I52:1526;47:102;52:1604;32:105",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                3004,
+                597,
+                20,
+                20
+               ],
+               "component": "Icon/sliders-horizontal"
+              },
+              {
+               "id": "I52:1526;47:102;52:1604;32:107",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "Live data"
+              },
+              {
+               "id": "I52:1526;47:102;52:1604;32:108",
+               "name": "Switch",
+               "type": "INSTANCE",
+               "box": [
+                3220,
+                584,
+                122,
+                46
+               ],
+               "component": "Switch",
+               "props": {
+                "showLabel": false,
+                "Label": "Logo",
+                "State": "On"
+               },
+               "children": [
+                {
+                 "id": "I52:1526;47:102;52:1604;32:108;26:213",
+                 "name": "Track",
+                 "type": "FRAME",
+                 "box": [
+                  3220,
+                  584,
+                  104,
+                  46
+                 ],
+                 "children": [
+                  {
+                   "id": "I52:1526;47:102;52:1604;32:108;26:214",
+                   "name": "Thumb",
+                   "type": "FRAME",
+                   "box": [
+                    3263,
+                    587,
+                    58,
+                    40
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "I52:1526;47:102;52:1606",
+             "name": "Divider",
+             "type": "INSTANCE",
+             "box": [
+              2988,
+              635,
+              370,
+              1
+             ],
+             "component": "Divider",
+             "props": {
+              "Type": "Inset"
+             }
+            },
+            {
+             "id": "I52:1526;47:102;52:1607",
+             "name": "List Row",
+             "type": "INSTANCE",
+             "box": [
+              2988,
+              636,
+              370,
+              56
+             ],
+             "component": "List Row",
+             "props": {
+              "Value": "Value",
+              "Title": "Audio react",
+              "Trailing": "Switch"
+             },
+             "children": [
+              {
+               "id": "I52:1526;47:102;52:1607;32:105",
+               "name": "Icon",
+               "type": "INSTANCE",
+               "box": [
+                3004,
+                654,
+                20,
+                20
+               ],
+               "component": "Icon/waveform"
+              },
+              {
+               "id": "I52:1526;47:102;52:1607;32:107",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "Audio react"
+              },
+              {
+               "id": "I52:1526;47:102;52:1607;32:108",
+               "name": "Switch",
+               "type": "INSTANCE",
+               "box": [
+                3220,
+                641,
+                122,
+                46
+               ],
+               "component": "Switch",
+               "props": {
+                "showLabel": false,
+                "Label": "Logo",
+                "State": "On"
+               },
+               "children": [
+                {
+                 "id": "I52:1526;47:102;52:1607;32:108;26:213",
+                 "name": "Track",
+                 "type": "FRAME",
+                 "box": [
+                  3220,
+                  641,
+                  104,
+                  46
+                 ],
+                 "children": [
+                  {
+                   "id": "I52:1526;47:102;52:1607;32:108;26:214",
+                   "name": "Thumb",
+                   "type": "FRAME",
+                   "box": [
+                    3263,
+                    644,
+                    58,
+                    40
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "52:1609",
+         "name": "Fader",
+         "type": "INSTANCE",
+         "box": [
+          2988,
+          710,
+          370,
+          82
+         ],
+         "component": "Fader",
+         "props": {
+          "Value": "0.60",
+          "Label": "Brightness",
+          "Mode": "Absolute",
+          "Orientation": "Horizontal",
+          "State": "Default"
+         },
+         "children": [
+          {
+           "id": "I52:1609;11:48",
+           "name": "Header",
+           "type": "FRAME",
+           "box": [
+            2988,
+            710,
+            370,
+            18
+           ],
+           "children": [
+            {
+             "id": "I52:1609;11:49",
+             "name": "Label",
+             "type": "TEXT",
+             "text": "Brightness"
+            },
+            {
+             "id": "I52:1609;11:50",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              3074,
+              719,
+              244,
+              1
+             ]
+            },
+            {
+             "id": "I52:1609;11:51",
+             "name": "Value",
+             "type": "TEXT",
+             "text": "0.60"
+            }
+           ]
+          },
+          {
+           "id": "I52:1609;11:52",
+           "name": "Body",
+           "type": "FRAME",
+           "box": [
+            2988,
+            736,
+            370,
+            56
+           ]
+          }
+         ]
+        },
+        {
+         "id": "52:1622",
+         "name": "Fader",
+         "type": "INSTANCE",
+         "box": [
+          2988,
+          810,
+          370,
+          82
+         ],
+         "component": "Fader",
+         "props": {
+          "Value": "+0.02",
+          "Label": "Hue drift",
+          "Mode": "Relative",
+          "Orientation": "Horizontal",
+          "State": "Default"
+         },
+         "children": [
+          {
+           "id": "I52:1622;25:128",
+           "name": "Header",
+           "type": "FRAME",
+           "box": [
+            2988,
+            810,
+            370,
+            18
+           ],
+           "children": [
+            {
+             "id": "I52:1622;25:129",
+             "name": "Label",
+             "type": "TEXT",
+             "text": "Hue drift"
+            },
+            {
+             "id": "I52:1622;25:130",
+             "name": "Frame",
+             "type": "FRAME",
+             "box": [
+              3061,
+              819,
+              228,
+              1
+             ]
+            },
+            {
+             "id": "I52:1622;25:160",
+             "name": "Icon",
+             "type": "INSTANCE",
+             "box": [
+              3297,
+              812,
+              14,
+              14
+             ],
+             "component": "Icon/arrows-clockwise"
+            },
+            {
+             "id": "I52:1622;25:131",
+             "name": "Value",
+             "type": "TEXT",
+             "text": "+0.02"
+            }
+           ]
+          },
+          {
+           "id": "I52:1622;25:132",
+           "name": "Body",
+           "type": "FRAME",
+           "box": [
+            2988,
+            836,
+            370,
+            56
+           ],
+           "children": [
+            {
+             "id": "I52:1622;30:212",
+             "name": "Wheel",
+             "type": "FRAME",
+             "box": [
+              2994,
+              846,
+              358,
+              36
+             ]
+            },
+            {
+             "id": "I52:1622;30:241",
+             "name": "Icon",
+             "type": "INSTANCE",
+             "box": [
+              2988,
+              888,
+              14,
+              14
+             ],
+             "component": "Icon/minus"
+            },
+            {
+             "id": "I52:1622;30:243",
+             "name": "Icon",
+             "type": "INSTANCE",
+             "box": [
+              3344,
+              888,
+              14,
+              14
+             ],
+             "component": "Icon/plus"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "52:1727",
+       "name": "Page Dots",
+       "type": "INSTANCE",
+       "box": [
+        2972,
+        994,
+        402,
+        6
+       ],
+       "component": "Page Dots",
+       "props": {
+        "Count": "3"
+       }
+      },
+      {
+       "id": "52:1731",
+       "name": "Home Indicator",
+       "type": "INSTANCE",
+       "box": [
+        2972,
+        1000,
+        402,
+        34
+       ],
+       "component": "Home Indicator",
+       "props": {
+        "Device": "Phone"
+       }
+      }
+     ]
+    },
+    {
+     "id": "52:1733",
+     "name": "Phone / 06 Pult — connection lost",
+     "type": "FRAME",
+     "box": [
+      3454,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "104:7979",
+     "name": "Phone / 07 Settings (sheet)",
+     "type": "FRAME",
+     "box": [
+      3936,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "52:2826",
+     "name": "Phone / 08 What's new",
+     "type": "FRAME",
+     "box": [
+      4418,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "52:2924",
+     "name": "Phone / 09 Pairing QR shown",
+     "type": "FRAME",
+     "box": [
+      4900,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "104:8937",
+     "name": "Phone / 10 Installation (sheet)",
+     "type": "FRAME",
+     "box": [
+      5382,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "65:3463",
+     "name": "Phone / 11 Pult — light theme",
+     "type": "FRAME",
+     "box": [
+      5864,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "109:11394",
+     "name": "Phone / 12 Prompts — live",
+     "type": "FRAME",
+     "box": [
+      6346,
+      160,
+      402,
+      874
+     ],
+     "children": [
+      {
+       "id": "109:11395",
+       "name": "Status Bar",
+       "type": "INSTANCE",
+       "box": [
+        6346,
+        160,
+        402,
+        62
+       ],
+       "component": "Status Bar",
+       "props": {
+        "Device": "Phone"
+       }
+      },
+      {
+       "id": "109:11396",
+       "name": "Pult Header",
+       "type": "INSTANCE",
+       "box": [
+        6346,
+        222,
+        402,
+        64
+       ],
+       "component": "Pult Header",
+       "props": {
+        "Mode": "Control"
+       }
+      },
+      {
+       "id": "109:11397",
+       "name": "Tabs",
+       "type": "FRAME",
+       "box": [
+        6346,
+        286,
+        402,
+        64
+       ],
+       "children": [
+        {
+         "id": "109:11398",
+         "name": "Tab Bar",
+         "type": "INSTANCE",
+         "box": [
+          6362,
+          294,
+          370,
+          48
+         ],
+         "component": "Tab Bar",
+         "props": {},
+         "children": [
+          {
+           "id": "I109:11398;47:269",
+           "name": "Tabs",
+           "type": "SLOT",
+           "children": [
+            {
+             "id": "I109:11398;47:269;109:11564",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              6366,
+              298,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Live",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I109:11398;47:269;109:11564;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Live"
+              }
+             ]
+            },
+            {
+             "id": "I109:11398;47:269;109:11565",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              6488,
+              298,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Scenes",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I109:11398;47:269;109:11565;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Scenes"
+              }
+             ]
+            },
+            {
+             "id": "I109:11398;47:269;109:11566",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              6610,
+              298,
+              118,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Prompts",
+              "State": "Active"
+             },
+             "children": [
+              {
+               "id": "I109:11398;47:269;109:11566;10:36",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Prompts"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "109:11399",
+       "name": "Pult",
+       "type": "FRAME",
+       "box": [
+        6346,
+        350,
+        402,
+        644
+       ],
+       "children": [
+        {
+         "id": "109:11568",
+         "name": "Prompt Presets",
+         "type": "INSTANCE",
+         "box": [
+          6362,
+          362,
+          370,
+          228
+         ],
+         "component": "Prompt Presets",
+         "props": {
+          "State": "Active"
+         },
+         "annotations": [
+          {
+           "category": "OSC",
+           "text": "**/prompt/text** `string` (live prompt) · applied ✓ when the installation echoes it or sends **/prompt/text/applied**\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+          },
+          {
+           "category": "Depends on",
+           "text": "Presets live in the bridge (not the config): create, edit, reorder, soft delete with Undo. Applying → Error after 4 s without confirmation. Lease holder or studio only."
+          }
+         ],
+         "children": [
+          {
+           "id": "I109:11568;84:844",
+           "name": "Console Panel",
+           "type": "INSTANCE",
+           "box": [
+            6362,
+            362,
+            370,
+            228
+           ],
+           "component": "Console Panel",
+           "props": {
+            "Title": "PROMPTS"
+           },
+           "children": [
+            {
+             "id": "I109:11568;84:844;47:159",
+             "name": "Title",
+             "type": "TEXT",
+             "text": "PROMPTS"
+            },
+            {
+             "id": "I109:11568;84:844;47:160",
+             "name": "Controls",
+             "type": "SLOT",
+             "children": [
+              {
+               "id": "I109:11568;84:844;47:160;109:18932",
+               "name": "Grid",
+               "type": "FRAME",
+               "box": [
+                6378,
+                404,
+                338,
+                170
+               ],
+               "children": [
+                {
+                 "id": "I109:11568;84:844;47:160;109:18933",
+                 "name": "Row",
+                 "type": "FRAME",
+                 "box": [
+                  6378,
+                  404,
+                  338,
+                  79
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:11568;84:844;47:160;109:18934",
+                   "name": "Prompt Preset",
+                   "type": "INSTANCE",
+                   "box": [
+                    6378,
+                    404,
+                    163,
+                    79
+                   ],
+                   "component": "Prompt Preset",
+                   "props": {
+                    "Prompt": "lush tropical plants, neon light, mist, 35mm",
+                    "Name": "Neon jungle",
+                    "State": "On"
+                   },
+                   "children": [
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18934;83:305",
+                     "name": "Head",
+                     "type": "FRAME",
+                     "box": [
+                      6392,
+                      416,
+                      135,
+                      18
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:11568;84:844;47:160;109:18934;83:306",
+                       "name": "Name",
+                       "type": "TEXT",
+                       "text": "Neon jungle"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18934;83:308",
+                     "name": "Prompt",
+                     "type": "TEXT",
+                     "text": "lush tropical plants, neon light, mist, 35mm"
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:11568;84:844;47:160;109:18935",
+                   "name": "Prompt Preset",
+                   "type": "INSTANCE",
+                   "box": [
+                    6553,
+                    404,
+                    163,
+                    79
+                   ],
+                   "component": "Prompt Preset",
+                   "props": {
+                    "Prompt": "bioluminescent jellyfish, deep blue, slow drift",
+                    "Name": "Deep ocean",
+                    "State": "Off"
+                   },
+                   "children": [
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18935;83:299",
+                     "name": "Head",
+                     "type": "FRAME",
+                     "box": [
+                      6567,
+                      416,
+                      135,
+                      18
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:11568;84:844;47:160;109:18935;83:300",
+                       "name": "Name",
+                       "type": "TEXT",
+                       "text": "Deep ocean"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18935;83:302",
+                     "name": "Prompt",
+                     "type": "TEXT",
+                     "text": "bioluminescent jellyfish, deep blue, slow drift"
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I109:11568;84:844;47:160;109:18936",
+                 "name": "Row",
+                 "type": "FRAME",
+                 "box": [
+                  6378,
+                  495,
+                  338,
+                  79
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:11568;84:844;47:160;109:18937",
+                   "name": "Prompt Preset",
+                   "type": "INSTANCE",
+                   "box": [
+                    6378,
+                    495,
+                    176,
+                    79
+                   ],
+                   "component": "Prompt Preset",
+                   "props": {
+                    "Prompt": "concrete towers, fog, sodium lights, wide angle",
+                    "Name": "Brutalist city",
+                    "State": "Off"
+                   },
+                   "children": [
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18937;83:299",
+                     "name": "Head",
+                     "type": "FRAME",
+                     "box": [
+                      6392,
+                      507,
+                      148,
+                      18
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:11568;84:844;47:160;109:18937;83:300",
+                       "name": "Name",
+                       "type": "TEXT",
+                       "text": "Brutalist city"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18937;83:302",
+                     "name": "Prompt",
+                     "type": "TEXT",
+                     "text": "concrete towers, fog, sodium lights, wide angle"
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:11568;84:844;47:160;109:18938",
+                   "name": "New prompt",
+                   "type": "FRAME",
+                   "box": [
+                    6566,
+                    495,
+                    151,
+                    79
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18939",
+                     "name": "Icon/plus",
+                     "type": "INSTANCE",
+                     "box": [
+                      6630,
+                      514,
+                      22,
+                      22
+                     ],
+                     "component": "Icon/plus"
+                    },
+                    {
+                     "id": "I109:11568;84:844;47:160;109:18940",
+                     "name": "NEW PROMPT",
+                     "type": "TEXT",
+                     "text": "NEW PROMPT"
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "109:11597",
+         "name": "Prompt Mix",
+         "type": "INSTANCE",
+         "box": [
+          6362,
+          608,
+          370,
+          308
+         ],
+         "component": "Prompt Mix",
+         "annotations": [
+          {
+           "category": "OSC",
+           "text": "**/prompt/mix** `string A` `string B` `float 0–1` (crossfade between two presets)\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+          },
+          {
+           "category": "Depends on",
+           "text": "Needs two presets; “Use in mix” from the context menu fills A/B."
+          }
+         ],
+         "children": [
+          {
+           "id": "I109:11597;84:935",
+           "name": "Console Panel",
+           "type": "INSTANCE",
+           "box": [
+            6362,
+            608,
+            370,
+            308
+           ],
+           "component": "Console Panel",
+           "props": {
+            "Title": "PROMPT MIX"
+           },
+           "children": [
+            {
+             "id": "I109:11597;84:935;47:159",
+             "name": "Title",
+             "type": "TEXT",
+             "text": "PROMPT MIX"
+            },
+            {
+             "id": "I109:11597;84:935;47:160",
+             "name": "Controls",
+             "type": "SLOT",
+             "children": [
+              {
+               "id": "I109:11597;84:935;84:953",
+               "name": "Col",
+               "type": "FRAME",
+               "box": [
+                6378,
+                650,
+                338,
+                250
+               ],
+               "children": [
+                {
+                 "id": "I109:11597;84:935;84:954",
+                 "name": "Pair",
+                 "type": "FRAME",
+                 "box": [
+                  6378,
+                  650,
+                  338,
+                  60
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:11597;84:935;84:955",
+                   "name": "Select A",
+                   "type": "FRAME",
+                   "box": [
+                    6378,
+                    650,
+                    163,
+                    60
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:11597;84:935;84:956",
+                     "name": "Label",
+                     "type": "TEXT",
+                     "text": "A"
+                    },
+                    {
+                     "id": "I109:11597;84:935;84:957",
+                     "name": "Pult Select",
+                     "type": "INSTANCE",
+                     "box": [
+                      6378,
+                      670,
+                      163,
+                      40
+                     ],
+                     "component": "Pult Select",
+                     "props": {
+                      "Pult": "Neon jungle"
+                     },
+                     "children": [
+                      {
+                       "id": "I109:11597;84:935;84:957;10:33",
+                       "name": "Pult",
+                       "type": "TEXT",
+                       "text": "Neon jungle"
+                      },
+                      {
+                       "id": "I109:11597;84:935;84:957;23:114",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        6487,
+                        682,
+                        16,
+                        16
+                       ],
+                       "component": "Icon/caret-down"
+                      }
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:11597;84:935;84:958",
+                   "name": "Select B",
+                   "type": "FRAME",
+                   "box": [
+                    6553,
+                    650,
+                    163,
+                    60
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:11597;84:935;84:959",
+                     "name": "Label",
+                     "type": "TEXT",
+                     "text": "B"
+                    },
+                    {
+                     "id": "I109:11597;84:935;84:960",
+                     "name": "Pult Select",
+                     "type": "INSTANCE",
+                     "box": [
+                      6553,
+                      670,
+                      163,
+                      40
+                     ],
+                     "component": "Pult Select",
+                     "props": {
+                      "Pult": "Deep ocean"
+                     },
+                     "children": [
+                      {
+                       "id": "I109:11597;84:935;84:960;10:33",
+                       "name": "Pult",
+                       "type": "TEXT",
+                       "text": "Deep ocean"
+                      },
+                      {
+                       "id": "I109:11597;84:935;84:960;23:114",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        6662,
+                        682,
+                        16,
+                        16
+                       ],
+                       "component": "Icon/caret-down"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I109:11597;84:935;84:961",
+                 "name": "Fader",
+                 "type": "INSTANCE",
+                 "box": [
+                  6378,
+                  726,
+                  338,
+                  82
+                 ],
+                 "component": "Fader",
+                 "props": {
+                  "Label": "Blend",
+                  "Value": "A 30 · B 70",
+                  "Mode": "Crossfade",
+                  "Orientation": "Horizontal",
+                  "State": "Default"
+                 },
+                 "children": [
+                  {
+                   "id": "I109:11597;84:935;84:961;75:5083",
+                   "name": "Header",
+                   "type": "FRAME",
+                   "box": [
+                    6378,
+                    726,
+                    338,
+                    18
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:11597;84:935;84:961;75:5084",
+                     "name": "Label",
+                     "type": "TEXT",
+                     "text": "Mix"
+                    },
+                    {
+                     "id": "I109:11597;84:935;84:961;75:5085",
+                     "name": "Frame",
+                     "type": "FRAME",
+                     "box": [
+                      6408,
+                      735,
+                      214,
+                      1
+                     ]
+                    },
+                    {
+                     "id": "I109:11597;84:935;84:961;75:5086",
+                     "name": "Value",
+                     "type": "TEXT",
+                     "text": "A 30 · B 70"
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:11597;84:935;84:961;75:5087",
+                   "name": "Body",
+                   "type": "FRAME",
+                   "box": [
+                    6378,
+                    752,
+                    338,
+                    56
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I109:11597;84:935;84:962",
+                 "name": "Weights",
+                 "type": "FRAME",
+                 "box": [
+                  6378,
+                  824,
+                  338,
+                  76
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:11597;84:935;84:963",
+                   "name": "Weight",
+                   "type": "FRAME",
+                   "box": [
+                    6378,
+                    824,
+                    163,
+                    76
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:11597;84:935;84:964",
+                     "name": "NEON JUNGLE",
+                     "type": "TEXT",
+                     "text": "NEON JUNGLE"
+                    },
+                    {
+                     "id": "I109:11597;84:935;84:965",
+                     "name": "30%",
+                     "type": "TEXT",
+                     "text": "30%"
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:11597;84:935;84:966",
+                   "name": "Weight",
+                   "type": "FRAME",
+                   "box": [
+                    6553,
+                    824,
+                    163,
+                    76
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:11597;84:935;84:967",
+                     "name": "DEEP OCEAN",
+                     "type": "TEXT",
+                     "text": "DEEP OCEAN"
+                    },
+                    {
+                     "id": "I109:11597;84:935;84:968",
+                     "name": "70%",
+                     "type": "TEXT",
+                     "text": "70%"
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "109:11404",
+       "name": "Page Dots",
+       "type": "INSTANCE",
+       "box": [
+        6346,
+        994,
+        402,
+        6
+       ],
+       "component": "Page Dots",
+       "props": {
+        "Count": "3"
+       }
+      },
+      {
+       "id": "109:11405",
+       "name": "Home Indicator",
+       "type": "INSTANCE",
+       "box": [
+        6346,
+        1000,
+        402,
+        34
+       ],
+       "component": "Home Indicator",
+       "props": {
+        "Device": "Phone"
+       }
+      }
+     ]
+    },
+    {
+     "id": "109:11650",
+     "name": "Phone / 13 Prompts — edit mode",
+     "type": "FRAME",
+     "box": [
+      6828,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "109:11871",
+     "name": "Phone / 14 Prompt — context menu",
+     "type": "FRAME",
+     "box": [
+      7310,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "109:12176",
+     "name": "Phone / 15 New prompt (sheet)",
+     "type": "FRAME",
+     "box": [
+      7792,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "109:12562",
+     "name": "Phone / 16 Prompt deleted (Undo)",
+     "type": "FRAME",
+     "box": [
+      8274,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "109:12834",
+     "name": "Phone / 17 Activity (sheet, pushed)",
+     "type": "FRAME",
+     "box": [
+      8756,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "109:13196",
+     "name": "Phone / 18 Scan QR — not recognised",
+     "type": "FRAME",
+     "box": [
+      9238,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "109:13246",
+     "name": "Phone / 19 No pult yet",
+     "type": "FRAME",
+     "box": [
+      9720,
+      160,
+      402,
+      874
+     ]
+    },
+    {
+     "id": "126:10083",
+     "name": "Phone / 20 Debug (sheet, pushed)",
+     "type": "FRAME",
+     "box": [
+      10202,
+      160,
+      402,
+      874
+     ]
+    }
+   ]
+  },
+  {
+   "id": "109:18969",
+   "name": "Tablet — live-event VJ console (primary for live events)",
+   "type": "SECTION",
+   "box": [
+    0,
+    1354,
+    28460,
+    1114
+   ],
+   "children": [
+    {
+     "id": "54:845",
+     "name": "Tablet / 01 Splash",
+     "type": "FRAME",
+     "box": [
+      80,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "54:867",
+     "name": "Tablet / 02 Connect",
+     "type": "FRAME",
+     "box": [
+      1370,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "103:5436",
+     "name": "Tablet / 02a Loading — client brand",
+     "type": "FRAME",
+     "box": [
+      2660,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "104:10209",
+     "name": "Tablet / 02b Enter address (form sheet)",
+     "type": "FRAME",
+     "box": [
+      3950,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "54:912",
+     "name": "Tablet / 03 Scan QR",
+     "type": "FRAME",
+     "box": [
+      5240,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "54:1012",
+     "name": "Tablet / 04 VJ console — in control",
+     "type": "FRAME",
+     "box": [
+      6530,
+      1514,
+      1210,
+      834
+     ],
+     "children": [
+      {
+       "id": "54:1013",
+       "name": "Status Bar",
+       "type": "INSTANCE",
+       "box": [
+        6530,
+        1514,
+        1210,
+        32
+       ],
+       "component": "Status Bar",
+       "props": {
+        "Device": "Tablet"
+       }
+      },
+      {
+       "id": "54:1017",
+       "name": "Pult Header",
+       "type": "INSTANCE",
+       "box": [
+        6530,
+        1546,
+        1210,
+        64
+       ],
+       "component": "Pult Header",
+       "props": {
+        "Mode": "Control"
+       }
+      },
+      {
+       "id": "54:1028",
+       "name": "Tabs",
+       "type": "FRAME",
+       "box": [
+        6530,
+        1610,
+        1210,
+        60
+       ],
+       "children": [
+        {
+         "id": "54:1029",
+         "name": "Tab Bar",
+         "type": "INSTANCE",
+         "box": [
+          6550,
+          1616,
+          460,
+          48
+         ],
+         "component": "Tab Bar",
+         "props": {},
+         "children": [
+          {
+           "id": "I54:1029;47:269",
+           "name": "Tabs",
+           "type": "SLOT",
+           "children": [
+            {
+             "id": "I54:1029;47:269;54:1048",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              6554,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Mix",
+              "State": "Active"
+             },
+             "children": [
+              {
+               "id": "I54:1029;47:269;54:1048;10:36",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Mix"
+              }
+             ]
+            },
+            {
+             "id": "I54:1029;47:269;54:1049",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              6668,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "FX",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I54:1029;47:269;54:1049;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "FX"
+              }
+             ]
+            },
+            {
+             "id": "I54:1029;47:269;54:1050",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              6782,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Cues",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I54:1029;47:269;54:1050;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Cues"
+              }
+             ]
+            },
+            {
+             "id": "I54:1029;47:269;54:1051",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              6896,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Scenes",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I54:1029;47:269;54:1051;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Scenes"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "54:1052",
+       "name": "Console",
+       "type": "FRAME",
+       "box": [
+        6530,
+        1670,
+        1210,
+        651
+       ],
+       "children": [
+        {
+         "id": "54:1053",
+         "name": "Fader Bank",
+         "type": "INSTANCE",
+         "box": [
+          6550,
+          1680,
+          379,
+          631
+         ],
+         "component": "Fader Bank",
+         "annotations": [
+          {
+           "category": "OSC",
+           "text": "**/mix/layer/{1–4}/opacity** `float 0–1` · **/mix/layer/{1–4}/on** `1 | 0` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+          },
+          {
+           "category": "Depends on",
+           "text": "Strip off → fader dims and stops sending; the value is kept and resent when switched back on."
+          }
+         ],
+         "children": [
+          {
+           "id": "I54:1053;51:66",
+           "name": "Console Panel",
+           "type": "INSTANCE",
+           "box": [
+            6550,
+            1680,
+            379,
+            631
+           ],
+           "component": "Console Panel",
+           "props": {
+            "Title": "MIX"
+           },
+           "children": [
+            {
+             "id": "I54:1053;51:66;47:159",
+             "name": "Title",
+             "type": "TEXT",
+             "text": "MIX"
+            },
+            {
+             "id": "I54:1053;51:66;47:160",
+             "name": "Controls",
+             "type": "SLOT",
+             "children": [
+              {
+               "id": "I54:1053;51:66;51:218",
+               "name": "Strips",
+               "type": "FRAME",
+               "box": [
+                6566,
+                1722,
+                347,
+                573
+               ],
+               "children": [
+                {
+                 "id": "I54:1053;51:66;51:219",
+                 "name": "Channel Strip",
+                 "type": "INSTANCE",
+                 "box": [
+                  6566,
+                  1722,
+                  87,
+                  573
+                 ],
+                 "component": "Channel Strip",
+                 "props": {
+                  "State": "On"
+                 },
+                 "children": [
+                  {
+                   "id": "I54:1053;51:66;51:219;51:5",
+                   "name": "Fader",
+                   "type": "INSTANCE",
+                   "box": [
+                    6565,
+                    1722,
+                    88,
+                    505
+                   ],
+                   "component": "Fader",
+                   "props": {
+                    "Value": "0.60",
+                    "Label": "Layer 1",
+                    "Mode": "Absolute",
+                    "Orientation": "Vertical",
+                    "State": "Default"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:219;51:5;11:16",
+                     "name": "Header",
+                     "type": "FRAME",
+                     "box": [
+                      6565,
+                      1722,
+                      88,
+                      14
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:219;51:5;11:17",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "Layer 1"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1053;51:66;51:219;51:5;11:20",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6565,
+                      1744,
+                      88,
+                      483
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I54:1053;51:66;51:219;51:29",
+                   "name": "Power",
+                   "type": "INSTANCE",
+                   "box": [
+                    6571,
+                    2239,
+                    76,
+                    56
+                   ],
+                   "component": "Group Button",
+                   "props": {
+                    "showCaption": false,
+                    "Caption": "KEYLOCK",
+                    "Label": "ON",
+                    "State": "On"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:219;51:29;31:60",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6571,
+                      2239,
+                      76,
+                      56
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:219;51:29;31:61",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "ON"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I54:1053;51:66;51:220",
+                 "name": "Channel Strip",
+                 "type": "INSTANCE",
+                 "box": [
+                  6653,
+                  1722,
+                  87,
+                  573
+                 ],
+                 "component": "Channel Strip",
+                 "props": {
+                  "State": "On"
+                 },
+                 "children": [
+                  {
+                   "id": "I54:1053;51:66;51:220;51:5",
+                   "name": "Fader",
+                   "type": "INSTANCE",
+                   "box": [
+                    6652,
+                    1722,
+                    88,
+                    505
+                   ],
+                   "component": "Fader",
+                   "props": {
+                    "Value": "0.60",
+                    "Label": "Layer 2",
+                    "Mode": "Absolute",
+                    "Orientation": "Vertical",
+                    "State": "Default"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:220;51:5;11:16",
+                     "name": "Header",
+                     "type": "FRAME",
+                     "box": [
+                      6652,
+                      1722,
+                      88,
+                      14
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:220;51:5;11:17",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "Layer 2"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1053;51:66;51:220;51:5;11:20",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6652,
+                      1744,
+                      88,
+                      483
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I54:1053;51:66;51:220;51:29",
+                   "name": "Power",
+                   "type": "INSTANCE",
+                   "box": [
+                    6658,
+                    2239,
+                    76,
+                    56
+                   ],
+                   "component": "Group Button",
+                   "props": {
+                    "showCaption": false,
+                    "Caption": "KEYLOCK",
+                    "Label": "ON",
+                    "State": "On"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:220;51:29;31:60",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6658,
+                      2239,
+                      76,
+                      56
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:220;51:29;31:61",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "ON"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I54:1053;51:66;51:221",
+                 "name": "Channel Strip",
+                 "type": "INSTANCE",
+                 "box": [
+                  6740,
+                  1722,
+                  87,
+                  573
+                 ],
+                 "component": "Channel Strip",
+                 "props": {
+                  "State": "Off"
+                 },
+                 "children": [
+                  {
+                   "id": "I54:1053;51:66;51:221;51:35",
+                   "name": "Fader",
+                   "type": "INSTANCE",
+                   "box": [
+                    6739,
+                    1722,
+                    88,
+                    505
+                   ],
+                   "component": "Fader",
+                   "props": {
+                    "Value": "0.60",
+                    "Label": "Layer 3",
+                    "Mode": "Absolute",
+                    "Orientation": "Vertical",
+                    "State": "Off"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:221;51:35;49:963",
+                     "name": "Header",
+                     "type": "FRAME",
+                     "box": [
+                      6739,
+                      1722,
+                      88,
+                      14
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:221;51:35;49:964",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "Layer 3"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1053;51:66;51:221;51:35;49:967",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6739,
+                      1744,
+                      88,
+                      483
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I54:1053;51:66;51:221;51:59",
+                   "name": "Power",
+                   "type": "INSTANCE",
+                   "box": [
+                    6745,
+                    2239,
+                    76,
+                    56
+                   ],
+                   "component": "Group Button",
+                   "props": {
+                    "showCaption": false,
+                    "Caption": "KEYLOCK",
+                    "Label": "OFF",
+                    "State": "Off"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:221;51:59;31:55",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6745,
+                      2239,
+                      76,
+                      56
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:221;51:59;31:56",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "OFF"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I54:1053;51:66;51:222",
+                 "name": "Channel Strip",
+                 "type": "INSTANCE",
+                 "box": [
+                  6827,
+                  1722,
+                  87,
+                  573
+                 ],
+                 "component": "Channel Strip",
+                 "props": {
+                  "State": "On"
+                 },
+                 "children": [
+                  {
+                   "id": "I54:1053;51:66;51:222;51:5",
+                   "name": "Fader",
+                   "type": "INSTANCE",
+                   "box": [
+                    6826,
+                    1722,
+                    88,
+                    505
+                   ],
+                   "component": "Fader",
+                   "props": {
+                    "Value": "0.60",
+                    "Label": "Master",
+                    "Mode": "Absolute",
+                    "Orientation": "Vertical",
+                    "State": "Default"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:222;51:5;11:16",
+                     "name": "Header",
+                     "type": "FRAME",
+                     "box": [
+                      6826,
+                      1722,
+                      88,
+                      14
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:222;51:5;11:17",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "Master"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1053;51:66;51:222;51:5;11:20",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6826,
+                      1744,
+                      88,
+                      483
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I54:1053;51:66;51:222;51:29",
+                   "name": "Power",
+                   "type": "INSTANCE",
+                   "box": [
+                    6832,
+                    2239,
+                    76,
+                    56
+                   ],
+                   "component": "Group Button",
+                   "props": {
+                    "showCaption": false,
+                    "Caption": "KEYLOCK",
+                    "Label": "ON",
+                    "State": "On"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1053;51:66;51:222;51:29;31:60",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      6832,
+                      2239,
+                      76,
+                      56
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1053;51:66;51:222;51:29;31:61",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "ON"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "54:1355",
+         "name": "Col B",
+         "type": "FRAME",
+         "box": [
+          6945,
+          1680,
+          379,
+          631
+         ],
+         "children": [
+          {
+           "id": "54:1356",
+           "name": "Knob Group",
+           "type": "INSTANCE",
+           "box": [
+            6945,
+            1680,
+            379,
+            442
+           ],
+           "component": "Knob Group",
+           "annotations": [
+            {
+             "category": "OSC",
+             "text": "**/fx/shape/{knob-id}** `float 0–1` · 240° knobs · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+            },
+            {
+             "category": "Depends on",
+             "text": "Knob ids = layer names in Figma (Inspector). Hue knob sends degrees 0–360."
+            }
+           ],
+           "children": [
+            {
+             "id": "I54:1356;51:224",
+             "name": "Console Panel",
+             "type": "INSTANCE",
+             "box": [
+              6945,
+              1680,
+              379,
+              442
+             ],
+             "component": "Console Panel",
+             "props": {
+              "Title": "SHAPE"
+             },
+             "children": [
+              {
+               "id": "I54:1356;51:224;47:159",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "SHAPE"
+              },
+              {
+               "id": "I54:1356;51:224;47:160",
+               "name": "Controls",
+               "type": "SLOT",
+               "children": [
+                {
+                 "id": "I54:1356;51:224;51:436",
+                 "name": "Grid",
+                 "type": "FRAME",
+                 "box": [
+                  6961,
+                  1722,
+                  347,
+                  384
+                 ],
+                 "children": [
+                  {
+                   "id": "I54:1356;51:224;51:437",
+                   "name": "Row",
+                   "type": "FRAME",
+                   "box": [
+                    6961,
+                    1722,
+                    347,
+                    186
+                   ],
+                   "children": [
+                    {
+                     "id": "I54:1356;51:224;51:438",
+                     "name": "Knob",
+                     "type": "INSTANCE",
+                     "box": [
+                      6961,
+                      1722,
+                      166,
+                      186
+                     ],
+                     "component": "Knob",
+                     "props": {
+                      "Value": "45°",
+                      "Label": "Hue shift",
+                      "Orientation": "Vertical",
+                      "Mode": "Absolute",
+                      "State": "Default",
+                      "Size": "Regular"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1356;51:224;51:438;11:81",
+                       "name": "Header",
+                       "type": "FRAME",
+                       "box": [
+                        6961,
+                        1722,
+                        166,
+                        18
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1356;51:224;51:438;11:82",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "Hue shift"
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:438;11:84",
+                         "name": "Value",
+                         "type": "TEXT",
+                         "text": "45°"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1356;51:224;51:438;11:85",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        6964,
+                        1748,
+                        160,
+                        160
+                       ]
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1356;51:224;51:439",
+                     "name": "Knob",
+                     "type": "INSTANCE",
+                     "box": [
+                      7143,
+                      1722,
+                      166,
+                      186
+                     ],
+                     "component": "Knob",
+                     "props": {
+                      "Value": "45°",
+                      "Label": "Speed",
+                      "Orientation": "Vertical",
+                      "Mode": "Absolute",
+                      "State": "Default",
+                      "Size": "Regular"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1356;51:224;51:439;11:81",
+                       "name": "Header",
+                       "type": "FRAME",
+                       "box": [
+                        7143,
+                        1722,
+                        166,
+                        18
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1356;51:224;51:439;11:82",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "Speed"
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:439;11:84",
+                         "name": "Value",
+                         "type": "TEXT",
+                         "text": "45°"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1356;51:224;51:439;11:85",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        7146,
+                        1748,
+                        160,
+                        160
+                       ]
+                      }
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I54:1356;51:224;51:440",
+                   "name": "Row",
+                   "type": "FRAME",
+                   "box": [
+                    6961,
+                    1920,
+                    347,
+                    186
+                   ],
+                   "children": [
+                    {
+                     "id": "I54:1356;51:224;51:441",
+                     "name": "Knob",
+                     "type": "INSTANCE",
+                     "box": [
+                      6961,
+                      1920,
+                      166,
+                      186
+                     ],
+                     "component": "Knob",
+                     "props": {
+                      "Value": "+12",
+                      "Label": "Zoom",
+                      "Orientation": "Vertical",
+                      "Mode": "Relative",
+                      "State": "Default",
+                      "Size": "Regular"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1356;51:224;51:441;24:32",
+                       "name": "Header",
+                       "type": "FRAME",
+                       "box": [
+                        6961,
+                        1920,
+                        166,
+                        18
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1356;51:224;51:441;24:33",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "Zoom"
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:441;24:117",
+                         "name": "Icon",
+                         "type": "INSTANCE",
+                         "box": [
+                          7044,
+                          1922,
+                          14,
+                          14
+                         ],
+                         "component": "Icon/arrows-clockwise"
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:441;24:35",
+                         "name": "Value",
+                         "type": "TEXT",
+                         "text": "+12"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1356;51:224;51:441;24:36",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        6964,
+                        1946,
+                        160,
+                        160
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1356;51:224;51:441;24:43",
+                         "name": "Ring",
+                         "type": "FRAME",
+                         "box": [
+                          6964,
+                          1946,
+                          160,
+                          160
+                         ]
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:441;24:76",
+                         "name": "Grip",
+                         "type": "FRAME",
+                         "box": [
+                          6964,
+                          1946,
+                          160,
+                          160
+                         ]
+                        }
+                       ]
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1356;51:224;51:442",
+                     "name": "Knob",
+                     "type": "INSTANCE",
+                     "box": [
+                      7143,
+                      1920,
+                      166,
+                      186
+                     ],
+                     "component": "Knob",
+                     "props": {
+                      "Value": "+12",
+                      "Label": "Rotate",
+                      "Orientation": "Vertical",
+                      "Mode": "Relative",
+                      "State": "Default",
+                      "Size": "Regular"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1356;51:224;51:442;24:32",
+                       "name": "Header",
+                       "type": "FRAME",
+                       "box": [
+                        7143,
+                        1920,
+                        166,
+                        18
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1356;51:224;51:442;24:33",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "Rotate"
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:442;24:117",
+                         "name": "Icon",
+                         "type": "INSTANCE",
+                         "box": [
+                          7230,
+                          1922,
+                          14,
+                          14
+                         ],
+                         "component": "Icon/arrows-clockwise"
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:442;24:35",
+                         "name": "Value",
+                         "type": "TEXT",
+                         "text": "+12"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1356;51:224;51:442;24:36",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        7146,
+                        1946,
+                        160,
+                        160
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1356;51:224;51:442;24:43",
+                         "name": "Ring",
+                         "type": "FRAME",
+                         "box": [
+                          7146,
+                          1946,
+                          160,
+                          160
+                         ]
+                        },
+                        {
+                         "id": "I54:1356;51:224;51:442;24:76",
+                         "name": "Grip",
+                         "type": "FRAME",
+                         "box": [
+                          7146,
+                          1946,
+                          160,
+                          160
+                         ]
+                        }
+                       ]
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "54:1749",
+           "name": "Layer Toggles",
+           "type": "INSTANCE",
+           "box": [
+            6945,
+            2138,
+            379,
+            173
+           ],
+           "component": "Layer Toggles",
+           "annotations": [
+            {
+             "category": "OSC",
+             "text": "**/layers/{name}** `1 | 0` · multi-select · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+            },
+            {
+             "category": "Depends on",
+             "text": "Any number of layers can be on; LED strip shows the live state from feedback."
+            }
+           ],
+           "children": [
+            {
+             "id": "I54:1749;51:559",
+             "name": "Console Panel",
+             "type": "INSTANCE",
+             "box": [
+              6945,
+              2138,
+              379,
+              173
+             ],
+             "component": "Console Panel",
+             "props": {
+              "Title": "LAYERS"
+             },
+             "children": [
+              {
+               "id": "I54:1749;51:559;47:159",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "LAYERS"
+              },
+              {
+               "id": "I54:1749;51:559;47:160",
+               "name": "Controls",
+               "type": "SLOT",
+               "children": [
+                {
+                 "id": "I54:1749;51:559;51:617",
+                 "name": "Button Group",
+                 "type": "INSTANCE",
+                 "box": [
+                  6961,
+                  2199,
+                  347,
+                  78
+                 ],
+                 "component": "Button Group",
+                 "children": [
+                  {
+                   "id": "I54:1749;51:559;51:617;31:73",
+                   "name": "Buttons",
+                   "type": "FRAME",
+                   "box": [
+                    6961,
+                    2199,
+                    347,
+                    78
+                   ],
+                   "children": [
+                    {
+                     "id": "I54:1749;51:559;51:617;31:74",
+                     "name": "Group Button",
+                     "type": "INSTANCE",
+                     "box": [
+                      6961,
+                      2199,
+                      78,
+                      78
+                     ],
+                     "component": "Group Button",
+                     "props": {
+                      "showCaption": true,
+                      "Caption": "BRAND",
+                      "Label": "LOGO",
+                      "State": "Off"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1749;51:559;51:617;31:74;31:55",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        6961,
+                        2199,
+                        78,
+                        56
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1749;51:559;51:617;31:74;31:56",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "LOGO"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1749;51:559;51:617;31:74;31:58",
+                       "name": "Caption",
+                       "type": "TEXT",
+                       "text": "BRAND"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1749;51:559;51:617;31:79",
+                     "name": "Group Button",
+                     "type": "INSTANCE",
+                     "box": [
+                      7051,
+                      2199,
+                      78,
+                      78
+                     ],
+                     "component": "Group Button",
+                     "props": {
+                      "showCaption": true,
+                      "Caption": "LIVE FEED",
+                      "Label": "DATA",
+                      "State": "On"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1749;51:559;51:617;31:79;31:60",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        7051,
+                        2199,
+                        78,
+                        56
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1749;51:559;51:617;31:79;31:61",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "DATA"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1749;51:559;51:617;31:79;31:63",
+                       "name": "Caption",
+                       "type": "TEXT",
+                       "text": "LIVE FEED"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1749;51:559;51:617;31:84",
+                     "name": "Group Button",
+                     "type": "INSTANCE",
+                     "box": [
+                      7141,
+                      2199,
+                      78,
+                      78
+                     ],
+                     "component": "Group Button",
+                     "props": {
+                      "showCaption": true,
+                      "Caption": "REACT",
+                      "Label": "AUDIO",
+                      "State": "On"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1749;51:559;51:617;31:84;31:60",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        7141,
+                        2199,
+                        78,
+                        56
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1749;51:559;51:617;31:84;31:61",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "AUDIO"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1749;51:559;51:617;31:84;31:63",
+                       "name": "Caption",
+                       "type": "TEXT",
+                       "text": "REACT"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1749;51:559;51:617;31:89",
+                     "name": "Group Button",
+                     "type": "INSTANCE",
+                     "box": [
+                      7231,
+                      2199,
+                      78,
+                      78
+                     ],
+                     "component": "Group Button",
+                     "props": {
+                      "showCaption": true,
+                      "Caption": "OVERLAY",
+                      "Label": "GRID",
+                      "State": "Off"
+                     },
+                     "children": [
+                      {
+                       "id": "I54:1749;51:559;51:617;31:89;31:55",
+                       "name": "Body",
+                       "type": "FRAME",
+                       "box": [
+                        7231,
+                        2199,
+                        78,
+                        56
+                       ],
+                       "children": [
+                        {
+                         "id": "I54:1749;51:559;51:617;31:89;31:56",
+                         "name": "Label",
+                         "type": "TEXT",
+                         "text": "GRID"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I54:1749;51:559;51:617;31:89;31:58",
+                       "name": "Caption",
+                       "type": "TEXT",
+                       "text": "OVERLAY"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "54:1819",
+         "name": "Col C",
+         "type": "FRAME",
+         "box": [
+          7341,
+          1680,
+          379,
+          631
+         ],
+         "children": [
+          {
+           "id": "54:1820",
+           "name": "Camera Control",
+           "type": "INSTANCE",
+           "box": [
+            7341,
+            1680,
+            379,
+            366
+           ],
+           "component": "Camera Control",
+           "annotations": [
+            {
+             "category": "OSC",
+             "text": "**/camera/aim** `x y float −1…1` · springs back · 30 Hz\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+            },
+            {
+             "category": "Depends on",
+             "text": "Only while the installation runs the camera scene; otherwise the panel shows Unsupported."
+            }
+           ],
+           "children": [
+            {
+             "id": "I54:1820;51:689",
+             "name": "Console Panel",
+             "type": "INSTANCE",
+             "box": [
+              7341,
+              1680,
+              379,
+              366
+             ],
+             "component": "Console Panel",
+             "props": {
+              "Title": "CAMERA"
+             },
+             "children": [
+              {
+               "id": "I54:1820;51:689;47:159",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "CAMERA"
+              },
+              {
+               "id": "I54:1820;51:689;47:160",
+               "name": "Controls",
+               "type": "SLOT",
+               "children": [
+                {
+                 "id": "I54:1820;51:689;51:792",
+                 "name": "Col",
+                 "type": "FRAME",
+                 "box": [
+                  7357,
+                  1722,
+                  347,
+                  308
+                 ],
+                 "children": [
+                  {
+                   "id": "I54:1820;51:689;51:793",
+                   "name": "Thumbstick",
+                   "type": "INSTANCE",
+                   "box": [
+                    7357,
+                    1722,
+                    347,
+                    206
+                   ],
+                   "component": "Thumbstick",
+                   "props": {
+                    "State": "Idle"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1820;51:689;51:793;31:95",
+                     "name": "Header",
+                     "type": "FRAME",
+                     "box": [
+                      7357,
+                      1722,
+                      347,
+                      18
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1820;51:689;51:793;31:96",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "Pan / tilt"
+                      },
+                      {
+                       "id": "I54:1820;51:689;51:793;31:97",
+                       "name": "Frame",
+                       "type": "FRAME",
+                       "box": [
+                        7420,
+                        1722,
+                        206,
+                        1
+                       ]
+                      },
+                      {
+                       "id": "I54:1820;51:689;51:793;31:98",
+                       "name": "Value",
+                       "type": "TEXT",
+                       "text": "0.00, 0.00"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1820;51:689;51:793;31:99",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      7440,
+                      1748,
+                      180,
+                      180
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I54:1820;51:689;51:794",
+                   "name": "Fader",
+                   "type": "INSTANCE",
+                   "box": [
+                    7357,
+                    1948,
+                    347,
+                    82
+                   ],
+                   "component": "Fader",
+                   "props": {
+                    "Value": "+0.02",
+                    "Label": "Zoom nudge",
+                    "Mode": "Relative",
+                    "Orientation": "Horizontal",
+                    "State": "Default"
+                   },
+                   "children": [
+                    {
+                     "id": "I54:1820;51:689;51:794;25:128",
+                     "name": "Header",
+                     "type": "FRAME",
+                     "box": [
+                      7357,
+                      1948,
+                      347,
+                      18
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1820;51:689;51:794;25:129",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "Zoom nudge"
+                      },
+                      {
+                       "id": "I54:1820;51:689;51:794;25:130",
+                       "name": "Frame",
+                       "type": "FRAME",
+                       "box": [
+                        7449,
+                        1957,
+                        186,
+                        1
+                       ]
+                      },
+                      {
+                       "id": "I54:1820;51:689;51:794;25:160",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        7643,
+                        1950,
+                        14,
+                        14
+                       ],
+                       "component": "Icon/arrows-clockwise"
+                      },
+                      {
+                       "id": "I54:1820;51:689;51:794;25:131",
+                       "name": "Value",
+                       "type": "TEXT",
+                       "text": "+0.02"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I54:1820;51:689;51:794;25:132",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      7357,
+                      1974,
+                      347,
+                      56
+                     ],
+                     "children": [
+                      {
+                       "id": "I54:1820;51:689;51:794;30:212",
+                       "name": "Wheel",
+                       "type": "FRAME",
+                       "box": [
+                        7363,
+                        1984,
+                        335,
+                        36
+                       ]
+                      },
+                      {
+                       "id": "I54:1820;51:689;51:794;30:241",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        7357,
+                        2026,
+                        14,
+                        14
+                       ],
+                       "component": "Icon/minus"
+                      },
+                      {
+                       "id": "I54:1820;51:689;51:794;30:243",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        7690,
+                        2026,
+                        14,
+                        14
+                       ],
+                       "component": "Icon/plus"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "63:3413",
+           "name": "Scene Bar",
+           "type": "INSTANCE",
+           "box": [
+            7341,
+            2062,
+            379,
+            249
+           ],
+           "component": "Scene Bar",
+           "annotations": [
+            {
+             "category": "OSC",
+             "text": "**/scene** `int 1–4` + crossfade `float s` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+            },
+            {
+             "category": "Depends on",
+             "text": "Scene list comes from the config; renaming a scene in Figma renames it for the client."
+            }
+           ],
+           "children": [
+            {
+             "id": "I63:3413;51:619",
+             "name": "Console Panel",
+             "type": "INSTANCE",
+             "box": [
+              7341,
+              2062,
+              379,
+              249
+             ],
+             "component": "Console Panel",
+             "props": {
+              "Title": "SCENE"
+             },
+             "children": [
+              {
+               "id": "I63:3413;51:619;47:159",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "SCENE"
+              },
+              {
+               "id": "I63:3413;51:619;47:160",
+               "name": "Controls",
+               "type": "SLOT",
+               "children": [
+                {
+                 "id": "I63:3413;51:619;51:658",
+                 "name": "Segmented",
+                 "type": "INSTANCE",
+                 "box": [
+                  7357,
+                  2172,
+                  347,
+                  56
+                 ],
+                 "component": "Segmented",
+                 "props": {
+                  "Content": "Icon",
+                  "State": "Default"
+                 },
+                 "children": [
+                  {
+                   "id": "I63:3413;51:619;51:658;30:526",
+                   "name": "Options",
+                   "type": "FRAME",
+                   "box": [
+                    7357,
+                    2172,
+                    347,
+                    56
+                   ],
+                   "children": [
+                    {
+                     "id": "I63:3413;51:619;51:658;30:527",
+                     "name": "Frame",
+                     "type": "FRAME",
+                     "box": [
+                      7362,
+                      2177,
+                      83,
+                      46
+                     ],
+                     "children": [
+                      {
+                       "id": "I63:3413;51:619;51:658;30:535",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        7392,
+                        2189,
+                        22,
+                        22
+                       ],
+                       "component": "Icon/lightning"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I63:3413;51:619;51:658;30:529",
+                     "name": "Frame",
+                     "type": "FRAME",
+                     "box": [
+                      7447,
+                      2177,
+                      83,
+                      46
+                     ],
+                     "children": [
+                      {
+                       "id": "I63:3413;51:619;51:658;30:537",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        7477,
+                        2189,
+                        22,
+                        22
+                       ],
+                       "component": "Icon/sun"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I63:3413;51:619;51:658;30:531",
+                     "name": "Frame",
+                     "type": "FRAME",
+                     "box": [
+                      7531,
+                      2177,
+                      83,
+                      46
+                     ],
+                     "children": [
+                      {
+                       "id": "I63:3413;51:619;51:658;30:539",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        7562,
+                        2189,
+                        22,
+                        22
+                       ],
+                       "component": "Icon/moon"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I63:3413;51:619;51:658;30:533",
+                     "name": "Frame",
+                     "type": "FRAME",
+                     "box": [
+                      7616,
+                      2177,
+                      83,
+                      46
+                     ],
+                     "children": [
+                      {
+                       "id": "I63:3413;51:619;51:658;30:541",
+                       "name": "Icon",
+                       "type": "INSTANCE",
+                       "box": [
+                        7647,
+                        2189,
+                        22,
+                        22
+                       ],
+                       "component": "Icon/circle-half"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "54:2026",
+       "name": "Page Dots",
+       "type": "INSTANCE",
+       "box": [
+        6530,
+        2321,
+        1210,
+        6
+       ],
+       "component": "Page Dots",
+       "props": {
+        "Count": "4"
+       }
+      },
+      {
+       "id": "54:2031",
+       "name": "Home Indicator",
+       "type": "INSTANCE",
+       "box": [
+        6530,
+        2327,
+        1210,
+        21
+       ],
+       "component": "Home Indicator",
+       "props": {
+        "Device": "Tablet"
+       }
+      }
+     ]
+    },
+    {
+     "id": "54:2033",
+     "name": "Tablet / 05 VJ console — view only",
+     "type": "FRAME",
+     "box": [
+      7820,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "54:2542",
+     "name": "Tablet / 06 VJ console — connection lost",
+     "type": "FRAME",
+     "box": [
+      9110,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "99:7941",
+     "name": "Tablet / 07 Settings (left drawer)",
+     "type": "FRAME",
+     "box": [
+      10400,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "75:4148",
+     "name": "Tablet / 08 What's new",
+     "type": "FRAME",
+     "box": [
+      11690,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "75:4216",
+     "name": "Tablet / 09 Pairing QR shown",
+     "type": "FRAME",
+     "box": [
+      12980,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "99:7287",
+     "name": "Tablet / 10 Installation (inspector)",
+     "type": "FRAME",
+     "box": [
+      14270,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "65:3481",
+     "name": "Tablet / 11 VJ console — light theme",
+     "type": "FRAME",
+     "box": [
+      15560,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "109:13460",
+     "name": "Tablet / 12 Prompts — live",
+     "type": "FRAME",
+     "box": [
+      16850,
+      1514,
+      1210,
+      834
+     ],
+     "children": [
+      {
+       "id": "109:13461",
+       "name": "Status Bar",
+       "type": "INSTANCE",
+       "box": [
+        16850,
+        1514,
+        1210,
+        32
+       ],
+       "component": "Status Bar",
+       "props": {
+        "Device": "Tablet"
+       }
+      },
+      {
+       "id": "109:13462",
+       "name": "Pult Header",
+       "type": "INSTANCE",
+       "box": [
+        16850,
+        1546,
+        1210,
+        64
+       ],
+       "component": "Pult Header",
+       "props": {
+        "Mode": "Control"
+       }
+      },
+      {
+       "id": "109:13463",
+       "name": "Tabs",
+       "type": "FRAME",
+       "box": [
+        16850,
+        1610,
+        1210,
+        60
+       ],
+       "children": [
+        {
+         "id": "109:13464",
+         "name": "Tab Bar",
+         "type": "INSTANCE",
+         "box": [
+          16870,
+          1616,
+          460,
+          48
+         ],
+         "component": "Tab Bar",
+         "props": {},
+         "children": [
+          {
+           "id": "I109:13464;47:269",
+           "name": "Tabs",
+           "type": "SLOT",
+           "children": [
+            {
+             "id": "I109:13464;47:269;109:13476",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              16874,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Mix",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I109:13464;47:269;109:13476;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Mix"
+              }
+             ]
+            },
+            {
+             "id": "I109:13464;47:269;109:13477",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              16988,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "FX",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I109:13464;47:269;109:13477;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "FX"
+              }
+             ]
+            },
+            {
+             "id": "I109:13464;47:269;109:13478",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              17102,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Cues",
+              "State": "Inactive"
+             },
+             "children": [
+              {
+               "id": "I109:13464;47:269;109:13478;10:38",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Cues"
+              }
+             ]
+            },
+            {
+             "id": "I109:13464;47:269;109:13479",
+             "name": "Screen Tab",
+             "type": "INSTANCE",
+             "box": [
+              17216,
+              1620,
+              110,
+              40
+             ],
+             "component": "Screen Tab",
+             "props": {
+              "Label": "Prompts",
+              "State": "Active"
+             },
+             "children": [
+              {
+               "id": "I109:13464;47:269;109:13479;10:36",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Prompts"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "109:13465",
+       "name": "Console",
+       "type": "FRAME",
+       "box": [
+        16850,
+        1670,
+        1210,
+        651
+       ],
+       "children": [
+        {
+         "id": "109:14008",
+         "name": "Col A",
+         "type": "FRAME",
+         "box": [
+          16870,
+          1680,
+          577,
+          631
+         ],
+         "children": [
+          {
+           "id": "109:14009",
+           "name": "Prompt Presets",
+           "type": "INSTANCE",
+           "box": [
+            16870,
+            1680,
+            577,
+            308
+           ],
+           "component": "Prompt Presets",
+           "props": {
+            "State": "Active"
+           },
+           "annotations": [
+            {
+             "category": "OSC",
+             "text": "**/prompt/text** `string` (live prompt) · applied ✓ when the installation echoes it or sends **/prompt/text/applied**\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+            },
+            {
+             "category": "Depends on",
+             "text": "Presets live in the bridge (not the config): create, edit, reorder, soft delete with Undo. Applying → Error after 4 s without confirmation. Lease holder or studio only."
+            }
+           ],
+           "children": [
+            {
+             "id": "I109:14009;84:844",
+             "name": "Console Panel",
+             "type": "INSTANCE",
+             "box": [
+              16870,
+              1680,
+              577,
+              228
+             ],
+             "component": "Console Panel",
+             "props": {
+              "Title": "PROMPTS"
+             },
+             "children": [
+              {
+               "id": "I109:14009;84:844;47:159",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "PROMPTS"
+              },
+              {
+               "id": "I109:14009;84:844;47:160",
+               "name": "Controls",
+               "type": "SLOT",
+               "children": [
+                {
+                 "id": "I109:14009;84:844;47:160;109:18951",
+                 "name": "Grid",
+                 "type": "FRAME",
+                 "box": [
+                  16886,
+                  1722,
+                  545,
+                  170
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:14009;84:844;47:160;109:18952",
+                   "name": "Row",
+                   "type": "FRAME",
+                   "box": [
+                    16886,
+                    1722,
+                    545,
+                    79
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:14009;84:844;47:160;109:18953",
+                     "name": "Prompt Preset",
+                     "type": "INSTANCE",
+                     "box": [
+                      16886,
+                      1722,
+                      267,
+                      79
+                     ],
+                     "component": "Prompt Preset",
+                     "props": {
+                      "Prompt": "lush tropical plants, neon light, mist, 35mm",
+                      "Name": "Neon jungle",
+                      "State": "On"
+                     },
+                     "children": [
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18953;83:305",
+                       "name": "Head",
+                       "type": "FRAME",
+                       "box": [
+                        16900,
+                        1734,
+                        239,
+                        18
+                       ],
+                       "children": [
+                        {
+                         "id": "I109:14009;84:844;47:160;109:18953;83:306",
+                         "name": "Name",
+                         "type": "TEXT",
+                         "text": "Neon jungle"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18953;83:308",
+                       "name": "Prompt",
+                       "type": "TEXT",
+                       "text": "lush tropical plants, neon light, mist, 35mm"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:14009;84:844;47:160;109:18954",
+                     "name": "Prompt Preset",
+                     "type": "INSTANCE",
+                     "box": [
+                      17165,
+                      1722,
+                      267,
+                      79
+                     ],
+                     "component": "Prompt Preset",
+                     "props": {
+                      "Prompt": "bioluminescent jellyfish, deep blue, slow drift",
+                      "Name": "Deep ocean",
+                      "State": "Off"
+                     },
+                     "children": [
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18954;83:299",
+                       "name": "Head",
+                       "type": "FRAME",
+                       "box": [
+                        17179,
+                        1734,
+                        239,
+                        18
+                       ],
+                       "children": [
+                        {
+                         "id": "I109:14009;84:844;47:160;109:18954;83:300",
+                         "name": "Name",
+                         "type": "TEXT",
+                         "text": "Deep ocean"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18954;83:302",
+                       "name": "Prompt",
+                       "type": "TEXT",
+                       "text": "bioluminescent jellyfish, deep blue, slow drift"
+                      }
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:14009;84:844;47:160;109:18955",
+                   "name": "Row",
+                   "type": "FRAME",
+                   "box": [
+                    16886,
+                    1813,
+                    545,
+                    79
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:14009;84:844;47:160;109:18956",
+                     "name": "Prompt Preset",
+                     "type": "INSTANCE",
+                     "box": [
+                      16886,
+                      1813,
+                      279,
+                      79
+                     ],
+                     "component": "Prompt Preset",
+                     "props": {
+                      "Prompt": "concrete towers, fog, sodium lights, wide angle",
+                      "Name": "Brutalist city",
+                      "State": "Off"
+                     },
+                     "children": [
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18956;83:299",
+                       "name": "Head",
+                       "type": "FRAME",
+                       "box": [
+                        16900,
+                        1825,
+                        251,
+                        18
+                       ],
+                       "children": [
+                        {
+                         "id": "I109:14009;84:844;47:160;109:18956;83:300",
+                         "name": "Name",
+                         "type": "TEXT",
+                         "text": "Brutalist city"
+                        }
+                       ]
+                      },
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18956;83:302",
+                       "name": "Prompt",
+                       "type": "TEXT",
+                       "text": "concrete towers, fog, sodium lights, wide angle"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:14009;84:844;47:160;109:18957",
+                     "name": "New prompt",
+                     "type": "FRAME",
+                     "box": [
+                      17177,
+                      1813,
+                      254,
+                      79
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18958",
+                       "name": "Icon/plus",
+                       "type": "INSTANCE",
+                       "box": [
+                        17293,
+                        1832,
+                        22,
+                        22
+                       ],
+                       "component": "Icon/plus"
+                      },
+                      {
+                       "id": "I109:14009;84:844;47:160;109:18959",
+                       "name": "NEW PROMPT",
+                       "type": "TEXT",
+                       "text": "NEW PROMPT"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "109:14092",
+           "name": "Mic",
+           "type": "INSTANCE",
+           "box": [
+            16870,
+            2004,
+            577,
+            308
+           ],
+           "component": "Mic",
+           "props": {
+            "Label": "Room sound",
+            "State": "Off"
+           },
+           "annotations": [
+            {
+             "category": "OSC",
+             "text": "**/mic/level** `float 0–1`, **/mic/bands** `float×4` (bass…high), **/mic/beat** `1` · 30 Hz, analysed on the device\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+            },
+            {
+             "category": "Depends on",
+             "text": "Microphone permission on the device; audio never leaves the phone — only numbers are sent."
+            }
+           ],
+           "children": [
+            {
+             "id": "I109:14092;80:205",
+             "name": "Header",
+             "type": "FRAME",
+             "box": [
+              16870,
+              2004,
+              577,
+              18
+             ],
+             "children": [
+              {
+               "id": "I109:14092;80:206",
+               "name": "Label",
+               "type": "TEXT",
+               "text": "Room sound"
+              },
+              {
+               "id": "I109:14092;80:207",
+               "name": "sp",
+               "type": "FRAME",
+               "box": [
+                16955,
+                2012,
+                484,
+                1
+               ]
+              },
+              {
+               "id": "I109:14092;80:208",
+               "name": "Value",
+               "type": "TEXT",
+               "text": "—"
+              }
+             ]
+            },
+            {
+             "id": "I109:14092;80:209",
+             "name": "Body",
+             "type": "FRAME",
+             "box": [
+              16870,
+              2034,
+              577,
+              142
+             ],
+             "children": [
+              {
+               "id": "I109:14092;80:210",
+               "name": "Mic button",
+               "type": "FRAME",
+               "box": [
+                16886,
+                2061,
+                88,
+                88
+               ],
+               "children": [
+                {
+                 "id": "I109:14092;80:211",
+                 "name": "Icon",
+                 "type": "INSTANCE",
+                 "box": [
+                  16913,
+                  2088,
+                  34,
+                  34
+                 ],
+                 "component": "Icon/microphone"
+                }
+               ]
+              },
+              {
+               "id": "I109:14092;80:213",
+               "name": "Meters",
+               "type": "FRAME",
+               "box": [
+                16990,
+                2050,
+                441,
+                110
+               ],
+               "children": [
+                {
+                 "id": "I109:14092;80:214",
+                 "name": "Band",
+                 "type": "FRAME",
+                 "box": [
+                  16990,
+                  2050,
+                  441,
+                  14
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:14092;80:215",
+                   "name": "Name",
+                   "type": "TEXT",
+                   "text": "LEVEL"
+                  },
+                  {
+                   "id": "I109:14092;80:216",
+                   "name": "Segments",
+                   "type": "FRAME",
+                   "box": [
+                    17038,
+                    2052,
+                    393,
+                    10
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I109:14092;80:231",
+                 "name": "Band",
+                 "type": "FRAME",
+                 "box": [
+                  16990,
+                  2074,
+                  441,
+                  14
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:14092;80:232",
+                   "name": "Name",
+                   "type": "TEXT",
+                   "text": "LOW"
+                  },
+                  {
+                   "id": "I109:14092;80:233",
+                   "name": "Segments",
+                   "type": "FRAME",
+                   "box": [
+                    17038,
+                    2078,
+                    393,
+                    6
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I109:14092;80:248",
+                 "name": "Band",
+                 "type": "FRAME",
+                 "box": [
+                  16990,
+                  2098,
+                  441,
+                  14
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:14092;80:249",
+                   "name": "Name",
+                   "type": "TEXT",
+                   "text": "MID"
+                  },
+                  {
+                   "id": "I109:14092;80:250",
+                   "name": "Segments",
+                   "type": "FRAME",
+                   "box": [
+                    17038,
+                    2102,
+                    393,
+                    6
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I109:14092;80:265",
+                 "name": "Band",
+                 "type": "FRAME",
+                 "box": [
+                  16990,
+                  2122,
+                  441,
+                  14
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:14092;80:266",
+                   "name": "Name",
+                   "type": "TEXT",
+                   "text": "HIGH"
+                  },
+                  {
+                   "id": "I109:14092;80:267",
+                   "name": "Segments",
+                   "type": "FRAME",
+                   "box": [
+                    17038,
+                    2126,
+                    393,
+                    6
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I109:14092;80:282",
+                 "name": "Beat",
+                 "type": "FRAME",
+                 "box": [
+                  16990,
+                  2146,
+                  43,
+                  14
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:14092;80:284",
+                   "name": "Beat text",
+                   "type": "TEXT",
+                   "text": "BEAT"
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "I109:14092;80:285",
+             "name": "Fader",
+             "type": "INSTANCE",
+             "box": [
+              16870,
+              2188,
+              577,
+              82
+             ],
+             "component": "Fader",
+             "props": {
+              "Value": "+6 dB",
+              "Label": "Sensitivity",
+              "Mode": "Absolute",
+              "Orientation": "Horizontal",
+              "State": "Disabled"
+             },
+             "children": [
+              {
+               "id": "I109:14092;80:285;11:70",
+               "name": "Header",
+               "type": "FRAME",
+               "box": [
+                16870,
+                2188,
+                577,
+                18
+               ],
+               "children": [
+                {
+                 "id": "I109:14092;80:285;11:71",
+                 "name": "Label",
+                 "type": "TEXT",
+                 "text": "Sensitivity"
+                },
+                {
+                 "id": "I109:14092;80:285;11:72",
+                 "name": "Frame",
+                 "type": "FRAME",
+                 "box": [
+                  16955,
+                  2196,
+                  445,
+                  1
+                 ]
+                },
+                {
+                 "id": "I109:14092;80:285;11:73",
+                 "name": "Value",
+                 "type": "TEXT",
+                 "text": "+6 dB"
+                }
+               ]
+              },
+              {
+               "id": "I109:14092;80:285;11:74",
+               "name": "Body",
+               "type": "FRAME",
+               "box": [
+                16870,
+                2214,
+                577,
+                56
+               ]
+              }
+             ]
+            },
+            {
+             "id": "I109:14092;80:298",
+             "name": "Message",
+             "type": "TEXT",
+             "text": "Tap to listen. Sound is analysed on this device — no audio leaves it."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "109:14038",
+         "name": "Col B",
+         "type": "FRAME",
+         "box": [
+          17463,
+          1680,
+          577,
+          631
+         ],
+         "children": [
+          {
+           "id": "109:14039",
+           "name": "Prompt Mix",
+           "type": "INSTANCE",
+           "box": [
+            17472,
+            1680,
+            560,
+            631
+           ],
+           "component": "Prompt Mix",
+           "annotations": [
+            {
+             "category": "OSC",
+             "text": "**/prompt/mix** `string A` `string B` `float 0–1` (crossfade between two presets)\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+            },
+            {
+             "category": "Depends on",
+             "text": "Needs two presets; “Use in mix” from the context menu fills A/B."
+            }
+           ],
+           "children": [
+            {
+             "id": "I109:14039;84:935",
+             "name": "Console Panel",
+             "type": "INSTANCE",
+             "box": [
+              17472,
+              1680,
+              560,
+              308
+             ],
+             "component": "Console Panel",
+             "props": {
+              "Title": "PROMPT MIX"
+             },
+             "children": [
+              {
+               "id": "I109:14039;84:935;47:159",
+               "name": "Title",
+               "type": "TEXT",
+               "text": "PROMPT MIX"
+              },
+              {
+               "id": "I109:14039;84:935;47:160",
+               "name": "Controls",
+               "type": "SLOT",
+               "children": [
+                {
+                 "id": "I109:14039;84:935;84:953",
+                 "name": "Col",
+                 "type": "FRAME",
+                 "box": [
+                  17488,
+                  1722,
+                  528,
+                  250
+                 ],
+                 "children": [
+                  {
+                   "id": "I109:14039;84:935;84:954",
+                   "name": "Pair",
+                   "type": "FRAME",
+                   "box": [
+                    17488,
+                    1722,
+                    528,
+                    60
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:14039;84:935;84:955",
+                     "name": "Select A",
+                     "type": "FRAME",
+                     "box": [
+                      17488,
+                      1722,
+                      258,
+                      60
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:14039;84:935;84:956",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "A"
+                      },
+                      {
+                       "id": "I109:14039;84:935;84:957",
+                       "name": "Pult Select",
+                       "type": "INSTANCE",
+                       "box": [
+                        17488,
+                        1742,
+                        258,
+                        40
+                       ],
+                       "component": "Pult Select",
+                       "props": {
+                        "Pult": "Neon jungle"
+                       },
+                       "children": [
+                        {
+                         "id": "I109:14039;84:935;84:957;10:33",
+                         "name": "Pult",
+                         "type": "TEXT",
+                         "text": "Neon jungle"
+                        },
+                        {
+                         "id": "I109:14039;84:935;84:957;23:114",
+                         "name": "Icon",
+                         "type": "INSTANCE",
+                         "box": [
+                          17597,
+                          1754,
+                          16,
+                          16
+                         ],
+                         "component": "Icon/caret-down"
+                        }
+                       ]
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:14039;84:935;84:958",
+                     "name": "Select B",
+                     "type": "FRAME",
+                     "box": [
+                      17758,
+                      1722,
+                      258,
+                      60
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:14039;84:935;84:959",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "B"
+                      },
+                      {
+                       "id": "I109:14039;84:935;84:960",
+                       "name": "Pult Select",
+                       "type": "INSTANCE",
+                       "box": [
+                        17758,
+                        1742,
+                        258,
+                        40
+                       ],
+                       "component": "Pult Select",
+                       "props": {
+                        "Pult": "Deep ocean"
+                       },
+                       "children": [
+                        {
+                         "id": "I109:14039;84:935;84:960;10:33",
+                         "name": "Pult",
+                         "type": "TEXT",
+                         "text": "Deep ocean"
+                        },
+                        {
+                         "id": "I109:14039;84:935;84:960;23:114",
+                         "name": "Icon",
+                         "type": "INSTANCE",
+                         "box": [
+                          17867,
+                          1754,
+                          16,
+                          16
+                         ],
+                         "component": "Icon/caret-down"
+                        }
+                       ]
+                      }
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:14039;84:935;84:961",
+                   "name": "Fader",
+                   "type": "INSTANCE",
+                   "box": [
+                    17488,
+                    1798,
+                    528,
+                    82
+                   ],
+                   "component": "Fader",
+                   "props": {
+                    "Label": "Blend",
+                    "Value": "A 30 · B 70",
+                    "Mode": "Crossfade",
+                    "Orientation": "Horizontal",
+                    "State": "Default"
+                   },
+                   "children": [
+                    {
+                     "id": "I109:14039;84:935;84:961;75:5083",
+                     "name": "Header",
+                     "type": "FRAME",
+                     "box": [
+                      17488,
+                      1798,
+                      528,
+                      18
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:14039;84:935;84:961;75:5084",
+                       "name": "Label",
+                       "type": "TEXT",
+                       "text": "Mix"
+                      },
+                      {
+                       "id": "I109:14039;84:935;84:961;75:5085",
+                       "name": "Frame",
+                       "type": "FRAME",
+                       "box": [
+                        17518,
+                        1807,
+                        404,
+                        1
+                       ]
+                      },
+                      {
+                       "id": "I109:14039;84:935;84:961;75:5086",
+                       "name": "Value",
+                       "type": "TEXT",
+                       "text": "A 30 · B 70"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:14039;84:935;84:961;75:5087",
+                     "name": "Body",
+                     "type": "FRAME",
+                     "box": [
+                      17488,
+                      1824,
+                      528,
+                      56
+                     ]
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I109:14039;84:935;84:962",
+                   "name": "Weights",
+                   "type": "FRAME",
+                   "box": [
+                    17488,
+                    1896,
+                    528,
+                    76
+                   ],
+                   "children": [
+                    {
+                     "id": "I109:14039;84:935;84:963",
+                     "name": "Weight",
+                     "type": "FRAME",
+                     "box": [
+                      17488,
+                      1896,
+                      258,
+                      76
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:14039;84:935;84:964",
+                       "name": "NEON JUNGLE",
+                       "type": "TEXT",
+                       "text": "NEON JUNGLE"
+                      },
+                      {
+                       "id": "I109:14039;84:935;84:965",
+                       "name": "30%",
+                       "type": "TEXT",
+                       "text": "30%"
+                      }
+                     ]
+                    },
+                    {
+                     "id": "I109:14039;84:935;84:966",
+                     "name": "Weight",
+                     "type": "FRAME",
+                     "box": [
+                      17758,
+                      1896,
+                      258,
+                      76
+                     ],
+                     "children": [
+                      {
+                       "id": "I109:14039;84:935;84:967",
+                       "name": "DEEP OCEAN",
+                       "type": "TEXT",
+                       "text": "DEEP OCEAN"
+                      },
+                      {
+                       "id": "I109:14039;84:935;84:968",
+                       "name": "70%",
+                       "type": "TEXT",
+                       "text": "70%"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "109:13473",
+       "name": "Page Dots",
+       "type": "INSTANCE",
+       "box": [
+        16850,
+        2321,
+        1210,
+        6
+       ],
+       "component": "Page Dots",
+       "props": {
+        "Count": "4"
+       }
+      },
+      {
+       "id": "109:13474",
+       "name": "Home Indicator",
+       "type": "INSTANCE",
+       "box": [
+        16850,
+        2327,
+        1210,
+        21
+       ],
+       "component": "Home Indicator",
+       "props": {
+        "Device": "Tablet"
+       }
+      }
+     ]
+    },
+    {
+     "id": "109:14187",
+     "name": "Tablet / 13 Prompts — edit mode",
+     "type": "FRAME",
+     "box": [
+      18140,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "109:14877",
+     "name": "Tablet / 14 Prompt — context menu",
+     "type": "FRAME",
+     "box": [
+      19430,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "109:16692",
+     "name": "Tablet / 15 New prompt (form sheet)",
+     "type": "FRAME",
+     "box": [
+      20720,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "109:15653",
+     "name": "Tablet / 16 Prompt deleted (Undo)",
+     "type": "FRAME",
+     "box": [
+      22010,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "109:17275",
+     "name": "Tablet / 17 Activity (inspector, pushed)",
+     "type": "FRAME",
+     "box": [
+      23300,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "109:17980",
+     "name": "Tablet / 18 Scan QR — not recognised",
+     "type": "FRAME",
+     "box": [
+      24590,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "109:18029",
+     "name": "Tablet / 19 No pult yet",
+     "type": "FRAME",
+     "box": [
+      25880,
+      1514,
+      1210,
+      834
+     ]
+    },
+    {
+     "id": "126:10455",
+     "name": "Tablet / 20 Debug (inspector, pushed)",
+     "type": "FRAME",
+     "box": [
+      27170,
+      1514,
+      1210,
+      834
+     ]
+    }
+   ]
+  }
+ ]
+}
