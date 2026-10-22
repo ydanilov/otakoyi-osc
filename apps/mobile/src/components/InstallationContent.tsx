@@ -9,6 +9,7 @@ import {
   ConnectionStatus,
   FlashlightIcon,
   HandPalmIcon,
+  InfoIcon,
   ListCard,
   ListRow,
   MonitorIcon,
@@ -25,6 +26,7 @@ import { Text } from "@osc/ui/components/ui/text";
 import * as React from "react";
 import { View } from "react-native";
 import { useApp, useSessionState } from "@/lib/app-context";
+import { DebugContent } from "./DebugContent";
 import {
   actionMessage,
   activityLine,
@@ -40,14 +42,21 @@ const HEALTH_MS = 2000;
 /** Hold-to-confirm for Restart and Blackout (ADR-016). */
 const HOLD_MS = 1200;
 
-export type InstallationView = "main" | "activity";
+export type InstallationView = "main" | "activity" | "debug";
+
+/** Title of the inspector / sheet for a view. */
+export const INSTALLATION_TITLE: Record<InstallationView, string> = {
+  main: "Installation",
+  activity: "Activity",
+  debug: "Debug",
+};
 
 const ACTION_ICON = { flash: FlashlightIcon, restart: ArrowClockwiseIcon, blackout: PowerIcon };
 
 /**
  * Installation panel body (ADR-013): name and status with stats, pult switcher, quick actions
- * (Flash, Restart and Blackout with hold-to-confirm), modes (Idle, optional Pause) and an Activity
- * row that pushes the activity list. Built from DS parts; the route (iPhone sheet) or the DS
+ * (Flash, Restart and Blackout with hold-to-confirm), modes (Idle, optional Pause), an Activity
+ * row that pushes the activity list and a Debug row that pushes the Debug page. Built from DS parts; the route (iPhone sheet) or the DS
  * Inspector (iPad) provides the frame.
  */
 export function InstallationContent({
@@ -61,13 +70,19 @@ export function InstallationContent({
   onView: (v: InstallationView) => void;
   pultId: string | null;
   onPult: (id: string) => void;
-  /** The inspector has no back button of its own: show one in the pushed Activity view. */
+  /** The inspector has no back button of its own: show one in the pushed Activity / Debug view. */
   showBack?: boolean;
 }) {
-  return view === "activity" ? (
-    <ActivityList onBack={showBack ? () => onView("main") : undefined} />
-  ) : (
-    <Main pultId={pultId} onPult={onPult} onActivity={() => onView("activity")} />
+  const back = showBack ? () => onView("main") : undefined;
+  if (view === "activity") return <ActivityList onBack={back} />;
+  if (view === "debug") return <DebugContent onBack={back} backLabel="Installation" />;
+  return (
+    <Main
+      pultId={pultId}
+      onPult={onPult}
+      onActivity={() => onView("activity")}
+      onDebug={() => onView("debug")}
+    />
   );
 }
 
@@ -75,10 +90,12 @@ function Main({
   pultId,
   onPult,
   onActivity,
+  onDebug,
 }: {
   pultId: string | null;
   onPult: (id: string) => void;
   onActivity: () => void;
+  onDebug: () => void;
 }) {
   const { session } = useApp();
   const s = useSessionState();
@@ -196,6 +213,7 @@ function Main({
           subtitle={lastLine ? `${lastLine.title} · ${lastLine.time}` : "Nothing yet"}
           onPress={onActivity}
         />
+        <ListRow icon={InfoIcon} title="Debug" subtitle="Bridge · OSC log" onPress={onDebug} />
       </ListCard>
     </View>
   );

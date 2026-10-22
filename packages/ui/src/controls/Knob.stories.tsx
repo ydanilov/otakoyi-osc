@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
+import { expect } from "storybook/test";
 import * as React from "react";
 import { ControlHarness } from "../stories/ControlHarness";
 import { makeControl } from "../stories/controls";
@@ -78,7 +79,7 @@ const meta = {
           do: ["Group knobs that belong together in a Console Panel."],
           dont: ["Don't make knobs smaller than 72 pt; the drag needs room."],
           anatomy: [
-            "Label + value readout",
+            "Header: label + value readout, centred above the dial, 6 pt apart",
             "Track arc (control track)",
             "Lit arc (control/signal) from start (or centre)",
             "Knob cap with indicator line",
@@ -116,7 +117,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  play: async ({ canvas }) => {
+    // Knob header: label and value centred above the dial.
+    await expect(await canvas.findByTestId("control-header-center")).toBeVisible();
+  },
+};
 export const Centered: Story = {
   args: { label: "Pan", centered: true, value: 0.5, min: -1, max: 1 },
 };

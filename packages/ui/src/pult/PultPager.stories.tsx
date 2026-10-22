@@ -1,4 +1,3 @@
-import { DebugStore, messagesFor } from "@osc/controls";
 import demoJson from "@osc/schema/examples/demo-installation.json";
 import { parseConfig } from "@osc/schema";
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
@@ -10,33 +9,19 @@ import { storyServices } from "../stories/services";
 import { PultPager, PultProvider } from "./PultRenderer";
 import { PultStore } from "./store";
 
-function Demo({
-  pultIndex = 0,
-  height = 700,
-  debug = false,
-}: {
-  pultIndex?: number;
-  height?: number;
-  /** Settings › Developer › Debug overlay: a DebugTag on every control. */
-  debug?: boolean;
-}) {
-  const debugStore = React.useMemo(() => new DebugStore(), []);
+function Demo({ pultIndex = 0, height = 700 }: { pultIndex?: number; height?: number }) {
   const store = React.useMemo(() => {
     const parsed = parseConfig(demoJson);
     if (!parsed.ok) throw new Error("demo config invalid");
     const pult = parsed.config.pults[pultIndex] ?? parsed.config.pults[0]!;
-    const st = new PultStore(parsed.config, pult, {
-      send: () => {},
-      interact: (_p, control, value) => debugStore.sent(control.id, messagesFor(control, value)),
-    });
-    return st;
-  }, [pultIndex, debugStore]);
+    return new PultStore(parsed.config, pult, { send: () => {} });
+  }, [pultIndex]);
   const services = React.useMemo(storyServices, []);
   return (
     <View style={{ height }}>
       <ControlServicesProvider value={services}>
         <PultProvider store={store}>
-          <PultPager pages={store.pult.pages} debug={debug ? debugStore : null} />
+          <PultPager pages={store.pult.pages} />
         </PultProvider>
       </ControlServicesProvider>
     </View>
@@ -85,7 +70,5 @@ type Story = StoryObj<typeof meta>;
 
 export const DemoPult: Story = {};
 export const Phone: Story = { globals: { viewport: { value: "phone" } } };
-/** Debug overlay on: every control shows its OSC address, last value sent and send rate. */
-export const DebugOverlay: Story = { args: { debug: true } };
 /** The demo's live pult: picture pad, compact knobs and sized pads. */
 export const LivePult: Story = { args: { pultIndex: 2 } };

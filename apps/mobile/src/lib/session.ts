@@ -58,7 +58,7 @@ export interface SessionOptions {
   now?: () => number;
 }
 
-/** Debug overlay: protocol ping and health (FPS) poll interval while it is on, ms. */
+/** Debug page: protocol ping and health (FPS) poll interval while it is open, ms. */
 export const DEBUG_POLL_MS = 2000;
 
 const NO_MODES: InstallationModes = { blackout: false, idle: false, pause: false };
@@ -77,7 +77,7 @@ export class Session {
   readonly pin: string | undefined;
   readonly name: string | undefined;
   stores = new Map<string, PultStore>();
-  /** Counters, rates and the OSC log behind the debug overlay (Settings › Developer). */
+  /** Counters, rates and the OSC log behind the Debug page (Installation › Debug, Settings › Developer › Debug). */
   readonly debug: DebugStore;
   private debugTimer: ReturnType<typeof setInterval> | null = null;
   private t: BridgeTransport | null = null;
@@ -109,8 +109,9 @@ export class Session {
   }
 
   /**
-   * Debug overlay on or off. While on, the session pings the bridge (RTT) and reads its health
-   * (the installation's FPS) every DEBUG_POLL_MS; off costs nothing.
+   * Debug page open or closed (it calls this on mount / unmount). While open, the session pings the
+   * bridge (RTT) and reads its health (the installation's FPS) every DEBUG_POLL_MS; closed costs
+   * nothing.
    */
   setDebug(on: boolean) {
     if (!on) {

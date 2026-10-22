@@ -294,6 +294,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   return (
     <ControlFrame
       label={c.label}
+      align="center"
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
@@ -442,6 +443,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
   return (
     <ControlFrame
       label={c.label}
+      align="center"
       badge={fine ? fineBadge(fineFactor) : undefined}
       relative
       disabled={disabled}
@@ -594,6 +596,7 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
   return (
     <ControlFrame
       label={c.label}
+      align="center"
       value={c.showValue ? formatValue(Math.round(display), { unit: c.unit ?? "°" }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}

@@ -165,6 +165,7 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   return (
     <ControlFrame
       label={c.label}
+      align={vertical ? "center" : "split"}
       value={c.showValue ? formatValue(moved, { unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       relative

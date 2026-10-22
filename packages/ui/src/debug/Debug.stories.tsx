@@ -42,29 +42,29 @@ function HudStory({ collapsed: initial = false }: { collapsed?: boolean }) {
 }
 
 const meta = {
-  title: "Pult/Debug Overlay",
+  title: "Patterns/Debug Tag & HUD",
   component: HudStory,
   parameters: {
     docs: {
       description: {
         component: componentDocs({
           purpose:
-            "Developer overlay for integration work (Settings › Developer › Debug overlay, per device, off by default): a tag on every control and a HUD at the bottom of the pult.",
-          use: ["Wiring an installation's OSC contract, checking rates and feedback on site."],
-          avoid: ["Client-facing UI — it stays off unless switched on on this device."],
+            "Compact debug readouts kept in the library. Not used in the app at the moment: the Debug page (Installation › Debug, Settings › Developer › Debug) is built from Debug Row and OSC Log, and debug never overlays the pult.",
+          use: ["Reserved; prefer Debug Row / OSC Log on the Debug page."],
+          avoid: ["The pult — debug never overlays it.", "Client-facing UI."],
           do: ["Read the HUD log to see what left the pult (→) and what came back (←)."],
-          dont: ["Don't ship a pult screenshot with the overlay on."],
+          dont: ["Don't pin tags over controls on the pult."],
           anatomy: [
             "Debug Tag: address / template (amber), last value sent, send rate — mono 10, 72 % black, amber hairline",
             "Debug HUD: head (DEBUG · proto · rev · schema), metrics (bridge, rtt, out, in, fps, lease, target, feedback), live OSC log",
           ],
           behaviour: [
             "Data from `DebugStore` (`@osc/controls`): per-control value and rate, 1 s rate windows, a 50-event ring buffer; unit-tested.",
-            "RTT from the protocol ping, FPS from the bridge's telemetry (`/sys/fps`), polled every 2 s only while the overlay is on.",
+            "RTT from the protocol ping, FPS from the bridge's telemetry (`/sys/fps`), polled every 2 s only while the Debug page is open.",
             "Tap the HUD head to collapse / expand.",
           ],
           a11y: [
-            "Tags are hidden from VoiceOver (they duplicate the control); the HUD head is a button with expanded state.",
+            "Each tag reads as one element (address, value, rate); the HUD head is a button with expanded state.",
           ],
           content: ["Values are clipped to one line."],
           figma: { component: "Debug Tag · Debug HUD", node: "118:13440 · 118:13444" },

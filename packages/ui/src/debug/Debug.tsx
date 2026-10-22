@@ -6,9 +6,10 @@ import { CONTINUOUS } from "../ds/depth";
 import { useTheme } from "../theme/ThemeProvider";
 
 /**
- * Debug overlay (Settings › Developer › Debug overlay). Mono 10 pt on a dark scrim with an amber
- * (status warning) hairline: it must read on top of any control in both modes, so its colours
- * come from the `debug` tokens and do not follow the theme mode.
+ * Debug Tag / Debug HUD: compact debug readouts kept in the library; not used in the app at the
+ * moment (the Debug page uses Debug Row and OSC Log, and debug never overlays the pult). Mono
+ * 10 pt on a dark scrim with an amber (status warning) hairline; the colours come from the `debug`
+ * tokens and do not follow the theme mode.
  */
 
 const MONO = "font-mono text-[10px] leading-[13px]";
@@ -17,7 +18,7 @@ const MONO = "font-mono text-[10px] leading-[13px]";
 const DEBUG_TEXT = baseTokens.color.dark.text;
 const DEBUG_MUTED = baseTokens.color.dark.textMuted;
 
-/** Figma `Debug Tag`: pinned at a control's top-left — address, last value sent, send rate. */
+/** Figma `Debug Tag`: one control — address, last value sent, send rate. */
 export function DebugTag({
   address,
   value,
@@ -33,9 +34,8 @@ export function DebugTag({
   const t = useTheme();
   return (
     <View
-      pointerEvents="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      accessible
+      accessibilityLabel={`${address}, ${value ?? "nothing sent"}${rate !== undefined ? `, ${rate}` : ""}`}
       className="max-w-full flex-row gap-1.5 self-start rounded-[6px] border px-1.5 py-[3px]"
       style={[
         CONTINUOUS,

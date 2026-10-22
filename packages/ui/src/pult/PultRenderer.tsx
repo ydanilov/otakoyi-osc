@@ -1,11 +1,10 @@
-import { debugAddress, formatRate, type ControlValue, type DebugStore } from "@osc/controls";
+import type { ControlValue } from "@osc/controls";
 import type { AnyControl, Control, Page } from "@osc/schema";
 import * as React from "react";
 import { ScrollView, View, type ScrollViewInstance } from "react-native";
 import { ScreenTab } from "../chrome/Navigation";
 import { PageDots } from "../chrome/Status";
 import { UnsupportedPlaceholder } from "../controls/discrete";
-import { DebugTag, useTicker } from "../debug/Debug";
 import { Surface } from "../ds/depth";
 import { controlRegistry } from "../controls/registry";
 import type { ControlProps } from "../controls/types";
@@ -47,20 +46,6 @@ function ConnectedControl({ control, studio }: { control: AnyControl; studio: bo
   );
 }
 
-/** Debug tag of one control: address, last value sent, send rate (re-read a few times a second). */
-function ControlDebugTag({ control, debug }: { control: AnyControl; debug: DebugStore }) {
-  useTicker(250);
-  if (control.type === "unsupported") return null;
-  const s = debug.control(control.id);
-  return (
-    <DebugTag
-      address={debugAddress(control)}
-      value={s?.value}
-      rate={`${formatRate(s?.rate ?? 0)}/s`}
-    />
-  );
-}
-
 /** Minimum row height (pt) before a page is split into another screen. */
 const MIN_ROW = 40;
 
@@ -77,16 +62,7 @@ interface PagerScreen {
  * does not fit at the minimum row height is split into several screens. All screens of all pages
  * sit in one horizontal pager; tabs above jump to a screen and follow the swipe.
  */
-export function PultPager({
-  pages,
-  studio = false,
-  debug,
-}: {
-  pages: Page[];
-  studio?: boolean;
-  /** Debug overlay on: every control shows its DebugTag (Settings › Developer). */
-  debug?: DebugStore | null | undefined;
-}) {
+export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: boolean }) {
   const t = useTheme();
   const { size, onLayout } = useLayout();
   const pad = t.space[4];
@@ -158,14 +134,7 @@ export function PultPager({
           >
             {screens.map((s) => (
               <View key={s.key} style={{ width: W, height: H, padding: pad }}>
-                <ScreenGrid
-                  screen={s}
-                  width={innerW}
-                  height={innerH}
-                  gap={gap}
-                  studio={studio}
-                  debug={debug}
-                />
+                <ScreenGrid screen={s} width={innerW} height={innerH} gap={gap} studio={studio} />
               </View>
             ))}
           </ScrollView>
@@ -186,14 +155,12 @@ function ScreenGrid({
   height,
   gap,
   studio,
-  debug,
 }: {
   screen: PagerScreen;
   width: number;
   height: number;
   gap: number;
   studio: boolean;
-  debug?: DebugStore | null | undefined;
 }) {
   const cols = screen.page.columns;
   const colW = (width - gap * (cols - 1)) / cols;
@@ -218,14 +185,6 @@ function ScreenGrid({
             }}
           >
             <ConnectedControl control={c} studio={studio} />
-            {debug && (
-              <View
-                pointerEvents="none"
-                style={{ position: "absolute", left: -2, top: -4, right: 0 }}
-              >
-                <ControlDebugTag control={c} debug={debug} />
-              </View>
-            )}
           </View>
         );
       })}

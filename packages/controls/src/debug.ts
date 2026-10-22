@@ -3,8 +3,8 @@ import type { Control } from "@osc/schema";
 import type { ControlValue } from "./logic";
 
 /**
- * Debug overlay (Settings › Developer › Debug overlay; Figma Debug Tag / Debug HUD). Pure TS: the
- * session feeds it what goes out and comes back, the overlay reads it a few times a second.
+ * Debug page (Installation › Debug, Settings › Developer › Debug; Figma Debug Tag / Debug HUD). Pure
+ * TS: the session feeds it what goes out and comes back, the page reads it a few times a second.
  *
  * - per control: the OSC address (or template), the last value sent and the send rate;
  * - totals: messages out / in per second over a sliding window, round-trip time of the protocol
@@ -74,7 +74,7 @@ export interface DebugControlStats {
   at: number;
 }
 
-/** One OSC argument as the overlay shows it: floats with 3 decimals, strings quoted. */
+/** One OSC argument as the Debug page shows it: floats with 3 decimals, strings quoted. */
 export function formatOscArg(a: OscArg): string {
   switch (a.type) {
     case "f":
@@ -122,7 +122,7 @@ export function formatClock(epochMs: number): string {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`;
 }
 
-/** Messages per second as the overlay shows it: `48`, `2.5`, `0`. */
+/** Messages per second as the Debug page shows it: `48`, `2.5`, `0`. */
 export function formatRate(r: number): string {
   if (r === 0) return "0";
   return r >= 10 ? String(Math.round(r)) : (Math.round(r * 10) / 10).toString();
@@ -147,7 +147,7 @@ export interface DebugStoreOptions {
   windowMs?: number;
 }
 
-/** Counters, rate windows and the OSC log behind the debug overlay. */
+/** Counters, rate windows and the OSC log behind the Debug page. */
 export class DebugStore {
   readonly now: () => number;
   private log = new Ring<DebugLogEntry>(50);

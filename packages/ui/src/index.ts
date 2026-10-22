@@ -139,3 +139,5 @@ export {
   type DebugHudLogLine,
   type DebugHudMetric,
 } from "./debug/Debug";
+export { DebugRow } from "./debug/DebugRow";
+export { OscLog, type OscLogLine } from "./debug/OscLog";

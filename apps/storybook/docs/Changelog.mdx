@@ -7,6 +7,32 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-22 — Debug page instead of the pult overlay; centred control headers
+
+**Changed**
+
+- Debug no longer overlays the pult: the per-control tags and the bottom HUD are gone from the pult
+  screen, and so is the Settings › Developer "Debug overlay" switch (and its stored preference).
+- The **Debug page** (Figma Phone / 20 Debug, Tablet / 20 Debug) is an iOS inset-grouped list:
+  **Connection** (Bridge, Round trip, Target, Last feedback, In control), **Traffic** (Sent,
+  Received, Installation FPS), **Controls** (one row per control on the current pult), **OSC log**
+  (last 50, newest first) and **Versions** (Protocol, Config revision, Schema). It scrolls; ping /
+  health polling runs only while it is open.
+- Entry points: Installation › **Debug** (subtitle "Bridge · OSC log", under Activity; pushed in
+  the iPhone sheet, in the iPad inspector with a back control) and Settings › Developer › **Debug**.
+- **Control headers**: vertical faders (and jog wheels) and knobs centre the label and value above
+  the control with a 6 pt gap; horizontal faders keep label left / value right (`ControlFrame
+align`).
+- **List Card**: `inset` for the separators (50 with icons, 16 for Debug Rows).
+- **Debug Tag** / **Debug HUD** stay in the library but are not used in the app now (story moved
+  to Patterns/Debug Tag & HUD); Pult Pager lost its debug story.
+
+**Added**
+
+- **Debug Row** (Kind=Metric: label, mono value; Kind=Control: label + mono address, mono value +
+  rate) and **OSC Log** (mono 11 lines: time, → sent in the signal colour / ← received in the
+  studio colour, address, value).
+
 ## 2026-10-22 — code = Figma parity, sizes, picture pads, debug overlay
 
 **Changed**

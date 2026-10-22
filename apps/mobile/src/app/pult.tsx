@@ -13,9 +13,12 @@ import { router } from "expo-router";
 import * as React from "react";
 import { Platform, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DebugPanel } from "@/components/DebugPanel";
 import { DemoBanner } from "@/components/DemoBanner";
-import { InstallationContent, type InstallationView } from "@/components/InstallationContent";
+import {
+  INSTALLATION_TITLE,
+  InstallationContent,
+  type InstallationView,
+} from "@/components/InstallationContent";
 import { PreviewPanel } from "@/components/PreviewPanel";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { edgeTarget, formFactorOf, presentationOf, type Panel } from "@/lib/nav";
@@ -45,14 +48,6 @@ export default function PultScreen() {
     activateKeepAwakeAsync("pult").catch(() => {});
     return () => void deactivateKeepAwake("pult").catch(() => {});
   }, [app.prefs.keepAwake]);
-
-  // Debug overlay (Settings › Developer): the session pings and polls health only while it is on.
-  const debugOn = app.prefs.debugOverlay;
-  React.useEffect(() => {
-    if (!session) return;
-    session.setDebug(debugOn);
-    return () => session.setDebug(false);
-  }, [session, debugOn]);
 
   // Connection lost: a dialog sheet (not an alert); it reconnects by itself meanwhile.
   React.useEffect(() => {
@@ -122,8 +117,7 @@ export default function PultScreen() {
                 <PreviewPanel sim={app.sim} />
               </View>
             )}
-            <PultPager key={pult.id} pages={pult.pages} debug={debugOn ? session.debug : null} />
-            {debugOn && <DebugPanel session={session} state={s} tablet={ff === "tablet"} />}
+            <PultPager key={pult.id} pages={pult.pages} />
           </SafeAreaView>
           {edgeTarget("left", ff) && <EdgeSwipe side="left" onOpen={() => open("settings")} />}
           <EdgeSwipe side="right" onOpen={() => open("installation")} />
@@ -131,7 +125,7 @@ export default function PultScreen() {
             <Inspector
               open={inspector}
               onClose={() => setInspector(false)}
-              title={view === "activity" ? "Activity" : "Installation"}
+              title={INSTALLATION_TITLE[view]}
             >
               <InstallationContent
                 view={view}

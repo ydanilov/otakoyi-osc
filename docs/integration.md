@@ -120,12 +120,13 @@ OTAKOYI_PIN=2468 pnpm bridge --config /absolute/path/to/draft-config.json
 # OTAKOYI_DEBUG=1 logs every OSC packet in and out
 ```
 
-**Debug overlay on the pult.** In the app or the web pult: Settings › Developer › Debug overlay
-(per device, off by default). Every control then shows a tag with its OSC address (or template),
-the last value sent and its send rate; a HUD at the bottom shows the bridge, the round-trip time,
-messages out / in per second, the installation's FPS (from your `/sys/fps`), the lease holder, the
-target, the time since your last feedback, the protocol / config / schema versions and a live log of
-the last ~50 OSC events (→ sent, ← received). Tap the HUD head to collapse it.
+**Debug page.** In the app or the web pult: Installation › Debug (or Settings › Developer › Debug).
+It never covers the pult. It lists the connection (bridge, round trip, target, time since your last
+feedback, who is in control), the traffic (messages sent / received per second, the installation's
+FPS from your `/sys/fps`), every control on the current pult with its OSC address (or template), the
+last value sent and its send rate, a live log of the last 50 OSC events (→ sent, ← received, newest
+first) and the protocol / config / schema versions. The app pings the bridge and polls its health
+only while the page is open.
 
 The draft config is only for testing; the real one is exported from Figma. Start from
 `packages/schema/examples/demo-installation.json`: set `targets[0].port` / `feedbackPort` and

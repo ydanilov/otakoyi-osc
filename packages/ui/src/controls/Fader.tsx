@@ -266,6 +266,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   return (
     <ControlFrame
       label={c.label}
+      align={vertical ? "center" : "split"}
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}

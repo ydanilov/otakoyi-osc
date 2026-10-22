@@ -13,13 +13,22 @@ import { cn } from "../lib/utils";
  * Figma `List Card`: raised card of List Rows separated by inset hairlines (Divider Type=Inset:
  * from the row text, 50 pt, to the trailing edge — iOS inset-grouped). Slot: rows as children.
  */
-export function ListCard({ children, className, ...props }: ViewProps & { className?: string }) {
+export function ListCard({
+  children,
+  className,
+  inset = LIST_INSET,
+  ...props
+}: ViewProps & {
+  className?: string;
+  /** Leading inset of the separators: 50 for List Rows with icons, 16 for rows without (Debug Row). */
+  inset?: number;
+}) {
   const rows = React.Children.toArray(children).filter(Boolean);
   return (
     <Surface depth="raised" radius="lg" className={cn("overflow-hidden", className)} {...props}>
       {rows.map((row, i) => (
         <React.Fragment key={i}>
-          {i > 0 && <View className="bg-border/50 h-px" style={{ marginLeft: LIST_INSET }} />}
+          {i > 0 && <View className="bg-border/50 h-px" style={{ marginLeft: inset }} />}
           {row}
         </React.Fragment>
       ))}

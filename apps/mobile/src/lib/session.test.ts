@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseConfig } from "@osc/schema";
 import { Simulator } from "@osc/sim";
 import demo from "../../../../packages/schema/examples/demo-installation.json";
-import { Session, installationOnline } from "./session";
+import { DEBUG_POLL_MS, Session, installationOnline } from "./session";
 
 const parsed = parseConfig(demo);
 if (!parsed.ok) throw new Error("demo config");
@@ -108,7 +108,7 @@ describe("Session over a transport (here: the in-app simulator)", () => {
     expect(s.state.error).toEqual({ code: "auth", message: "Wrong PIN" });
   });
 
-  it("feeds the debug overlay: OSC out per control, RTT of the ping, FPS from telemetry", async () => {
+  it("feeds the Debug page: OSC out per control, RTT of the ping, FPS from telemetry", async () => {
     const s = demoSession();
     s.start();
     await vi.advanceTimersByTimeAsync(0);
@@ -129,6 +129,23 @@ describe("Session over a transport (here: the in-app simulator)", () => {
     // Feedback that changes a value (the demo's audio meter) is logged as received.
     await vi.advanceTimersByTimeAsync(500);
     expect(s.debug.entries().some((e) => e.dir === "in")).toBe(true);
+    s.stop();
+  });
+
+  it("pings and polls health only while the Debug page is open", async () => {
+    const s = demoSession();
+    s.start();
+    await vi.advanceTimersByTimeAsync(0);
+    const health = vi.spyOn(s.http, "health");
+    await vi.advanceTimersByTimeAsync(DEBUG_POLL_MS * 3);
+    expect(health).not.toHaveBeenCalled();
+    s.setDebug(true); // page mounted
+    expect(health).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(DEBUG_POLL_MS);
+    expect(health).toHaveBeenCalledTimes(2);
+    s.setDebug(false); // page unmounted
+    await vi.advanceTimersByTimeAsync(DEBUG_POLL_MS * 3);
+    expect(health).toHaveBeenCalledTimes(2);
     s.stop();
   });
 });
