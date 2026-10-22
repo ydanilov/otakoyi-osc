@@ -19,6 +19,7 @@ import {
   fineBadge,
   formatOffset,
   formatValue,
+  stepDecimals,
   hsbToHex,
   hsvToHex,
   hueDrag,
@@ -343,7 +344,11 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
     <ControlFrame
       label={c.label}
       align="center"
-      value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
+      value={
+        c.showValue
+          ? formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) })
+          : undefined
+      }
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
@@ -353,8 +358,11 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
           onLayout={onLayout}
           accessible
           accessibilityRole="adjustable"
+          accessibilityState={{ disabled: !!disabled }}
           accessibilityLabel={c.label ?? c.id}
-          accessibilityValue={{ text: formatValue(display, { unit: c.unit }) }}
+          accessibilityValue={{
+            text: formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) }),
+          }}
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
           onAccessibilityAction={(e) => {
             const next = Math.min(
@@ -544,6 +552,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
           onLayout={onLayout}
           accessible
           accessibilityRole="adjustable"
+          accessibilityState={{ disabled: !!disabled }}
           accessibilityLabel={c.label ?? c.id}
           accessibilityHint="Endless. Turn to nudge."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
@@ -721,6 +730,7 @@ function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
           onLayout={onLayout}
           accessible
           accessibilityRole="adjustable"
+          accessibilityState={{ disabled: !!disabled }}
           accessibilityLabel={c.label ?? c.id}
           accessibilityValue={{ text: `${Math.round(display)}°` }}
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}

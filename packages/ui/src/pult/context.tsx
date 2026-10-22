@@ -1,4 +1,5 @@
-import type { ControlValue, PromptAck } from "@osc/controls";
+import { isEnabled, type ControlValue, type PromptAck } from "@osc/controls";
+import type { AnyControl } from "@osc/schema";
 import * as React from "react";
 import type { ControlMode, PultStore } from "./store";
 
@@ -68,4 +69,27 @@ export function useRelativeOffset(id: string): { value: number; add: (d: number)
     [store],
   );
   return { value: store ? fromStore : local, add };
+}
+
+/**
+ * `enabledWhen` (Figma "Depends on", ADR-014): false while any condition does not hold — the
+ * control is then drawn in its Disabled state. Re-evaluated whenever a referenced control changes.
+ * Outside a pult (no store) a control is always enabled.
+ */
+export function useControlEnabled(control: AnyControl): boolean {
+  const store = React.useContext(StoreContext);
+  const conditions = control.type === "unsupported" ? undefined : control.enabledWhen;
+  const subscribe = React.useCallback(
+    (fn: () => void) => {
+      if (!store || !conditions?.length) return () => {};
+      const offs = conditions.map((c) => store.subscribe(c.control, fn));
+      return () => offs.forEach((off) => off());
+    },
+    [store, conditions],
+  );
+  return React.useSyncExternalStore(subscribe, () =>
+    !store
+      ? true
+      : isEnabled(conditions, (id) => ({ control: store.control(id), value: store.get(id) })),
+  );
 }

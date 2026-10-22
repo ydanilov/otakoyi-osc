@@ -8,6 +8,7 @@ import {
   fineBadge,
   type LitShape,
   formatValue,
+  stepDecimals,
   positionToValue,
   relativeDrag,
   resetValue,
@@ -311,7 +312,7 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
           ? undefined
           : crossfade
             ? crossfadeLabel(c.labels, valueToPosition(display, range))
-            : formatValue(display, { unit: c.unit })
+            : formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) })
       }
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
@@ -323,7 +324,9 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
           accessible
           accessibilityRole="adjustable"
           accessibilityLabel={c.label ?? c.id}
-          accessibilityValue={{ text: formatValue(display, { unit: c.unit }) }}
+          accessibilityValue={{
+            text: formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) }),
+          }}
           accessibilityState={{ disabled: !!disabled }}
           accessibilityHint="Drag to adjust. Two fingers for fine control. Double-tap to reset."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}

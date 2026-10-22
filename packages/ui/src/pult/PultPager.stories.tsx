@@ -1,5 +1,6 @@
 import demoJson from "@osc/schema/examples/demo-installation.json";
 import tryJson from "@osc/schema/examples/try-the-demo.json";
+import phaseOneJson from "../../../../tools/figma-export/fixtures/phase-one.config.json";
 import { parseConfig } from "@osc/schema";
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import * as React from "react";
@@ -8,8 +9,48 @@ import { expect } from "storybook/test";
 import { ControlServicesProvider } from "../platform/services";
 import { componentDocs } from "../stories/docs";
 import { storyServices } from "../stories/services";
+import { ThemeProvider } from "../theme/ThemeProvider";
 import { PultPager, PultProvider } from "./PultRenderer";
 import { PultStore } from "./store";
+
+/** A toggle and a knob that "Depends on" it (`enabledWhen`, Figma annotation). */
+const dependsJson = {
+  schemaVersion: 2,
+  installation: { id: "depends", name: "Depends on", revision: 1 },
+  targets: [{ id: "td", name: "TD", protocol: "udp", host: "auto", port: 7000 }],
+  pults: [
+    {
+      id: "p",
+      name: "Audio",
+      pages: [
+        {
+          id: "audio",
+          title: "Audio",
+          controls: [
+            { id: "audio-react", type: "toggle", label: "Audio react", address: "/audio/on" },
+            {
+              id: "gain",
+              type: "knob",
+              label: "Gain",
+              address: "/audio/gain",
+              enabledWhen: [{ control: "audio-react", equals: 1 }],
+            },
+          ],
+          layout: {
+            phone: {
+              "audio-react": { x: 0, y: 0, w: 12, h: 2 },
+              gain: { x: 0, y: 2, w: 12, h: 4 },
+            },
+            tablet: {
+              "audio-react": { x: 0, y: 0, w: 4, h: 2 },
+              gain: { x: 4, y: 0, w: 4, h: 4 },
+            },
+          },
+        },
+      ],
+    },
+  ],
+};
 
 function Demo({
   pultIndex = 0,
@@ -18,17 +59,28 @@ function Demo({
 }: {
   pultIndex?: number;
   height?: number;
-  /** `sample`: every control type; `try`: the Figma "Try the demo" installation (panels). */
-  config?: "sample" | "try";
+  /**
+   * `sample`: every control type; `try`: the Figma "Try the demo" installation (panels);
+   * `depends`: a knob enabled by a toggle (`enabledWhen`).
+   */
+  config?: "sample" | "try" | "depends" | "phaseOne";
 }) {
   const store = React.useMemo(() => {
-    const parsed = parseConfig(config === "try" ? tryJson : demoJson);
+    const parsed = parseConfig(
+      config === "try"
+        ? tryJson
+        : config === "depends"
+          ? dependsJson
+          : config === "phaseOne"
+            ? phaseOneJson
+            : demoJson,
+    );
     if (!parsed.ok) throw new Error("demo config invalid");
     const pult = parsed.config.pults[pultIndex] ?? parsed.config.pults[0]!;
     return new PultStore(parsed.config, pult, { send: () => {} });
   }, [pultIndex, config]);
   const services = React.useMemo(storyServices, []);
-  return (
+  const pager = (
     <View style={{ height }}>
       <ControlServicesProvider value={services}>
         <PultProvider store={store}>
@@ -36,6 +88,13 @@ function Demo({
         </PultProvider>
       </ControlServicesProvider>
     </View>
+  );
+  // An exported client config carries its Figma Brand mode as `theme` (the app applies it the
+  // same way); the toolbar brand applies to the other stories.
+  return config === "phaseOne" ? (
+    <ThemeProvider brand={store.config.theme}>{pager}</ThemeProvider>
+  ) : (
+    pager
   );
 }
 
@@ -67,6 +126,7 @@ const meta = {
             "Controls are packed from the top at their Figma heights (phone 18 pt gaps, free space below; tablet 16 pt gaps, each column's last item to the bottom); a page that does not fit splits into screens (`layoutPage`, unit-tested, ADR-006).",
             "Phones re-flow controls to half/full width (`reflowForPhone`).",
             "Controls read/write the PultStore; view-only disables them.",
+            "`enabledWhen` (Figma “Depends on”): the control is drawn Disabled until every condition holds.",
           ],
           a11y: ["Each control carries its own role; the pager is swipeable and tabbable."],
           content: ["Page titles ≤ 12 characters (tabs)."],
@@ -100,6 +160,34 @@ export const PanelsVjConsole: Story = {
 export const PanelsLobbyPhone: Story = {
   name: "Panels · Lobby wall (phone)",
   args: { config: "try", pultIndex: 2, height: 640 },
+  globals: { viewport: { value: "phone" } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole("switch", { name: "Live data" })).toBeTruthy();
+  },
+};
+
+/** Figma "Depends on": Gain is Disabled until Audio react is on (`enabledWhen`). */
+export const DependsOn: Story = {
+  name: "Depends on (enabledWhen)",
+  args: { config: "depends", height: 420 },
+  play: async ({ canvas, userEvent }) => {
+    const gain = await canvas.findByRole("slider", { name: "Gain" });
+    await expect(gain).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(canvas.getByRole("switch", { name: "Audio react" }));
+    await expect(canvas.getByRole("slider", { name: "Gain" })).not.toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  },
+};
+
+/**
+ * Client · Phase One as the exporter writes it (`tools/figma-export/fixtures/phase-one.config.json`):
+ * its sections use the Figma Brand mode "Aurora · Phase One", so the pult is teal / lavender.
+ */
+export const PhaseOneAurora: Story = {
+  name: "Phase One · Aurora (exported from Figma)",
+  args: { config: "phaseOne", height: 640 },
   globals: { viewport: { value: "phone" } },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole("switch", { name: "Live data" })).toBeTruthy();

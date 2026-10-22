@@ -27,18 +27,19 @@ pnpm figma-export --snapshot tools/figma-export/fixtures/phase-one.json \
   --out /tmp/config.json --report /tmp/report.md
 ```
 
-| Option              | What                                                                                                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `--file`, `--page`  | File key and page (name, part of the name, or node id). Needs `FIGMA_ACCESS_TOKEN`.                                            |
-| `--snapshot`        | Read a saved snapshot instead (format below).                                                                                  |
-| `--section`         | Only frames inside sections whose name contains this text (e.g. `Tablet`), or an id.                                           |
-| `--base`            | What Figma does not hold: `installation` (id, name, actions), `targets`, `theme`, `presets`, `pult` (id, name, defaultTarget). |
-| `--contract`        | The installation's `otakoyi/osc-contract.json`; an address not in it is an error.                                              |
-| `--previous`        | The published config; `installation.revision` is bumped when the pults changed.                                                |
-| `--out`, `--report` | Config JSON (default stdout) and Markdown report (default stderr).                                                             |
-| `--report-json`     | The report as JSON (`valid`, `summary`, `issues`) for scripts.                                                                 |
-| `--save-snapshot`   | REST mode: also save the fetched snapshot (to commit as a fixture or diff later).                                              |
-| `--allow-gaps`      | Exit 0 although the report has errors. The config is written either way.                                                       |
+| Option              | What                                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--file`, `--page`  | File key and page (name, part of the name, or node id). Needs `FIGMA_ACCESS_TOKEN`.                                                                                         |
+| `--snapshot`        | Read a saved snapshot instead (format below).                                                                                                                               |
+| `--section`         | Only frames inside sections whose name contains this text (e.g. `Tablet`), or an id.                                                                                        |
+| `--brand`           | Figma Brand mode for the `theme` colours (default: the mode set on the client page's sections). Needs a snapshot with Brand.                                                |
+| `--base`            | What Figma does not hold: `installation` (id, name, actions), `targets`, `theme` (mode, logo, splash, font), `presets`, `pult` (id, name, defaultTarget, formFactor, icon). |
+| `--contract`        | The installation's `otakoyi/osc-contract.json`; an address not in it is an error.                                                                                           |
+| `--previous`        | The published config; `installation.revision` is bumped when the pults changed.                                                                                             |
+| `--out`, `--report` | Config JSON (default stdout) and Markdown report (default stderr).                                                                                                          |
+| `--report-json`     | The report as JSON (`valid`, `summary`, `issues`) for scripts.                                                                                                              |
+| `--save-snapshot`   | REST mode: also save the fetched snapshot (to commit as a fixture or diff later).                                                                                           |
+| `--allow-gaps`      | Exit 0 although the report has errors. The config is written either way.                                                                                                    |
 
 Paths are relative to the folder the command is run from (the repo root in the examples).
 Exit codes: `0` ok; `1` the config does not validate, or the report has errors (missing address,
@@ -89,10 +90,35 @@ The repo's own CI runs the exporter's unit tests and the snapshot test of the Ph
 
 ### Layout
 
-Every control's bounding box is mapped to the 12-column grid of its form factor: left/right edges
-are scaled from the box around all controls of the frame; rows use one row unit per frame (the
-shortest control's height, 32–96 pt), and empty rows are dropped. A control missing in one form
-factor's frame is appended full-width at the bottom of that layout (warning).
+Every control's (or panel's) bounding box is mapped to the 12-column grid of its form factor:
+left/right edges are scaled from the box around all controls of the frame; rows use one row unit
+per frame (the shortest control's height, 32–96 pt), and empty rows are dropped. Rows only order
+the controls: the app draws each at its Figma height with the Figma gaps (ADR-006). A control
+missing in one form factor's frame is appended full-width at the bottom of that layout (warning).
+
+### Panels
+
+The outermost Console-Panel pattern instance around controls becomes a page **panel** (schema
+`page.panels`), placed in the layout instead of the controls in it; its Console Panel `Title`
+becomes the panel title (`MIX` → `Mix`), the layer name (or the title) its id:
+
+| Figma pattern                                      | `pattern`                                              |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| Fader Bank · Knob Group · Knob Row · Layer Toggles | `faderBank` · `knobGroup` · `knobRow` · `layerToggles` |
+| Camera Control · Scene Bar · Show Actions          | `cameraControl` · `sceneBar` · `showActions`           |
+| List Card with switch rows                         | `list` (no title)                                      |
+| Mix, a bare Console Panel                          | `stack`                                                |
+
+Phone and tablet panels are merged by id. A Channel Strip's Group Button becomes a toggle with
+`style: "led"` (the strip's ON button).
+
+### Form factor, icons
+
+- `pult.formFactor` (ADR-013): from `--base` `pult.formFactor`, else the form factor drawn first on
+  the page (a note in the report says which).
+- Control icons: the first `Icon/<name>` instance inside a List Row, pad or toggle becomes the
+  control's `icon` (`device-mobile`); icon options of a Segmented become `options[].icon`. The
+  components' own glyphs (↻, − / +, chevrons, check) are never icons.
 
 ### Component → control
 
@@ -157,8 +183,8 @@ Inspector writes them and mirrors them into shared plugin data (namespace `otako
 - A line starting with `draft` is a note; draft annotations are listed in the report.
 
 **Depends on** — `when <control-id> = <value>` lines (or `is on` / `is off`) become `enabledWhen`
-in the config (schema field; the renderer does not evaluate it yet). Other lines are notes for
-people and appear in the report.
+in the config: the pult draws the control Disabled until every condition holds. Other lines are
+notes for people and appear in the report.
 
 ### Report
 
@@ -174,10 +200,29 @@ The exporter's input is a plain JSON snapshot (`tools/figma-export/src/snapshot.
 `{ format: "otakoyi-figma-snapshot", version: 1, fileKey, page: {id, name}, nodes }`, where each
 node has `id`, `name`, `type`, `box` `[x, y, w, h]`, `text`, `component` (set name), `props`
 (variant / text / boolean properties without the `#id` suffix), `annotations`
-(`{category, text}`), `plugin` (shared `otakoyi` data) and `children`. The REST converter, the
-Inspector's **Export snapshot** and the fixtures all produce it. The REST API may not return Dev
-Mode annotations; on pages the Inspector has not touched, use **Export snapshot** and run the CLI
-with `--snapshot`.
+(`{category, text}`), `plugin` (shared `otakoyi` data), `brandMode` (the Brand variable mode set on
+a section or frame) and `children`. The snapshot also carries `brand` — the Figma `Brand`
+collection: `{collection, defaultMode, modes: {<mode>: {"brand/primary": "#…", …}}}` — and
+`page.brandMode`. The REST converter, the Inspector's **Export snapshot** and the fixtures all
+produce it. The REST API may not return Dev Mode annotations, and its Variables API is
+Enterprise-only (no Brand modes); use **Export snapshot** and run the CLI with `--snapshot`.
+
+## Adding a client theme
+
+Each client's colours are a **mode** of the Figma `Brand` variable collection (`brand/primary`,
+`on-primary`, `primary-pressed`, `primary-subtle`, `accent`, `on-accent`,
+`primary-signal-light`); `Otakoyi` is the default and equals `brandDefaults` in
+`packages/tokens/tokens.json` (`pnpm tokens:check` fails when they drift, against
+`packages/tokens/figma/brand-modes.json`).
+
+1. In Figma, Variables › Brand: add a mode named after the client (`Aurora · Phase One`) and set
+   its colours. `primary-signal-light` must reach 3:1 on the light background (else the exporter
+   drops it with a warning and the app derives it).
+2. Select the client page's sections (or frames) and set their Brand mode to the new mode.
+3. Run the Otakoyi Inspector › **Export snapshot** and `pnpm figma-export --snapshot <file>` (or
+   pass `--brand "<mode>"`): the config's `theme` gets the mode's colours; `--base` adds the logo,
+   splash and theme mode. The app recolours the loading screen, pult and controls from it.
+4. A new mode for the studio itself (not a client): also update `packages/tokens/figma/brand-modes.json`.
 
 ## Otakoyi Inspector (Figma plugin)
 
@@ -201,5 +246,6 @@ Figma reloads `dist/code.js` the next time the plugin starts.
 ## Client · Phase One today
 
 `tools/figma-export/fixtures/phase-one.json` is a snapshot of the page (pult screens in full, other
-screens as frame shells); `phase-one.config.json` and `phase-one.report.md` next to it are the
-exporter's output, kept as snapshot tests. Re-dump the fixture when the page changes.
+screens as frame shells, the Brand modes; the sections use `Aurora · Phase One`);
+`phase-one.config.json` and `phase-one.report.md` next to it are the exporter's output, kept as
+snapshot tests. Re-dump the fixture when the page changes.

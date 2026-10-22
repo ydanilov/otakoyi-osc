@@ -4,6 +4,7 @@ import { parseConfig, type Control } from "@osc/schema";
 import demo from "../../schema/examples/demo-installation.json";
 import {
   formatOffset,
+  stepDecimals,
   createThrottle,
   faderPosition,
   formatValue,
@@ -226,5 +227,16 @@ describe("formatOffset", () => {
     expect(formatOffset(0.001)).toBe("0.00");
     expect(formatOffset(0, { int: true })).toBe("0");
     expect(formatOffset(-3, { int: true, unit: "°" })).toBe("\u22123°");
+  });
+});
+
+describe("stepDecimals", () => {
+  it("shows a value at its step's precision", () => {
+    expect(stepDecimals(0.1)).toBe(1);
+    expect(stepDecimals(0.05)).toBe(2);
+    expect(stepDecimals(1)).toBe(0);
+    expect(stepDecimals(1e-7)).toBe(7);
+    expect(stepDecimals(undefined)).toBeUndefined();
+    expect(formatValue(1.5, { unit: "×", decimals: stepDecimals(0.1) })).toBe("1.5×");
   });
 });

@@ -17,7 +17,14 @@ import {
   type Snapshot,
 } from "@osc/figma-export";
 import { Control } from "@osc/schema";
-import { NAMESPACE, categoryLabels, pultFrameOf, serialize } from "./serialize";
+import {
+  NAMESPACE,
+  brandContext,
+  brandModeOf,
+  categoryLabels,
+  pultFrameOf,
+  serialize,
+} from "./serialize";
 
 type FromUi =
   | { type: "refresh" }
@@ -128,16 +135,19 @@ async function save(osc: string, dependsOn: string) {
 
 async function snapshot(): Promise<Snapshot> {
   const cats = await categoryLabels();
+  const brand = await brandContext();
   const page = figma.currentPage;
   await page.loadAsync();
   const nodes: FNode[] = [];
-  for (const c of page.children) nodes.push(await serialize(c, cats));
+  for (const c of page.children) nodes.push(await serialize(c, cats, brand));
+  const pageMode = brandModeOf(page, brand);
   return {
     format: SNAPSHOT_FORMAT,
     version: 1,
     source: `Otakoyi Inspector, ${new Date().toISOString()}`,
     fileKey: figma.fileKey,
-    page: { id: page.id, name: page.name },
+    page: { id: page.id, name: page.name, ...(pageMode ? { brandMode: pageMode } : {}) },
+    ...(brand ? { brand: brand.snapshot } : {}),
     nodes,
   };
 }

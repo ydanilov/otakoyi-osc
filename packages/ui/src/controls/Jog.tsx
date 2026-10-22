@@ -195,6 +195,7 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
           onLayout={onLayout}
           accessible
           accessibilityRole="adjustable"
+          accessibilityState={{ disabled: !!disabled }}
           accessibilityLabel={c.label ?? c.id}
           accessibilityHint="Endless. Drag to nudge."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}

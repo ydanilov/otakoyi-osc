@@ -51,7 +51,7 @@ describe("exportSnapshot — the Phase One fixture", () => {
 
   it("finds the pult screens and skips the rest", () => {
     expect(r.summary.pages.map((p) => [p.id, Object.keys(p.frames)])).toEqual([
-      ["live-1", ["phone"]],
+      ["live", ["phone"]],
       ["prompts", ["phone", "tablet"]],
       ["mix", ["tablet"]],
     ]);
@@ -62,16 +62,74 @@ describe("exportSnapshot — the Phase One fixture", () => {
     const codes = (l: string) => [
       ...new Set(r.issues.filter((i) => i.level === l).map((i) => i.code)),
     ];
-    expect(codes("error")).toEqual(["missing-address"]);
+    expect(codes("error")).toEqual([]);
     expect(codes("warning")).toEqual([
-      "tabs-disagree",
       "tab-without-frame",
-      "option-count",
-      "prompt-mix-address",
+      "tabs-disagree",
       "draft-annotation",
       "missing-form-factor",
       "not-on-form-factor",
     ]);
+  });
+
+  it("exports Console-Panel patterns as page panels, placed instead of their controls", () => {
+    type P = {
+      id: string;
+      panels?: { id: string; title?: string; pattern: string; controls: string[] }[];
+      layout: Record<string, Record<string, unknown>>;
+    };
+    const pages = (r.config.pults as { pages: P[] }[])[0]!.pages;
+    const mix = pages.find((p) => p.id === "mix")!;
+    expect(mix.panels!.map((p) => [p.id, p.pattern, p.title, p.controls.length])).toEqual([
+      ["mix", "faderBank", "Mix", 8],
+      ["shape", "knobGroup", "Shape", 4],
+      ["layers-panel", "layerToggles", "Layers", 1],
+      ["camera", "cameraControl", "Camera", 2],
+      ["scene-panel", "sceneBar", "Scene", 1],
+    ]);
+    expect(Object.keys(mix.layout.tablet!).sort()).toEqual(
+      ["camera", "layers-panel", "mix", "scene-panel", "shape"].sort(),
+    );
+    const live = pages.find((p) => p.id === "live")!;
+    expect(live.panels).toEqual([
+      { id: "list-card", pattern: "list", controls: ["logo", "live-data", "audio-react"] },
+    ]);
+  });
+
+  it("exports the primary form factor, control icons and LED toggles", () => {
+    const pult = (r.config.pults as Record<string, unknown>[])[0]!;
+    expect(pult.formFactor).toBe("phone");
+    const controls = (pult.pages as { controls: Record<string, unknown>[] }[]).flatMap(
+      (p) => p.controls,
+    );
+    const byId = (id: string) => controls.find((c) => c.id === id)!;
+    expect(byId("logo").icon).toBe("device-mobile");
+    expect(byId("audio-react").icon).toBe("waveform");
+    expect(byId("power-1").style).toBe("led");
+    expect((byId("scene").options as { icon?: string }[]).map((o) => o.icon)).toEqual([
+      "lightning",
+      "sun",
+      "moon",
+      "circle-half",
+    ]);
+  });
+
+  it("takes the theme colours from the page's Figma Brand mode (Aurora)", () => {
+    expect(r.config.theme).toEqual({
+      primary: "#5CE6C8",
+      onPrimary: "#06140F",
+      primaryPressed: "#3BBFA3",
+      primarySubtle: "#132723",
+      accent: "#B7A6FF",
+      onAccent: "#0D0A1A",
+      primarySignalLight: "#1F8C75",
+    });
+    const otakoyi = exportSnapshot(fixture, { brand: "Otakoyi" });
+    expect((otakoyi.config.theme as { primary: string }).primary).toBe("#8DFF2E");
+    const bad = exportSnapshot(fixture, { brand: "Nope" });
+    expect(bad.issues.find((i) => i.code === "unknown-brand-mode")?.level).toBe("error");
+    const none = exportSnapshot({ ...fixture, brand: undefined }, { brand: "Otakoyi" });
+    expect(none.issues.find((i) => i.code === "no-brand-modes")?.level).toBe("error");
   });
 
   it("is deterministic (config and report snapshots)", async () => {

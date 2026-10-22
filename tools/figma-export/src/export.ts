@@ -8,11 +8,13 @@
  * Controls of a page are merged across phone and tablet by id.
  */
 import { FORM_FACTORS, parseConfig, reflowForPhone, type FormFactor, type Grid } from "@osc/schema";
+import { brandFromFigma } from "@osc/tokens";
 import { bottomOf, gridFor } from "./grid";
 import {
   mapFrame,
   slug,
   type FoundControl,
+  type FoundPanel,
   type Issue,
   type Level,
   type RawControl,
@@ -25,7 +27,15 @@ export interface BaseConfig {
   targets?: Record<string, unknown>[];
   theme?: Record<string, unknown>;
   presets?: Record<string, unknown>[];
-  pult?: { id?: string; name?: string; defaultTarget?: string };
+  pult?: {
+    id?: string;
+    name?: string;
+    defaultTarget?: string;
+    /** Primary form factor (ADR-013); otherwise the form factor drawn first on the page. */
+    formFactor?: FormFactor;
+    /** Icon in the Installation › Pults list (Phosphor kebab name). */
+    icon?: string;
+  };
 }
 
 /** The installation's OSC contract (`otakoyi/osc-contract.json`, docs/osc-contract.schema.json). */
@@ -40,6 +50,11 @@ export interface ExportOptions {
   contract?: OscContract;
   /** The published config: `revision` is bumped when the pults differ. */
   previous?: { installation?: { revision?: number }; pults?: unknown };
+  /**
+   * Figma Brand mode for the config's `theme` colours (e.g. "Aurora · Phase One"). Default: the
+   * mode set on the pult frames' section (or frame, or page).
+   */
+  brand?: string;
 }
 
 export interface PageSummary {
@@ -75,6 +90,8 @@ const LEVELS: Level[] = ["error", "warning", "info"];
 
 interface PultFrame {
   frame: FNode;
+  /** Brand mode set on the frame or its section. */
+  brandMode?: string;
   ff: FormFactor;
   pultId?: string;
   pageId: string;
@@ -141,15 +158,15 @@ function classify(frame: FNode): { pf?: PultFrame; skip?: string } {
   return { pf: { frame, ff, pageId: slug(title), title, tabs: tabs.labels, body: bodyOf(frame) } };
 }
 
-function topFrames(snap: Snapshot, section?: string): FNode[] {
-  const out: FNode[] = [];
+function topFrames(snap: Snapshot, section?: string): Array<{ frame: FNode; section?: FNode }> {
+  const out: Array<{ frame: FNode; section?: FNode }> = [];
   const want = section?.toLowerCase();
   for (const n of snap.nodes) {
     if (n.type === "SECTION") {
       if (want && !n.name.toLowerCase().includes(want) && n.id !== section) continue;
       for (const c of n.children ?? [])
-        if (c.type === "FRAME" || c.type === "COMPONENT") out.push(c);
-    } else if (n.type === "FRAME" && !want) out.push(n);
+        if (c.type === "FRAME" || c.type === "COMPONENT") out.push({ frame: c, section: n });
+    } else if (n.type === "FRAME" && !want) out.push({ frame: n });
   }
   return out;
 }
@@ -203,7 +220,7 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
   const pultFrames: PultFrame[] = [];
   let skipped = 0;
   const seen = new Map<string, PultFrame>();
-  for (const f of frames) {
+  for (const { frame: f, section } of frames) {
     const { pf, skip } = classify(f);
     if (!pf) {
       skipped++;
@@ -223,6 +240,8 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
       continue;
     }
     seen.set(key, pf);
+    const brandMode = f.brandMode ?? section?.brandMode;
+    if (brandMode) pf.brandMode = brandMode;
     pultFrames.push(pf);
   }
   if (!pultFrames.length)
@@ -277,6 +296,7 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
     title: string;
     frames: Partial<Record<FormFactor, PultFrame>>;
     found: Partial<Record<FormFactor, FoundControl[]>>;
+    panels: Partial<Record<FormFactor, FoundPanel[]>>;
   }
   const pages = new Map<string, PageAcc>();
   const drafts = new Map<string, string>();
@@ -288,9 +308,16 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
     for (const d of r.drafts) drafts.set(d.nodeId, d.name);
     for (const f of r.controls)
       if (f.idFrom !== "layer") derivedIds.push(`${f.control.id} (${f.component})`);
-    const acc = pages.get(p.pageId) ?? { id: p.pageId, title: p.title, frames: {}, found: {} };
+    const acc = pages.get(p.pageId) ?? {
+      id: p.pageId,
+      title: p.title,
+      frames: {},
+      found: {},
+      panels: {},
+    };
     acc.frames[p.ff] = p;
     acc.found[p.ff] = r.controls;
+    acc.panels[p.ff] = r.panels;
     pages.set(p.pageId, acc);
   }
   if (drafts.size)
@@ -317,6 +344,8 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
   for (const page of sorted) {
     const controls: RawControl[] = [];
     const byId = new Map<string, RawControl>();
+    /** Found control (either form factor) → its id in the config. */
+    const outId = new Map<FoundControl, string>();
     const missing = new Map<RawControl, Issue>();
     const boxes: Record<FormFactor, { id: string; box?: [number, number, number, number] }[]> = {
       phone: [],
@@ -344,6 +373,7 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
             if (k !== "id" && prev[k] === undefined) prev[k] = v;
           if (!f.missing) missing.delete(prev);
           boxes[ff].push({ id: prev.id, box: f.box });
+          outId.set(f, prev.id);
           continue;
         }
         if (prev) {
@@ -373,6 +403,7 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
         if (f.missing) missing.set(c, f.missing);
         controls.push(c);
         boxes[ff].push({ id: c.id, box: f.box });
+        outId.set(f, c.id);
       }
     }
 
@@ -382,9 +413,54 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
       controls.splice(controls.indexOf(c), 1);
       for (const ff of FORM_FACTORS) boxes[ff] = boxes[ff].filter((b) => b.id !== c.id);
     }
+    // Panels (Console-Panel patterns): merged by id across phone and tablet. In a form factor
+    // that draws the panel, the panel is placed instead of the controls in it.
+    const kept = new Set(controls.map((c) => c.id));
+    const panels: Array<{ id: string; title?: string; pattern: string; controls: string[] }> = [];
+    const panelIn: Record<FormFactor, Map<string, [number, number, number, number] | undefined>> = {
+      phone: new Map(),
+      tablet: new Map(),
+    };
+    for (const ff of FORM_FACTORS)
+      for (const fp of page.panels[ff] ?? []) {
+        const ids = fp.controls
+          .map((f) => outId.get(f))
+          .filter((id): id is string => !!id && kept.has(id));
+        if (!ids.length) continue;
+        let p = panels.find((x) => x.id === fp.id);
+        if (!p) {
+          let id = fp.id;
+          for (let n = 2; kept.has(id); n++) id = `${fp.id}-panel${n > 2 ? `-${n - 1}` : ""}`;
+          p = { id, ...(fp.title ? { title: fp.title } : {}), pattern: fp.pattern, controls: [] };
+          panels.push(p);
+        } else if (p.pattern !== fp.pattern)
+          issue(
+            "warning",
+            "panel-pattern-differs",
+            `panel "${p.id}" is a ${p.pattern} on one form factor and a ${fp.pattern} on the other; kept ${p.pattern}`,
+            fp.nodeId,
+            `${ff}/${page.id}`,
+          );
+        for (const id of ids)
+          if (!p.controls.includes(id)) {
+            const other = panels.find((x) => x !== p && x.controls.includes(id));
+            if (other) continue;
+            p.controls.push(id);
+          }
+        panelIn[ff].set(p.id, fp.box);
+      }
     const layout: Record<FormFactor, Record<string, Grid>> = { phone: {}, tablet: {} };
     const grids: Partial<Record<FormFactor, Map<string, Grid>>> = {};
-    for (const ff of FORM_FACTORS) if (page.frames[ff]) grids[ff] = gridFor(boxes[ff]);
+    for (const ff of FORM_FACTORS) {
+      if (!page.frames[ff]) continue;
+      const inPanel = new Set(
+        panels.filter((p) => panelIn[ff].has(p.id)).flatMap((p) => p.controls),
+      );
+      grids[ff] = gridFor([
+        ...boxes[ff].filter((b) => !inPanel.has(b.id)),
+        ...[...panelIn[ff]].map(([id, box]) => ({ id, box })),
+      ]);
+    }
     if (!grids.phone && grids.tablet) {
       grids.phone = reflowForPhone(grids.tablet);
       issue(
@@ -409,7 +485,13 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
       const g = grids[ff] ?? new Map<string, Grid>();
       let row = bottomOf(g.values());
       const only: string[] = [];
+      // A panel placed in this form factor's grid covers its controls; a panel the reflow /
+      // copy carried over from the other form factor too.
+      const placedPanels = panels.filter((p) => g.has(p.id));
+      for (const p of placedPanels) layout[ff][p.id] = g.get(p.id)!;
+      const covered = new Set(placedPanels.flatMap((p) => p.controls));
       for (const c of controls) {
+        if (covered.has(c.id)) continue;
         const cell = g.get(c.id);
         if (cell) layout[ff][c.id] = cell;
         else {
@@ -428,7 +510,13 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
     }
 
     const out = controls.map(ordered);
-    outPages.push({ id: page.id, title: titles.get(page.id) ?? page.title, controls: out, layout });
+    outPages.push({
+      id: page.id,
+      title: titles.get(page.id) ?? page.title,
+      controls: out,
+      ...(panels.length ? { panels } : {}),
+      layout,
+    });
     for (const c of out) allControls.push({ page: page.id, c });
     summaries.push({
       id: page.id,
@@ -473,17 +561,59 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
         );
 
   // 6. Assemble, bump revision, validate.
+  // Primary form factor (ADR-013): the base config's, else the form factor drawn first.
+  const formFactor = base.pult?.formFactor ?? frameList[0]?.ff;
+  if (formFactor && !base.pult?.formFactor)
+    issue(
+      "info",
+      "form-factor",
+      `primary form factor: ${formFactor} (drawn first on the page; set pult.formFactor in --base to choose)`,
+    );
   const pult: Record<string, unknown> = {
     id: pultId,
     name: base.pult?.name ?? installName,
     ...(base.pult?.defaultTarget ? { defaultTarget: base.pult.defaultTarget } : {}),
+    ...(formFactor ? { formFactor } : {}),
+    ...(base.pult?.icon ? { icon: base.pult.icon } : {}),
     pages: outPages,
   };
+
+  // Theme colours from the client's Figma Brand mode (base supplies mode, logo, splash, font).
+  let theme = base.theme;
+  const modeName =
+    opts.brand ?? frameList.find((p) => p.brandMode)?.brandMode ?? snap.page.brandMode;
+  if (modeName) {
+    const mode = snap.brand?.modes[modeName];
+    if (!snap.brand)
+      issue(
+        "error",
+        "no-brand-modes",
+        `Brand mode "${modeName}" asked for, but the snapshot has no Brand variables — export it with the Otakoyi Inspector`,
+      );
+    else if (!mode)
+      issue(
+        "error",
+        "unknown-brand-mode",
+        `Brand mode "${modeName}" is not in Figma (modes: ${Object.keys(snap.brand.modes).join(", ")})`,
+      );
+    else {
+      const b = brandFromFigma(mode);
+      for (const u of b.unknown)
+        issue("warning", "brand-variable", `Brand variable ${u} has no config theme key; ignored`);
+      for (const d of b.dropped) issue("warning", "brand-signal-light", d);
+      theme = { ...base.theme, ...b.theme };
+      issue(
+        "info",
+        "brand-mode",
+        `theme colours from the Figma Brand mode "${modeName}"${opts.brand ? "" : " (set on the client page)"}`,
+      );
+    }
+  }
   if (!base.targets?.length)
     issue(
       "info",
       "default-target",
-      `no --base config: targets set to the default (udp 7000, feedback 9000); theme left to the app default`,
+      `no --base config: targets set to the default (udp 7000, feedback 9000)${theme ? "" : "; theme left to the app default"}`,
     );
   let revision = base.installation?.revision ?? opts.previous?.installation?.revision ?? 1;
   if (
@@ -500,7 +630,7 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
       ...(base.installation?.actions ? { actions: base.installation.actions } : {}),
     },
     targets: base.targets?.length ? base.targets : [DEFAULT_TARGET],
-    ...(base.theme ? { theme: base.theme } : {}),
+    ...(theme ? { theme } : {}),
     ...(base.presets?.length ? { presets: base.presets } : {}),
     pults: [pult],
   };

@@ -442,6 +442,9 @@ importers:
       '@osc/schema':
         specifier: workspace:*
         version: link:../../packages/schema
+      '@osc/tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
 
   tools/figma-plugin:
     dependencies:

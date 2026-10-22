@@ -38,6 +38,8 @@ export interface FNode {
   annotations?: FAnnotation[];
   /** Shared plugin data in the `otakoyi` namespace (`osc`, `dependsOn`), mirrored by the Inspector. */
   plugin?: Record<string, string>;
+  /** Explicit mode of the Figma `Brand` variable collection set on this node (section / frame). */
+  brandMode?: string;
   children?: FNode[];
 }
 
@@ -47,7 +49,16 @@ export interface Snapshot {
   /** Free text: how and when the snapshot was made. */
   source?: string;
   fileKey?: string;
-  page: { id: string; name: string };
+  page: { id: string; name: string; brandMode?: string };
+  /**
+   * The Figma `Brand` variable collection: one mode per client (`brand/*` → hex). The REST
+   * Variables API is Enterprise-only, so the Inspector's Export snapshot carries it.
+   */
+  brand?: {
+    collection: string;
+    defaultMode: string;
+    modes: Record<string, Record<string, string>>;
+  };
   /** Top-level nodes of the page (sections and frames). */
   nodes: FNode[];
 }

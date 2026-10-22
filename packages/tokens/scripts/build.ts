@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createTheme, themeToCssVars, baseTokens as base } from "../src/theme";
+import { brandDriftFromFigma, type FigmaBrandModes } from "../src/figma";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const header =
@@ -121,5 +122,13 @@ for (const [rel, content] of files) {
     console.log(`✓ ${rel}`);
   }
 }
+// Figma Brand modes (figma/brand-modes.json, dumped from Figma) vs tokens.json brandDefaults.
+const figma = JSON.parse(
+  readFileSync(join(root, "figma/brand-modes.json"), "utf8"),
+) as FigmaBrandModes;
+for (const d of brandDriftFromFigma(figma, base.brandDefaults as Record<string, string>)) {
+  console.error(`✗ Figma Brand drift: ${d}`);
+  stale++;
+}
 if (stale) process.exit(1);
-if (check) console.log("✓ generated token files are up to date");
+if (check) console.log("✓ generated token files are up to date; brandDefaults = Figma Brand");

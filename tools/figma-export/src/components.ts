@@ -49,9 +49,11 @@ export const COMPONENTS: Record<string, ComponentRole> = {
   "Fader Bank": container(),
   "Channel Strip": container("fader + power toggle"),
   "Knob Group": container(),
+  "Knob Row": container(),
   "Layer Toggles": container(),
   "Camera Control": container(),
   "Scene Bar": container("Segmented inside → sceneList"),
+  "Show Actions": container(),
   Mix: container(),
   "Stepper Group": container(),
 
@@ -97,3 +99,32 @@ export function roleOf(component: string | undefined): ComponentRole | undefined
   if (component.startsWith("Icon/")) return chrome;
   return COMPONENTS[component];
 }
+
+/**
+ * Console-Panel patterns (Figma Patterns page) → page `panels[].pattern` (ADR-014). The outermost
+ * pattern instance around controls becomes one panel; a bare Console Panel is a `stack`, a List
+ * Card of switch rows a `list`.
+ */
+export const PANEL_PATTERNS: Record<string, string> = {
+  "Fader Bank": "faderBank",
+  "Knob Group": "knobGroup",
+  "Knob Row": "knobRow",
+  "Layer Toggles": "layerToggles",
+  "Camera Control": "cameraControl",
+  "Scene Bar": "sceneBar",
+  "Show Actions": "showActions",
+  Mix: "stack",
+  "Console Panel": "stack",
+  "List Card": "list",
+};
+
+/** Glyphs that are part of a component's own chrome, never a control's icon. */
+export const DECORATIVE_ICONS = new Set([
+  "arrows-clockwise",
+  "caret-down",
+  "caret-right",
+  "caret-left",
+  "minus",
+  "plus",
+  "check",
+]);

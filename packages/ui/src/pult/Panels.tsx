@@ -5,7 +5,7 @@ import { ConsolePanel, ListCard } from "../containers/Cards";
 import { iconByName } from "../ds/iconByName";
 import { ListRow } from "../forms/ListRow";
 import { ConnectedControl } from "./ConnectedControl";
-import { useControlMode, useControlValue, usePultStore } from "./context";
+import { useControlEnabled, useControlMode, useControlValue, usePultStore } from "./context";
 import { panelMaxWidth } from "./layout";
 
 /** Figma Channel Strip: the ON button under each fader. */
@@ -179,6 +179,7 @@ function ListToggleRow({ control: c }: { control: AnyControl }) {
   const store = usePultStore();
   const value = useControlValue(c.id);
   const mode = useControlMode();
+  const enabled = useControlEnabled(c);
   if (c.type !== "toggle") return null;
   return (
     <ListRow
@@ -187,7 +188,7 @@ function ListToggleRow({ control: c }: { control: AnyControl }) {
       trailing="switch"
       checked={value === true}
       onCheckedChange={(v) => store.interact(c, v)}
-      disabled={mode !== "control"}
+      disabled={mode !== "control" || !enabled}
     />
   );
 }

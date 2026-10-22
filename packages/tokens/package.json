@@ -10,7 +10,8 @@
     "./tokens.json": "./tokens.json",
     "./tokens.css": "./generated/tokens.css",
     "./global.css": "./generated/global.css",
-    "./tailwind-preset": "./generated/tailwind-preset.cjs"
+    "./tailwind-preset": "./generated/tailwind-preset.cjs",
+    "./figma/brand-modes.json": "./figma/brand-modes.json"
   },
   "scripts": {
     "build": "tsx scripts/build.ts",

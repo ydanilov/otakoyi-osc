@@ -12,7 +12,7 @@ import {
   type DependsOn,
   type OscSpec,
 } from "./annotations";
-import { roleOf } from "./components";
+import { DECORATIVE_ICONS, PANEL_PATTERNS, roleOf } from "./components";
 import { findFirst, textOf, walk, type FNode } from "./snapshot";
 
 export type Level = "error" | "warning" | "info";
@@ -44,8 +44,24 @@ export interface FoundControl {
   missing?: Issue;
 }
 
+/** A Console-Panel pattern instance around controls (page `panels`, ADR-014). */
+export interface FoundPanel {
+  id: string;
+  idFrom: "layer" | "title" | "pattern";
+  title?: string;
+  /** Schema `PanelPattern`. */
+  pattern: string;
+  nodeId: string;
+  component: string;
+  box?: [number, number, number, number];
+  /** The controls inside, in frame order (the same objects as in `controls`). */
+  controls: FoundControl[];
+}
+
 export interface FrameResult {
   controls: FoundControl[];
+  /** Panels with at least one control. */
+  panels: FoundPanel[];
   issues: Issue[];
   /** Annotated nodes whose OSC annotation is marked draft. */
   drafts: { nodeId: string; name: string }[];
@@ -116,6 +132,7 @@ interface Scope {
   annot?: Annot;
   panelTitle?: string;
   sceneBar?: boolean;
+  panel?: FoundPanel;
 }
 
 type Kind =
@@ -249,7 +266,9 @@ function labelOf(node: FNode): string | undefined {
 }
 
 /** Option labels drawn in a Segmented's `Options` frame: texts, else icon names. */
-function optionCells(node: FNode): { text?: string; icon?: string; on?: boolean }[] {
+function optionCells(
+  node: FNode,
+): { text?: string; icon?: string; iconName?: string; on?: boolean }[] {
   const opts = findFirst(node, (n) => n.name === "Options" && n.type !== "TEXT");
   return (opts?.children ?? []).map((cell) => {
     const text = findFirst(cell, (n) => n.type === "TEXT")?.text;
@@ -259,8 +278,34 @@ function optionCells(node: FNode): { text?: string; icon?: string; on?: boolean 
       icon: icon
         ? humanize(icon.slice(5).replace(/-/g, " ")).replace(/^./, (c) => c.toUpperCase())
         : undefined,
+      iconName: icon ? iconSlug(icon) : undefined,
     };
   });
+}
+
+/** `Icon/device-mobile` → `device-mobile` (Phosphor kebab name, schema `icon`). */
+function iconSlug(component: string): string | undefined {
+  const n = slug(component.replace(/^Icon\//, ""));
+  return /^[a-z][a-z0-9-]*$/.test(n) ? n : undefined;
+}
+
+/**
+ * The control's own icon: the first `Icon/<name>` instance in it that is not inside another
+ * nested component and not one of the component's own glyphs (relative ↻, jog − / +, chevrons).
+ */
+export function iconOf(node: FNode): string | undefined {
+  let found: string | undefined;
+  walk(node, (n) => {
+    if (found) return false;
+    if (n === node) return;
+    if (n.type === "INSTANCE" && n.component?.startsWith("Icon/")) {
+      const name = iconSlug(n.component);
+      if (name && !DECORATIVE_ICONS.has(name)) found = name;
+      return false;
+    }
+    if (n.type === "INSTANCE") return false;
+  });
+  return found;
 }
 
 function applyKeys(c: RawControl, keys: Record<string, string>, allowed: string[]): void {
@@ -290,6 +335,7 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
   const where = opts.where;
   const issues: Issue[] = [];
   const controls: FoundControl[] = [];
+  const panels: FoundPanel[] = [];
   const annots: Annot[] = [];
   const promptMixes: { node: FNode; annot?: Annot }[] = [];
   const issue = (level: Level, code: string, message: string, nodeId?: string) =>
@@ -302,8 +348,10 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
       annots.push(a);
       next.annot = a;
     }
-    if (node.component === "Console Panel" && typeof node.props?.Title === "string")
+    if (node.component === "Console Panel" && typeof node.props?.Title === "string") {
       next.panelTitle = node.props.Title;
+      if (next.panel && !next.panel.title) next.panel.title = humanize(node.props.Title);
+    }
     if (node.component === "Scene Bar") next.sceneBar = true;
     return next;
   };
@@ -333,14 +381,16 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
     const push = (oscFrom?: string) => {
       const cond = annot?.dependsOn?.conditions;
       if (cond?.length) c.enabledWhen = cond.map((x) => ({ ...x }));
-      controls.push({
+      const found: FoundControl = {
         control: c,
         nodeId: node.id,
         component: node.component ?? "?",
         box: node.box,
         oscFrom,
         idFrom,
-      });
+      };
+      controls.push(found);
+      scope.panel?.controls.push(found);
     };
     const missing = (what = "no OSC address") => {
       const i: Issue = {
@@ -350,16 +400,18 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
         nodeId: node.id,
         where,
       };
-      if (opts.deferMissing)
-        controls.push({
+      if (opts.deferMissing) {
+        const found: FoundControl = {
           control: c,
           nodeId: node.id,
           component: node.component ?? "?",
           box: node.box,
           idFrom,
           missing: i,
-        });
-      else issues.push(i);
+        };
+        controls.push(found);
+        scope.panel?.controls.push(found);
+      } else issues.push(i);
     };
     const need = (): { address: string; entry: AddressSpec } | undefined => {
       const got = take(annot, kind, id);
@@ -432,8 +484,11 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
         if (!got) return;
         c.address = got.address;
         const vals = got.entry.values;
+        const icon = iconOf(node);
+        if (icon) c.icon = icon;
         if (kind === "toggle") {
           if (node.component === "Switch" || node.component === "List Row") c.style = "switch";
+          if (node.component === "Group Button") c.style = "led";
           const state =
             lower(p.State) ?? lower(findFirst(node, (n) => n.component === "Switch")?.props?.State);
           if (state === "on") c.default = true;
@@ -494,7 +549,10 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
             node.id,
           );
         if (kind === "segmented")
-          c.options = values.map((v, i) => ({ label: labels[i], value: v }));
+          c.options = values.map((v, i) => {
+            const icon = cells[i]?.iconName;
+            return { label: labels[i], value: v, ...(icon ? { icon } : {}) };
+          });
         else {
           c.scenes = values.map((v, i) => ({
             id: slug(String(labels[i])) || `scene-${i + 1}`,
@@ -680,6 +738,26 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
       } else if (role.role === "chrome") return;
       else if (role.role === "control") return build(node, role.type, scope);
       const next = scopeFor(node, scope);
+      const pattern = name ? PANEL_PATTERNS[name] : undefined;
+      if (pattern && !scope.panel) {
+        const panelTitle =
+          typeof node.props?.Title === "string"
+            ? node.props.Title
+            : node.children?.find((c) => c.component === "Console Panel")?.props?.Title;
+        const title = typeof panelTitle === "string" ? humanize(panelTitle) : undefined;
+        const fromLayer = !isDefaultName(node) && slug(node.name);
+        next.panel = {
+          id: fromLayer || (title && slug(title)) || slug(name!),
+          idFrom: fromLayer ? "layer" : title ? "title" : "pattern",
+          ...(title ? { title } : {}),
+          pattern,
+          nodeId: node.id,
+          component: name!,
+          box: node.box,
+          controls: [],
+        };
+        panels.push(next.panel);
+      }
       for (const c of node.children ?? []) visit(c, next);
       return;
     }
@@ -703,13 +781,18 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
       continue;
     }
     target.control.blend = true;
-    const expected = `${String(target.control.address)}/mix`;
-    const said = mix.annot?.osc?.entries[0]?.address;
-    if (said && said !== expected)
+    // A blending prompt sends <address>/a, /b and /mix (schema); the annotation lists them all,
+    // or only the mix address.
+    const addr = String(target.control.address);
+    const said = (mix.annot?.osc?.entries ?? []).map((e) => e.address);
+    const expected = [`${addr}/a`, `${addr}/b`, `${addr}/mix`];
+    const ok =
+      !said.length || (said.includes(`${addr}/mix`) && said.every((a) => expected.includes(a)));
+    if (!ok)
       issue(
         "warning",
         "prompt-mix-address",
-        `${target.control.id}: Prompt Mix is annotated ${said}, but a blending prompt sends ${String(target.control.address)}/a, /b and ${expected} (schema); fix the annotation or the installation`,
+        `${target.control.id}: Prompt Mix is annotated ${said.join(", ")}, but a blending prompt sends ${expected.join(", ")} (schema); fix the annotation or the installation`,
         mix.node.id,
       );
   }
@@ -753,5 +836,15 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
   const drafts = annots
     .filter((a) => a.osc?.draft)
     .map((a) => ({ nodeId: a.nodeId, name: a.name }));
-  return { controls, issues, drafts };
+  // Panels: only those around controls; a list panel has no title by default (Figma List Card).
+  const used = new Set(controls.map((f) => f.control.id));
+  const kept = panels.filter((p) => p.controls.length);
+  for (const p of kept) {
+    if (p.pattern === "list") delete p.title;
+    let id = p.id;
+    for (let n = 2; used.has(id); n++) id = `${p.id}-${n === 2 ? "panel" : `panel-${n - 1}`}`;
+    p.id = id;
+    used.add(id);
+  }
+  return { controls, panels: kept, issues, drafts };
 }

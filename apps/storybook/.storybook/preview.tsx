@@ -4,6 +4,7 @@ import type { Decorator, Preview } from "@storybook/react-native-web-vite";
 import { PortalHost } from "@rn-primitives/portal";
 import { ThemeProvider } from "@osc/ui";
 import { STORY_BRANDS, type StoryBrandId } from "@osc/ui/stories/brands";
+import { withPlainHandlers } from "@osc/ui/stories/handlers";
 import * as React from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -16,8 +17,13 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 const withProviders: Decorator = (Story, ctx) => {
   const mode = (ctx.globals.theme ?? "dark") as "dark" | "light";
   const brandId = (ctx.globals.brand ?? "otakoyi") as StoryBrandId;
-  const brand = React.useMemo(() => ({ ...STORY_BRANDS[brandId].brand, mode }), [brandId, mode]);
+  const brand = React.useMemo(
+    () => ({ ...(STORY_BRANDS[brandId] ?? STORY_BRANDS.otakoyi)?.brand, mode }),
+    [brandId, mode],
+  );
   const fullscreen = ctx.parameters.layout === "fullscreen";
+  // Spies get plain data, not RN Web events (see stories/handlers.ts).
+  const args = React.useMemo(() => withPlainHandlers(ctx.args), [ctx.args]);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -29,7 +35,7 @@ const withProviders: Decorator = (Story, ctx) => {
               alignItems: fullscreen ? "stretch" : "flex-start",
             }}
           >
-            <Story />
+            <Story args={args} />
           </View>
           <PortalHost />
         </ThemeProvider>

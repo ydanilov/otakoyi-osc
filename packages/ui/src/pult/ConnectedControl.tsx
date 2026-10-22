@@ -4,11 +4,11 @@ import * as React from "react";
 import { UnsupportedPlaceholder } from "../controls/discrete";
 import { controlRegistry } from "../controls/registry";
 import type { ControlProps } from "../controls/types";
-import { useControlMode, useControlValue, usePultStore } from "./context";
+import { useControlEnabled, useControlMode, useControlValue, usePultStore } from "./context";
 
 /**
  * One control wired to the store. Studio-only controls are hidden unless the session is a studio
- * session. `extra` passes pattern props through (a Fader Bank mutes a strip's fader).
+ * session; a control whose `enabledWhen` does not hold is drawn disabled. `extra` passes pattern props through (a Fader Bank mutes a strip's fader).
  */
 export function ConnectedControl({
   control,
@@ -22,6 +22,7 @@ export function ConnectedControl({
   const store = usePultStore();
   const value = useControlValue(control.id);
   const mode = useControlMode();
+  const enabled = useControlEnabled(control);
   const onChange = React.useCallback(
     (v: ControlValue) => store.interact(control, v),
     [store, control],
@@ -36,7 +37,7 @@ export function ConnectedControl({
       control={control as never}
       value={value}
       onChange={onChange}
-      disabled={mode !== "control"}
+      disabled={mode !== "control" || !enabled}
       {...extra}
     />
   );

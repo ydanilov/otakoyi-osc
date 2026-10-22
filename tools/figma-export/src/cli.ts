@@ -21,6 +21,7 @@ Input (one of):
 
 Options:
   --section <name|id>     only frames in matching sections (e.g. Phone)
+  --brand <mode>          Figma Brand mode for the theme colours (default: the page's mode)
   --base <path>           installation, targets, theme, presets, pult id/name (not in Figma)
   --contract <path>       installation OSC contract; unknown addresses are errors
   --previous <path>       published config; revision is bumped when the pults changed
@@ -48,6 +49,7 @@ async function main(argv: string[]): Promise<number> {
       page: { type: "string" },
       snapshot: { type: "string" },
       section: { type: "string" },
+      brand: { type: "string" },
       base: { type: "string" },
       contract: { type: "string" },
       previous: { type: "string" },
@@ -82,6 +84,7 @@ async function main(argv: string[]): Promise<number> {
 
   const result = exportSnapshot(snap, {
     section: a.section,
+    brand: a.brand,
     base: a.base ? (readJson(a.base) as BaseConfig) : undefined,
     contract: a.contract ? (readJson(a.contract) as OscContract) : undefined,
     previous: a.previous ? (readJson(a.previous) as never) : undefined,

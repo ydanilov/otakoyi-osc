@@ -247,6 +247,18 @@ export function formatValue(
 }
 
 /**
+ * Decimals a value needs to show its `step` (0.1 → 1, 0.05 → 2, 1 → 0); undefined without a step
+ * (formatValue then picks by magnitude: `0.60`, `12.5`, `120`).
+ */
+export function stepDecimals(step: number | undefined): number | undefined {
+  if (!step || !Number.isFinite(step)) return undefined;
+  const t = String(step);
+  const e = /e-(\d+)$/.exec(t);
+  if (e) return Number(e[1]);
+  return t.includes(".") ? t.split(".")[1]!.length : 0;
+}
+
+/**
  * Signed change of a relative (endless) control for its header (Figma "Relative indicator",
  * option A): `+12`, `−0.02`, `0`. The ↻ glyph next to it marks the control as relative.
  */

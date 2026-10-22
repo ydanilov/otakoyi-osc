@@ -19,10 +19,12 @@ import { PanelView } from "./Panels";
 
 export {
   PultProvider,
+  useControlEnabled,
   useControlMeta,
   useControlMode,
   useControlValue,
   usePultStore,
+  useRelativeOffset,
 } from "./context";
 
 interface PagerScreen {
