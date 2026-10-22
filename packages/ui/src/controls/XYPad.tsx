@@ -17,6 +17,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
+import { TouchLightSkia, useLightPoint, useTouchLight, useTouchLightSkia } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 type Point = { x: number; y: number };
@@ -61,6 +62,9 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
 
   const { width: w, height: h } = size;
   const spring = c.springBack;
+  const light = useTouchLight({ disabled: !!disabled });
+  const lightAt = useLightPoint(light, w, h);
+  const lightProps = useTouchLightSkia(light, lightAt.x, lightAt.y, "stick");
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 0,
@@ -69,12 +73,14 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
       "worklet";
       dragging.value = true;
       active.value = 1;
+      light.down(e.x, e.y);
       px.value = Math.min(1, Math.max(0, e.x / w));
       py.value = Math.min(1, Math.max(0, 1 - e.y / h));
       scheduleOnRN(report, px.value, py.value, false);
     },
     onUpdate: (e) => {
       "worklet";
+      light.move(e.x, e.y);
       px.value = Math.min(1, Math.max(0, e.x / w));
       py.value = Math.min(1, Math.max(0, 1 - e.y / h));
       scheduleOnRN(report, px.value, py.value, false);
@@ -83,6 +89,7 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
       "worklet";
       dragging.value = false;
       active.value = 0;
+      light.up();
       if (spring) {
         px.value = withSpring(0.5);
         py.value = withSpring(0.5);
@@ -120,6 +127,8 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
             <Canvas style={{ width: w, height: h }}>
               <RoundedRect x={0} y={0} width={w} height={h} r={r} color={t.control.track} />
               <Group clip={rrect(rect(0, 0, w, h), r, r)}>
+                {/* Touch light: under the finger, clipped to the pad, below the cursor. */}
+                <TouchLightSkia {...lightProps} />
                 <Line
                   p1={vec(w / 2, 0)}
                   p2={vec(w / 2, h)}

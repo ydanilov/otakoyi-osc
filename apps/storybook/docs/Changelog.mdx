@@ -7,6 +7,23 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-22 — Touch light: press response on all controls
+
+**Added**
+
+- **Touch Light** (Figma `Touch Light` 134:795, board 134:15404): while a finger is down a soft
+  light (primary halo + white core, ~20 % each) blooms under it inside the touch surface, follows it
+  1:1 and fades on release — in 120 ms ease-out (scale 0.6 → 1), out 260 ms ease-in; Reduce Motion
+  fades only. Above the surface fill, below labels, icons, LEDs and grips; never when disabled or
+  view-only.
+- On Fader (all modes and orientations, on the thumb), Knob (absolute, encoder, hue; both sizes),
+  Pad, Toggle (text and picture), Hold to Confirm, Group Button, Button Grid, Scene List, Segmented
+  (per segment), Quick Action, Button, XY Pad and Thumbstick.
+- Tokens `touchLight` (sizes, opacities, core colour, timings); maths in `@osc/controls`
+  `touchLight.ts`; `useTouchLight()` + `TouchLightSkia` / `TouchLightView` in `@osc/ui`.
+- Story **Controls/Touch Light**: `pinned` / `pinX` / `pinY` / `pinIndex` args pin the light
+  (`PinTouchLight`) so it shows in static snapshots.
+
 ## 2026-10-22 — Debug page instead of the pult overlay; centred control headers
 
 **Changed**

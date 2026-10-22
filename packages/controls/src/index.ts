@@ -7,3 +7,4 @@ export * from "./store";
 export * from "./coerce";
 export * from "./states";
 export * from "./debug";
+export * from "./touchLight";
