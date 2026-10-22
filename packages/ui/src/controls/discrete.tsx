@@ -20,6 +20,7 @@ import { LedSwitch } from "../forms/LedSwitch";
 import { useControlServices } from "../platform/services";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
+import { TouchLightView, usePressLight, useTouchLight } from "./TouchLight";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
 
@@ -38,15 +39,20 @@ function Pad({
   style,
   onPressIn,
   onPressOut,
+  lightIndex,
   ...props
 }: Omit<React.ComponentProps<typeof Pressable>, "style"> & {
   look?: PadLook;
   className?: string;
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
+  /** Cell index for a pinned touch light (stories) in multi-pad controls. */
+  lightIndex?: number;
 }) {
   const t = useTheme();
-  const press = usePressState(undefined, { onPressIn, onPressOut });
+  const light = useTouchLight({ disabled: !!disabled, index: lightIndex });
+  const lit = usePressLight(light, { onPressIn, onPressOut });
+  const press = usePressState(undefined, { onPressIn: lit.onPressIn, onPressOut: lit.onPressOut });
   // A latched pad under the finger sinks a little more; a resting one goes Neu/Pressed.
   const depth = look === "pressed" ? "flat" : look === "on" || press.pressed ? "pressed" : "raised";
   const shadow = useDepthStyle(
@@ -56,8 +62,10 @@ function Pad({
   );
   return (
     <Pressable
+      ref={lit.ref}
       disabled={disabled}
       onPressIn={press.onPressIn}
+      onPressMove={lit.onPressMove}
       onPressOut={press.onPressOut}
       className={cn(
         "min-h-touch flex-1 items-center justify-center px-3",
@@ -76,6 +84,8 @@ function Pad({
       ]}
       {...props}
     >
+      {/* Touch light: above the key fill, below the label. */}
+      <TouchLightView light={light} radius={t.size.padRadius} />
       {children}
     </Pressable>
   );
@@ -264,7 +274,9 @@ function PicturePad({
   const target = c.size === "compact" ? t.size.picturePadCompact : t.size.picturePadRegular;
   const side = size.width > 0 ? Math.min(target, size.width, size.height) : 0;
   const r = t.size.padRadius;
-  const press = usePressState(undefined);
+  const light = useTouchLight({ disabled: !!disabled });
+  const lit = usePressLight(light);
+  const press = usePressState(undefined, { onPressIn: lit.onPressIn, onPressOut: lit.onPressOut });
   const shadow = useDepthStyle(
     disabled ? "flat" : on || press.pressed ? "pressed" : "raised",
     !disabled && on ? "signal" : false,
@@ -274,9 +286,11 @@ function PicturePad({
       <View className="flex-1 items-center justify-center" onLayout={onLayout}>
         {side > 0 && (
           <Pressable
+            ref={lit.ref}
             disabled={disabled}
             onPress={() => onChange(!on)}
             onPressIn={press.onPressIn}
+            onPressMove={lit.onPressMove}
             onPressOut={press.onPressOut}
             accessibilityRole="switch"
             accessibilityState={{ checked: on, disabled: !!disabled }}
@@ -304,6 +318,8 @@ function PicturePad({
                 </Defs>
                 <Rect x="0" y="0" width="100%" height="100%" fill={`url(#pad-${c.id})`} />
               </Svg>
+              {/* Touch light: above the picture, below the label. */}
+              <TouchLightView light={light} radius={r} />
               <Text className="text-foreground text-sm font-semibold" numberOfLines={1}>
                 {c.label ?? c.id}
               </Text>
@@ -346,43 +362,77 @@ export function Segmented({ control: c, value, onChange, disabled }: ControlProp
           style={[CONTINUOUS, { borderWidth: 1, borderColor: t.control.trackBorder }, housing]}
           accessibilityRole="radiogroup"
         >
-          {c.options.map((o, i) => {
-            const active = i === selected;
-            return (
-              <Pressable
-                key={i}
-                disabled={disabled}
-                onPress={() => onChange(i)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: active }}
-                className={cn(
-                  "flex-1 items-center justify-center rounded-full px-2",
-                  active && "bg-control-track",
-                )}
-                style={[CONTINUOUS, active ? well : undefined]}
-              >
-                <Text
-                  className="text-sm"
-                  style={
-                    active
-                      ? {
-                          color: t.control.fill,
-                          textShadowColor: t.control.fill,
-                          textShadowRadius: 8,
-                          textShadowOffset: { width: 0, height: 0 },
-                        }
-                      : { color: t.color.textMuted }
-                  }
-                  numberOfLines={1}
-                >
-                  {o.label}
-                </Text>
-              </Pressable>
-            );
-          })}
+          {c.options.map((o, i) => (
+            <SegmentOption
+              key={i}
+              index={i}
+              label={o.label}
+              active={i === selected}
+              disabled={disabled}
+              well={well}
+              onPress={() => onChange(i)}
+            />
+          ))}
         </View>
       </View>
     </ControlFrame>
+  );
+}
+
+/** One Segmented option: an inset capsule when selected, with its own touch light. */
+function SegmentOption({
+  index,
+  label,
+  active,
+  disabled,
+  well,
+  onPress,
+}: {
+  index: number;
+  label: string;
+  active: boolean;
+  disabled?: boolean;
+  well: { boxShadow: string };
+  onPress: () => void;
+}) {
+  const t = useTheme();
+  const light = useTouchLight({ disabled: !!disabled, index });
+  const lit = usePressLight(light);
+  return (
+    <Pressable
+      ref={lit.ref}
+      disabled={disabled}
+      onPress={onPress}
+      onPressIn={lit.onPressIn}
+      onPressMove={lit.onPressMove}
+      onPressOut={lit.onPressOut}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: active }}
+      className={cn(
+        "flex-1 items-center justify-center rounded-full px-2",
+        active && "bg-control-track",
+      )}
+      style={[CONTINUOUS, active ? well : undefined]}
+    >
+      {/* Touch light: inside the segment's capsule, below the label. */}
+      <TouchLightView light={light} radius={t.radius.full} />
+      <Text
+        className="text-sm"
+        style={
+          active
+            ? {
+                color: t.control.fill,
+                textShadowColor: t.control.fill,
+                textShadowRadius: 8,
+                textShadowOffset: { width: 0, height: 0 },
+              }
+            : { color: t.color.textMuted }
+        }
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -418,6 +468,7 @@ export function ButtonGrid({ control: c, value, onChange, disabled }: ControlPro
               return (
                 <Pad
                   key={k}
+                  lightIndex={cell}
                   look={on ? (c.mode === "momentary" ? "pressed" : "on") : "rest"}
                   disabled={disabled}
                   className="min-h-0 px-1"
@@ -448,6 +499,7 @@ export function SceneList({ control: c, value, onChange, disabled }: ControlProp
             <Pad
               key={s.id}
               look={active ? "on" : "rest"}
+              lightIndex={c.scenes.indexOf(s)}
               disabled={disabled}
               onPress={() => onChange(s.id)}
               className="min-h-14 flex-none flex-row justify-between"
@@ -475,11 +527,12 @@ export function ButtonGroup({
   return (
     <ControlFrame label={c.label} disabled={disabled}>
       <View className="flex-1 flex-row gap-2">
-        {c.buttons.map((b) => {
+        {c.buttons.map((b, i) => {
           const on = lit.has(b.id);
           return (
             <Pad
               key={b.id}
+              lightIndex={i}
               disabled={disabled}
               className="min-h-0 gap-1.5 px-1"
               onPress={() => onChange(toggleInGroup(c, value, b.id))}

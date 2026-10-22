@@ -16,6 +16,7 @@ import { InsetRRect, LitRRect } from "./skia";
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
+import { TouchLightSkia, useLightPoint, useTouchLight, useTouchLightSkia } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 /** Angle between two ribs of the wheel (a cylinder seen from the front), degrees. */
@@ -41,6 +42,9 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   const [moved, setMoved] = React.useState(0);
   const glow = useGlow();
   const spread = useFineSpread(fine);
+  const light = useTouchLight({ disabled: !!disabled });
+  const lightAt = useLightPoint(light, w, h);
+  const lightProps = useTouchLightSkia(light, lightAt.x, lightAt.y, "fader");
 
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
@@ -70,9 +74,10 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 2,
-    onBegin: () => {
+    onBegin: (e) => {
       "worklet";
       animateGlow(glow, true);
+      light.down(e.x, e.y);
     },
     onActivate: () => {
       "worklet";
@@ -84,11 +89,13 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
       const step = dist - last.value;
       last.value = dist;
       offset.value = offset.value + step;
+      light.move(e.x, e.y);
       scheduleOnRN(push, step, e.numberOfPointers);
     },
     onFinalize: () => {
       "worklet";
       animateGlow(glow, false);
+      light.up();
       scheduleOnRN(end);
     },
   });
@@ -223,6 +230,8 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
                   ]}
                 />
               </RoundedRect>
+              {/* Touch light: under the finger, on the wheel, below the detent LEDs. */}
+              <TouchLightSkia {...lightProps} />
               {fine && (
                 <RoundedRect
                   x={hx + 0.75}

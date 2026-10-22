@@ -18,6 +18,14 @@ export { XYPad } from "./controls/XYPad";
 export { Meter } from "./controls/Meter";
 export { JogFader } from "./controls/Jog";
 export { Thumbstick } from "./controls/Thumbstick";
+export {
+  PinTouchLight,
+  TouchLightSkia,
+  TouchLightView,
+  usePressLight,
+  useTouchLight,
+  useTouchLightSkia,
+} from "./controls/TouchLight";
 export { ImageUpload, MicControl } from "./controls/media";
 export { PromptControl } from "./controls/Prompt";
 export {

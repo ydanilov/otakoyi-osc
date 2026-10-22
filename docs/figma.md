@@ -40,6 +40,8 @@ for state. Depth is meaningful (ADR-013):
   (tracks, toggle beds, inputs, tab bars).
 - **Flat** — information nested in a card (Chip, Stat Tile, icon wells, Label).
 - **Glow** (`Glow/*`) — lit values, LEDs, and buttons only while pressed. Never on resting buttons.
+- **Touch light** (`Touch Light`) — the press response: a soft light under the finger inside the
+  control's touch surface while it is held (iOS 26 text-field highlight). See Rules.
 
 Effect colours are bound to `elevation/*` variables, so shadows and highlights switch with the
 theme mode. Pult screens never scroll. Navigation follows the Apple HIG (ADR-013): Settings and
@@ -82,7 +84,8 @@ Controls: Fader (Absolute slot / Relative jog wheel × Vertical / Horizontal × 
 Disabled), Knob (Absolute / Relative / Color-Hue × Vertical / Horizontal × Size Regular / Compact,
 240° travel), Pad (Size), Toggle (Size × Content=Text / Image), Thumbstick,
 XY Pad, Meter, Toggle, Pad, Hold to Confirm, Segmented (single-select), Group Button and Button
-Group (multi-select with LED strip), Button Grid, Scene List, Label, Color Picker, Unsupported.
+Group (multi-select with LED strip), Button Grid, Scene List, Label, Color Picker, Unsupported,
+Touch Light (press response, 134:795; board "Touch light — press response" 134:15404).
 
 Icons: Phosphor Regular as `Icon/<name>` components — use them for every glyph.
 
@@ -95,6 +98,7 @@ are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 | Figma component (variants)                                                                            | Code                                                                          | File                                                                                          |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `Neu/*`, `Glow/*` effect styles                                                                       | `Surface depth glow`, `boxShadow()`                                           | `ds/depth.tsx`, `@osc/tokens` depth.ts                                                        |
+| Touch Light (press response)                                                                          | `useTouchLight` + `TouchLightSkia` / `TouchLightView`, `PinTouchLight`        | `controls/TouchLight.tsx`, `@osc/controls` touchLight.ts, tokens `touchLight`                 |
 | `Icon/<name>`                                                                                         | `<Name>Icon` + `Glyph`                                                        | `ds/icons.ts`, `ds/Glyph.tsx`                                                                 |
 | Button (Variant × State)                                                                              | `Button variant pressed disabled`                                             | `chrome/Button.tsx`                                                                           |
 | Icon Button (State=Default / Active)                                                                  | `IconButton active`                                                           | `chrome/Button.tsx`                                                                           |
@@ -145,6 +149,13 @@ Knob Group, Camera Control, Scene Bar…) are built from config by the pult rend
 - Component and variant names follow the code (`controlRegistry` types, ADRs).
 - Colours only through variables; a new colour starts in `tokens.json`, then here.
 - The control drawing in code (Skia) is the source of truth for geometry; Figma mirrors it.
+- **Touch light**: every pressable / draggable control (Fader, Knob, Pad, Toggle, Hold to Confirm,
+  Group Button, Segmented per segment, Quick Action, Button, XY Pad, Thumbstick) shows a Touch Light
+  while pressed — halo (primary, ~20 %) + core (white, ~20 %), centred on the touch, above the
+  surface fill and below labels / icons, clipped to the surface's shape (faders: on the thumb,
+  below its LED and grips; knob: on the disc, below the cap; thumbstick: on the stick). In 120 ms
+  ease-out (scale 0.6 → 1), follows 1:1, out 260 ms ease-in; Reduce Motion fades only. Never on
+  disabled or view-only controls. Sizes and timings: `touchLight` in `tokens.json`.
 
 ## Gallery in code
 

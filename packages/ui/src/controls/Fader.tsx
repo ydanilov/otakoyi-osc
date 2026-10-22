@@ -32,6 +32,7 @@ import { InsetRRect, LitCircle, LitRRect, RaisedRRect } from "./skia";
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import { JogFader } from "./Jog";
+import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
 
@@ -92,6 +93,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   const [fine, setFine] = React.useState(false);
   const glow = useGlow();
   const spread = useFineSpread(fine);
+  const light = useTouchLight({ disabled: !!disabled });
 
   // Feedback from the installation or another device moves the fader, unless the finger is on it.
   React.useEffect(() => {
@@ -140,6 +142,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     onBegin: (e) => {
       "worklet";
       animateGlow(glow, true);
+      light.down(e.x, e.y);
       if (!absolute) return;
       dragging.value = true;
       const p = vertical ? 1 - e.y / h : e.x / w;
@@ -180,6 +183,7 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
     onFinalize: () => {
       "worklet";
       animateGlow(glow, false);
+      light.up();
       if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, pos.value, true);
@@ -224,6 +228,10 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
   const thumbH = vertical ? capShort : capLong - 12;
   const thumbX = useDerivedValue(() => (vertical ? mid - thumbW / 2 : thumbC.value - thumbW / 2));
   const thumbY = useDerivedValue(() => (vertical ? thumbC.value - thumbH / 2 : mid - thumbH / 2));
+  // Touch light: centred on the thumb (it follows the thumb, which follows the finger).
+  const lightX = useDerivedValue(() => (vertical ? mid : thumbC.value));
+  const lightY = useDerivedValue(() => (vertical ? thumbC.value : mid));
+  const lightProps = useTouchLightSkia(light, lightX, lightY, "fader");
   // LED across the thumb, 10 pt before its centre; three grip lines after it.
   const ledLen = Math.round((vertical ? thumbW : thumbH) * 0.6);
   const gripLen = Math.round((vertical ? thumbW : thumbH) * 0.48);
@@ -348,6 +356,8 @@ function PositionFader({ control: c, value, onChange, disabled }: ControlProps<"
                 height={thumbH}
                 r={t.radius.sm}
               />
+              {/* Touch light: above the thumb, below its LED and grips. */}
+              <TouchLightSkia {...lightProps} />
               {fine && (
                 <RoundedRect
                   x={thumbX}
