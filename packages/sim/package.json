@@ -1,0 +1,19 @@
+{
+  "name": "@osc/sim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@osc/bridge-core": "workspace:*",
+    "@osc/controls": "workspace:*",
+    "@osc/core": "workspace:*",
+    "@osc/protocol": "workspace:*",
+    "@osc/schema": "workspace:*"
+  }
+}

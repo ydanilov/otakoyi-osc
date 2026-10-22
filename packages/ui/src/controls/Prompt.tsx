@@ -1,4 +1,6 @@
 import {
+  dragShift,
+  dragTargetIndex,
   isPromptValue,
   movePreset,
   presetCardState,
@@ -13,19 +15,33 @@ import type { PromptPresetDto } from "@osc/protocol";
 import { Control, type ControlOf } from "@osc/schema";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
+import { GestureDetector, usePanGesture, useTapGesture } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { Button } from "@osc/ui/components/ui/button";
 import { Input } from "@osc/ui/components/ui/input";
 import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
 import { useControlServices } from "../platform/services";
 import { useControlMeta } from "../pult/context";
+import { Toast } from "../chrome/Toast";
+import { CopyIcon, LightningIcon, PencilSimpleIcon, CircleHalfIcon, TrashIcon } from "../ds/icons";
+import { ContextMenu } from "../menus/ContextMenu";
+import type { MenuItem } from "../menus/menu-types";
 import { ControlFrame } from "./ControlFrame";
 import { Led } from "./discrete";
 import { Fader } from "./Fader";
 import type { ControlProps } from "./types";
 
-/** How long the Undo toast stays after a delete (the bridge keeps the preset restorable longer). */
-const UNDO_TOAST_MS = 5000;
+/** Card width and gap (`w-40`, `gap-2`): one drag slot. */
+const CARD_W = 160;
+const CARD_GAP = 8;
+const SLOT = CARD_W + CARD_GAP;
 
 const CARD: Record<PresetCardState, string> = {
   off: "border-border bg-card",
@@ -41,22 +57,22 @@ const PATTERN_HINT = {
   active: null,
   applying: "Applying…",
   allOff: "All off · base look",
-  editing: "Editing",
+  editing: "Drag to reorder",
   empty: "No prompts yet — add one below",
   error: "The installation didn't confirm · tap the card to retry",
 } as const;
 
-type Sheet =
-  | { kind: "actions"; preset: PromptPresetDto }
-  | { kind: "confirmDelete"; preset: PromptPresetDto }
-  | { kind: "edit"; preset: PromptPresetDto; text: string; label: string };
+type Sheet = { kind: "edit"; preset: PromptPresetDto; text: string; label: string };
 
 /**
  * Prompt (ADR-015, states in ADR-016). Card states: Off, On, In blend, Disabled, Applying (amber,
- * waiting for the installation), Error (not confirmed; tap retries), Editing. Long-press opens the
- * card's actions (On/Off, Edit, Use in mix, Duplicate, Delete). Deletes ask first and can be undone
- * for a few seconds. Edit mode deletes ("−") and reorders. All logic is in @osc/controls; presets
- * live on the bridge (`useControlServices().prompts`).
+ * waiting for the installation), Error (not confirmed; tap retries), Editing.
+ * - Long-press a card: the system context menu (ADR-013) — On/Off, Edit, Use in mix, Duplicate,
+ *   Delete (destructive, last).
+ * - Delete is immediate (no confirmation: it can be undone) with an Undo toast for 5 s; the bridge
+ *   keeps the preset restorable (soft delete, ADR-016).
+ * - Edit mode: drag a card by its grip to reorder (persisted on the bridge); "−" deletes.
+ * All logic is in @osc/controls; presets live on the bridge (`useControlServices().prompts`).
  */
 export function PromptControl({ control: c, value, onChange, disabled }: ControlProps<"prompt">) {
   const { prompts, pult } = useControlServices();
@@ -78,11 +94,6 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
   React.useEffect(() => {
     void refresh();
   }, [refresh]);
-  React.useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), UNDO_TOAST_MS);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   const run = async (fn: () => Promise<unknown>) => {
     setError(null);
@@ -110,11 +121,12 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
   const del = (p: PromptPresetDto) =>
     run(async () => {
       setSheet(null);
-      await prompts.remove(p.id);
+      // Immediate: it can be undone (HIG: no confirmation for undoable actions).
       const list = presets.filter((x) => x.id !== p.id);
       setPresets(list);
-      reapplyLocally(list, p.id);
       setToast(p);
+      await prompts.remove(p.id);
+      reapplyLocally(list, p.id);
     });
   const undo = (p: PromptPresetDto) =>
     run(async () => {
@@ -124,21 +136,21 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
     });
   const duplicate = (p: PromptPresetDto) =>
     run(async () => {
-      setSheet(null);
       await prompts.duplicate(p.id);
       await refresh();
     });
-  const move = (p: PromptPresetDto, by: number) =>
+  const moveTo = (id: string, to: number) =>
     run(async () => {
       const ids = movePreset(
         presets.map((x) => x.id),
-        p.id,
-        presets.indexOf(p) + by,
+        id,
+        to,
       );
-      setPresets(ids.map((id) => presets.find((x) => x.id === id)!));
+      if (ids.join() === presets.map((x) => x.id).join()) return;
+      setPresets(ids.map((i) => presets.find((x) => x.id === i)!));
       await prompts.reorder(pult, c.id, ids);
     });
-  const saveEdit = (s: Extract<Sheet, { kind: "edit" }>) =>
+  const saveEdit = (s: Sheet) =>
     run(async () => {
       const updated = await prompts.update(s.preset.id, {
         text: s.text,
@@ -158,6 +170,53 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
       await refresh();
     });
 
+  const menuFor = (p: PromptPresetDto): MenuItem[] => {
+    const state = presetCardState({ id: p.id, value: current });
+    const on = state !== "off";
+    return [
+      {
+        key: "toggle",
+        label: on ? "Off" : "On",
+        icon: LightningIcon,
+        systemImage: on ? "lightswitch.off" : "lightswitch.on",
+        onSelect: () => tap(p, state),
+      },
+      {
+        key: "edit",
+        label: "Edit",
+        icon: PencilSimpleIcon,
+        systemImage: "pencil",
+        onSelect: () => setSheet({ kind: "edit", preset: p, text: p.text, label: p.label }),
+      },
+      ...(c.blend
+        ? [
+            {
+              key: "mix",
+              label: "Use in mix",
+              icon: CircleHalfIcon,
+              systemImage: "circle.lefthalf.filled",
+              onSelect: () => emit(presets, useInMix(p.id, current)),
+            },
+          ]
+        : []),
+      {
+        key: "duplicate",
+        label: "Duplicate",
+        icon: CopyIcon,
+        systemImage: "plus.square.on.square",
+        onSelect: () => duplicate(p),
+      },
+      {
+        key: "delete",
+        label: "Delete",
+        icon: TrashIcon,
+        systemImage: "trash",
+        destructive: true,
+        onSelect: () => del(p),
+      },
+    ];
+  };
+
   const mixControl = React.useMemo(
     () =>
       Control.parse({
@@ -173,6 +232,10 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
       }) as ControlOf<"fader">,
     [c.id, c.address, c.default],
   );
+
+  // Drag to reorder (edit mode): which card is lifted and how far it moved.
+  const dragFrom = useSharedValue(-1);
+  const dragX = useSharedValue(0);
 
   const pattern = presetsPatternState({ count: presets.length, value: current, ack, editing });
   const hint = PATTERN_HINT[pattern];
@@ -193,82 +256,78 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
           )}
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="grow-0">
-          <View className="flex-row gap-2">
+          <View className="flex-row" style={{ gap: CARD_GAP }}>
             {presets.map((p, i) => {
               const state = presetCardState({ id: p.id, value: current, ack, editing, disabled });
               const lit = state === "on";
-              return (
-                <View key={p.id} className={cn("w-40 gap-1 rounded-md border p-2", CARD[state])}>
-                  <Pressable
-                    disabled={disabled || editing}
-                    onPress={() => tap(p, state)}
-                    onLongPress={() => setSheet({ kind: "actions", preset: p })}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: lit, disabled: !!disabled }}
-                    accessibilityLabel={`${p.label}, ${state}`}
-                    accessibilityHint="Tap to switch on or off. Long-press for more."
-                    className="min-h-touch gap-1"
-                  >
-                    <View className="flex-row items-center gap-2">
-                      <Led
-                        on={state !== "off" && state !== "disabled" && state !== "editing"}
-                        className={cn(
-                          lit && "bg-primary-foreground",
-                          state === "applying" && "bg-status-warning",
-                          state === "error" && "bg-status-critical",
-                        )}
-                      />
-                      <Text
-                        className={cn(
-                          "flex-1 text-xs font-medium",
-                          lit ? "text-primary-foreground" : "text-foreground",
-                        )}
-                        numberOfLines={1}
-                      >
-                        {p.label}
-                      </Text>
-                    </View>
+              const body = (
+                <TapArea
+                  enabled={!disabled && !editing}
+                  onTap={() => tap(p, state)}
+                  testID={`prompt-card-${i}`}
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Led
+                      on={state !== "off" && state !== "disabled" && state !== "editing"}
+                      className={cn(
+                        lit && "bg-primary-foreground",
+                        state === "applying" && "bg-status-warning",
+                        state === "error" && "bg-status-critical",
+                      )}
+                    />
                     <Text
                       className={cn(
-                        "text-xs",
-                        lit ? "text-primary-foreground/80" : "text-muted-foreground",
-                        state === "applying" && "text-status-warning",
-                        state === "error" && "text-status-critical",
+                        "flex-1 text-xs font-medium",
+                        lit ? "text-primary-foreground" : "text-foreground",
                       )}
-                      numberOfLines={2}
+                      numberOfLines={1}
                     >
-                      {state === "applying"
-                        ? "Applying…"
-                        : state === "error"
-                          ? "Not confirmed · tap to retry"
-                          : state === "inBlend"
-                            ? `In blend · ${current.aId === p.id ? "A" : "B"}`
-                            : p.text}
+                      {p.label}
                     </Text>
-                  </Pressable>
-                  {editing && (
-                    // TODO(prompt-drag): drag to reorder; ‹ › are the accessible stand-in until then.
-                    <View className="flex-row gap-1">
-                      <SmallButton
-                        label="−"
-                        hint={`Delete ${p.label}`}
-                        onPress={() => setSheet({ kind: "confirmDelete", preset: p })}
-                      />
-                      <SmallButton
-                        label="‹"
-                        hint="Move left"
-                        disabled={i === 0}
-                        onPress={() => move(p, -1)}
-                      />
-                      <SmallButton
-                        label="›"
-                        hint="Move right"
-                        disabled={i === presets.length - 1}
-                        onPress={() => move(p, 1)}
-                      />
-                    </View>
+                  </View>
+                  <Text
+                    className={cn(
+                      "text-xs",
+                      lit ? "text-primary-foreground/80" : "text-muted-foreground",
+                      state === "applying" && "text-status-warning",
+                      state === "error" && "text-status-critical",
+                    )}
+                    numberOfLines={2}
+                  >
+                    {state === "applying"
+                      ? "Applying…"
+                      : state === "error"
+                        ? "Not confirmed · tap to retry"
+                        : state === "inBlend"
+                          ? `In blend · ${current.aId === p.id ? "A" : "B"}`
+                          : p.text}
+                  </Text>
+                </TapArea>
+              );
+              return (
+                <DraggableCard
+                  key={p.id}
+                  index={i}
+                  count={presets.length}
+                  editing={editing}
+                  from={dragFrom}
+                  dx={dragX}
+                  className={CARD[state]}
+                  label={p.label}
+                  onDrop={(to) => moveTo(p.id, to)}
+                  onDelete={() => del(p)}
+                >
+                  {editing || disabled ? (
+                    body
+                  ) : (
+                    <ContextMenu
+                      label={`${p.label}, ${state}. Tap to switch on or off; more actions available.`}
+                      items={menuFor(p)}
+                    >
+                      {body}
+                    </ContextMenu>
                   )}
-                </View>
+                </DraggableCard>
               );
             })}
           </View>
@@ -317,155 +376,187 @@ export function PromptControl({ control: c, value, onChange, disabled }: Control
       {sheet && (
         <View className="bg-background/90 absolute inset-0 justify-end rounded-md p-2">
           <View className="bg-card border-border gap-2 rounded-md border p-3">
-            {sheet.kind === "actions" && (
-              <>
-                <Text className="text-foreground text-sm font-semibold" numberOfLines={1}>
-                  {sheet.preset.label}
-                </Text>
-                <SheetButton
-                  label={
-                    presetCardState({ id: sheet.preset.id, value: current }) === "off"
-                      ? "On"
-                      : "Off"
-                  }
-                  onPress={() => {
-                    tap(sheet.preset, presetCardState({ id: sheet.preset.id, value: current }));
-                    setSheet(null);
-                  }}
-                />
-                <SheetButton
-                  label="Edit"
-                  onPress={() =>
-                    setSheet({
-                      kind: "edit",
-                      preset: sheet.preset,
-                      text: sheet.preset.text,
-                      label: sheet.preset.label,
-                    })
-                  }
-                />
-                {c.blend && (
-                  <SheetButton
-                    label="Use in mix"
-                    onPress={() => {
-                      emit(presets, useInMix(sheet.preset.id, current));
-                      setSheet(null);
-                    }}
-                  />
-                )}
-                <SheetButton label="Duplicate" onPress={() => duplicate(sheet.preset)} />
-                <SheetButton
-                  label="Delete"
-                  destructive
-                  onPress={() => setSheet({ kind: "confirmDelete", preset: sheet.preset })}
-                />
-                <SheetButton label="Cancel" onPress={() => setSheet(null)} />
-              </>
-            )}
-            {sheet.kind === "confirmDelete" && (
-              <>
-                <Text className="text-foreground text-sm">
-                  Delete “{sheet.preset.label}”?
-                  {current.aId === sheet.preset.id || current.bId === sheet.preset.id
-                    ? " It is live: the installation goes back to its base look."
-                    : ""}
-                </Text>
-                <SheetButton label="Delete" destructive onPress={() => del(sheet.preset)} />
-                <SheetButton label="Cancel" onPress={() => setSheet(null)} />
-              </>
-            )}
-            {sheet.kind === "edit" && (
-              <>
-                <Input
-                  value={sheet.label}
-                  onChangeText={(label) => setSheet({ ...sheet, label })}
-                  maxLength={64}
-                  placeholder="Name"
-                />
-                <Input
-                  value={sheet.text}
-                  onChangeText={(text) => setSheet({ ...sheet, text })}
-                  maxLength={c.maxLength}
-                  multiline
-                  placeholder="Prompt"
-                />
-                <View className="flex-row gap-2">
-                  <Button size="sm" className="flex-1" onPress={() => saveEdit(sheet)}>
-                    <Text>Save</Text>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="flex-1"
-                    onPress={() => setSheet(null)}
-                  >
-                    <Text>Cancel</Text>
-                  </Button>
-                </View>
-                <SheetButton
-                  label="Delete prompt"
-                  destructive
-                  onPress={() => setSheet({ kind: "confirmDelete", preset: sheet.preset })}
-                />
-              </>
-            )}
+            <Input
+              value={sheet.label}
+              onChangeText={(label) => setSheet({ ...sheet, label })}
+              maxLength={64}
+              placeholder="Name"
+              accessibilityLabel="Prompt name"
+            />
+            <Input
+              value={sheet.text}
+              onChangeText={(text) => setSheet({ ...sheet, text })}
+              maxLength={c.maxLength}
+              multiline
+              placeholder="Prompt"
+              accessibilityLabel="Prompt text"
+            />
+            <View className="flex-row gap-2">
+              <Button size="sm" variant="ghost" className="flex-1" onPress={() => setSheet(null)}>
+                <Text>Cancel</Text>
+              </Button>
+              <Button size="sm" className="flex-1" onPress={() => saveEdit(sheet)}>
+                <Text>Save</Text>
+              </Button>
+            </View>
           </View>
         </View>
       )}
 
       {toast && (
-        <View className="bg-card border-border absolute bottom-2 left-2 right-2 flex-row items-center justify-between rounded-md border px-3 py-2">
-          <Text className="text-foreground flex-1 text-xs" numberOfLines={1}>
-            Deleted “{toast.label}”
-          </Text>
-          <Button size="sm" variant="ghost" onPress={() => undo(toast)}>
-            <Text>Undo</Text>
-          </Button>
+        <View className="absolute bottom-2 left-2 right-2" testID="undo-toast">
+          <Toast
+            key={toast.id}
+            message={`Deleted “${toast.label}”`}
+            icon={TrashIcon}
+            actionLabel="Undo"
+            onAction={() => undo(toast)}
+            onDismiss={() => setToast((t) => (t?.id === toast.id ? null : t))}
+          />
         </View>
       )}
     </ControlFrame>
   );
 }
 
-function SmallButton({
-  label,
-  hint,
-  onPress,
-  disabled,
+/**
+ * The card's tap target. A gesture-handler tap (not a Pressable), so the long-press of the
+ * context menu around it still reaches its own Pressable.
+ */
+function TapArea({
+  enabled,
+  onTap,
+  testID,
+  children,
 }: {
-  label: string;
-  hint: string;
-  onPress: () => void;
-  disabled?: boolean;
+  enabled: boolean;
+  onTap: () => void;
+  testID?: string;
+  children: React.ReactNode;
 }) {
+  const tapGesture = useTapGesture({ enabled, runOnJS: true, maxDuration: 300, onActivate: onTap });
   return (
-    <Pressable
-      disabled={disabled}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={hint}
-      className={cn(
-        "bg-muted min-h-8 flex-1 items-center justify-center rounded-sm",
-        disabled && "opacity-40",
-      )}
-    >
-      <Text className="text-foreground text-sm">{label}</Text>
-    </Pressable>
+    <GestureDetector gesture={tapGesture}>
+      <View className="min-h-touch gap-1" testID={testID}>
+        {children}
+      </View>
+    </GestureDetector>
   );
 }
 
-function SheetButton({
+/**
+ * A preset card. In edit mode
+ it can be dragged by its grip (the others slide to make room) and
+ * deleted with "−"; screen readers get Move left / Move right actions instead of the drag.
+ */
+function DraggableCard({
+  index,
+  count,
+  editing,
+  from,
+  dx,
+  className,
   label,
-  onPress,
-  destructive,
+  onDrop,
+  onDelete,
+  children,
 }: {
+  index: number;
+  count: number;
+  editing: boolean;
+  from: SharedValue<number>;
+  dx: SharedValue<number>;
+  className: string;
   label: string;
-  onPress: () => void;
-  destructive?: boolean;
+  onDrop: (to: number) => void;
+  onDelete: () => void;
+  children: React.ReactNode;
 }) {
+  const style = useAnimatedStyle(() => {
+    const f = from.value;
+    if (f < 0) return { transform: [{ translateX: 0 }, { scale: 1 }], zIndex: 0, opacity: 1 };
+    if (f === index)
+      return { transform: [{ translateX: dx.value }, { scale: 1.04 }], zIndex: 10, opacity: 0.95 };
+    const to = dragTargetIndex(f, dx.value, SLOT, count);
+    return {
+      transform: [
+        { translateX: withTiming(dragShift(index, f, to) * SLOT, { duration: 150 }) },
+        { scale: 1 },
+      ],
+      zIndex: 0,
+      opacity: 1,
+    };
+  });
+  const drop = React.useCallback(
+    (to: number) => {
+      onDrop(to);
+    },
+    [onDrop],
+  );
+  const pan = usePanGesture({
+    enabled: editing && count > 1,
+    minDistance: 2,
+    onActivate: () => {
+      "worklet";
+      from.value = index;
+      dx.value = 0;
+    },
+    onUpdate: (e) => {
+      "worklet";
+      dx.value = e.translationX;
+    },
+    onFinalize: () => {
+      "worklet";
+      if (from.value !== index) return;
+      const to = dragTargetIndex(index, dx.value, SLOT, count);
+      from.value = -1;
+      dx.value = 0;
+      if (to !== index) scheduleOnRN(drop, to);
+    },
+  });
   return (
-    <Button size="sm" variant={destructive ? "destructive" : "secondary"} onPress={onPress}>
-      <Text>{label}</Text>
-    </Button>
+    <Animated.View
+      style={[{ width: CARD_W }, style]}
+      accessibilityActions={
+        editing
+          ? [
+              { name: "moveLeft", label: "Move left" },
+              { name: "moveRight", label: "Move right" },
+            ]
+          : undefined
+      }
+      onAccessibilityAction={(e) => {
+        if (e.nativeEvent.actionName === "moveLeft" && index > 0) onDrop(index - 1);
+        if (e.nativeEvent.actionName === "moveRight" && index < count - 1) onDrop(index + 1);
+      }}
+    >
+      {/* Reanimated views are not NativeWind-interop'd: the card look is on this View. */}
+      <View className={cn("flex-1 gap-1 rounded-md border p-2", className)}>
+        {children}
+        {editing && (
+          <View className="flex-row items-center gap-1">
+            <Pressable
+              onPress={onDelete}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${label}`}
+              className="bg-muted min-h-8 w-10 items-center justify-center rounded-sm"
+            >
+              <Text className="text-status-critical text-base">−</Text>
+            </Pressable>
+            <GestureDetector gesture={pan}>
+              <View
+                className="bg-muted min-h-8 flex-1 items-center justify-center rounded-sm"
+                accessibilityLabel={`Drag ${label} to reorder`}
+                testID={`prompt-grip-${index}`}
+                // Web: show the grab cursor; native ignores it.
+                style={{ cursor: "grab" } as object}
+              >
+                <Text className="text-muted-foreground text-sm tracking-widest">⋮⋮</Text>
+              </View>
+            </GestureDetector>
+          </View>
+        )}
+      </View>
+    </Animated.View>
   );
 }

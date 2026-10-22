@@ -3,6 +3,7 @@
  * socket: the installation PIN (or studio key) and the device id that holds the lease.
  * Types are structural so this package stays free of the schema.
  */
+import type { ActivityEntry, BridgeHealth } from "./index";
 
 export interface ImageAssetDto {
   id: string;
@@ -110,7 +111,9 @@ export function createBridgeHttp(opts: BridgeHttpOptions) {
       reorder: (pult: string, control: string, ids: string[]) =>
         call<PromptPresetDto[]>(`/api/prompts/order?${q(pult, control)}`, jsonInit("PUT", { ids })),
     },
-    activity: (limit?: number) => call<unknown[]>(`/api/activity${limit ? `?limit=${limit}` : ""}`),
+    activity: (limit?: number) =>
+      call<ActivityEntry[]>(`/api/activity${limit ? `?limit=${limit}` : ""}`),
+    health: () => call<BridgeHealth>("/api/health", { cache: "no-store" }),
   };
 }
 

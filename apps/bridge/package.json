@@ -11,6 +11,7 @@
     "build:bin": "node scripts/build-bin.mjs"
   },
   "dependencies": {
+    "@osc/bridge-core": "workspace:*",
     "@osc/controls": "workspace:*",
     "@osc/core": "workspace:*",
     "@osc/protocol": "workspace:*",

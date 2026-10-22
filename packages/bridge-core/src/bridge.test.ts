@@ -3,7 +3,7 @@ import { argValue, message, type OscMessage } from "@osc/core";
 import type { ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
 import demo from "../../../packages/schema/examples/demo-installation.json";
-import { Bridge, FEEDBACK_TIMEOUT_MS, type LogEntry, type Peer } from "./bridge";
+import { Bridge, FEEDBACK_TIMEOUT_MS, type LogEntry, type Peer } from "./index";
 
 function setup(auth = {}) {
   const r = parseConfig(demo);

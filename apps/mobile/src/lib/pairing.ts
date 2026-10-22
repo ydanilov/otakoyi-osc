@@ -1,38 +1,59 @@
 import type { Pairing } from "@osc/protocol";
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
+import type { Theme } from "@osc/schema";
 
-const KEY = "otakoyi.pairing";
+/** Key/value storage behind an interface (AGENTS rule 5): SecureStore on native, localStorage on web. */
+export interface KeyValueStore {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string): Promise<void>;
+  remove(key: string): Promise<void>;
+}
+
+export const PAIRING_KEY = "otakoyi.pairing";
 
 /**
- * The bridge this device is paired with (from the QR / deep link). Native: Keychain via
- * SecureStore, because it holds the installation PIN. Web: localStorage (per browser).
+ * The installation this device is paired with, plus the brand it showed last time, so the
+ * client-branded loading screen can appear before the bridge answers on the next launch.
  */
-export async function loadPairing(): Promise<Pairing | null> {
-  try {
-    const raw =
-      Platform.OS === "web"
-        ? globalThis.localStorage?.getItem(KEY)
-        : await SecureStore.getItemAsync(KEY);
-    return raw ? (JSON.parse(raw) as Pairing) : null;
-  } catch {
-    return null;
-  }
+export interface SavedPairing extends Pairing {
+  brand?: { name: string; theme: Theme } | undefined;
 }
 
-export async function savePairing(p: Pairing): Promise<void> {
-  const raw = JSON.stringify(p);
-  try {
-    if (Platform.OS === "web") globalThis.localStorage?.setItem(KEY, raw);
-    else await SecureStore.setItemAsync(KEY, raw);
-  } catch {
-    // Storage unavailable (private mode): the pairing lasts for this session only.
-  }
+export function createPairingStore(kv: KeyValueStore) {
+  return {
+    async load(): Promise<SavedPairing | null> {
+      try {
+        const raw = await kv.get(PAIRING_KEY);
+        if (!raw) return null;
+        const p = JSON.parse(raw) as SavedPairing;
+        return typeof p?.bridge === "string" ? p : null;
+      } catch {
+        return null;
+      }
+    },
+    async save(p: SavedPairing): Promise<void> {
+      try {
+        await kv.set(PAIRING_KEY, JSON.stringify(p));
+      } catch {
+        // Storage unavailable (private mode): the pairing lasts for this session only.
+      }
+    },
+    /** "Forget this installation". */
+    async clear(): Promise<void> {
+      try {
+        await kv.remove(PAIRING_KEY);
+      } catch {}
+    },
+  };
 }
 
-export async function clearPairing(): Promise<void> {
-  try {
-    if (Platform.OS === "web") globalThis.localStorage?.removeItem(KEY);
-    else await SecureStore.deleteItemAsync(KEY);
-  } catch {}
+export type PairingStore = ReturnType<typeof createPairingStore>;
+
+/** In-memory store (tests, and a fallback when the platform has none). */
+export function memoryKeyValue(): KeyValueStore {
+  const m = new Map<string, string>();
+  return {
+    get: async (k) => m.get(k) ?? null,
+    set: async (k, v) => void m.set(k, v),
+    remove: async (k) => void m.delete(k),
+  };
 }

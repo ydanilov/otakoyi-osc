@@ -1,5 +1,5 @@
 import { createSocket } from "node:dgram";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -89,7 +89,9 @@ describe("bridge server (real sockets)", () => {
     expect(fb).toMatchObject({ pult: "lobby", value: "60", by: null });
 
     const health = await (await fetch(`http://127.0.0.1:${server.port}/api/health`)).json();
-    expect(health).toMatchObject({ ok: true, protocol: 2, devices: 1 });
+    expect(health).toMatchObject({ ok: true, protocol: 2, devices: 1, fps: 60 });
+    expect(typeof health.uptimeS).toBe("number");
+    expect(typeof health.startedAt).toBe("number");
     // Per target: last feedback, where it is reached.
     expect(health.targets[0]).toMatchObject({
       id: "td",
@@ -114,5 +116,30 @@ describe("bridge server (real sockets)", () => {
     const pair = await (await fetch(`http://127.0.0.1:${server.port}/pair`)).text();
     expect(pair).toContain("1234");
     expect(pair.match(/<svg/g)?.length).toBe(2);
+  });
+
+  it("serves the config's brand assets (images only, no way out of the folder)", async () => {
+    const parsed = parseConfig(demo);
+    if (!parsed.ok) throw new Error("config");
+    const assets = await mkdtemp(join(tmpdir(), "assets-"));
+    await writeFile(join(assets, "splash.png"), new Uint8Array([137, 80, 78, 71]));
+    await writeFile(join(assets, "notes.txt"), "secret");
+    const server = await startServer({
+      config: parsed.config,
+      port: 0,
+      host: "127.0.0.1",
+      logDir: await mkdtemp(join(tmpdir(), "bridge-")),
+      assetsDir: assets,
+      auth: {},
+      quiet: true,
+      mdns: false,
+    });
+    closers.push(() => server.close());
+    const base = `http://127.0.0.1:${server.port}/brand`;
+    const ok = await fetch(`${base}/splash.png`);
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/png");
+    expect((await fetch(`${base}/notes.txt`)).status).toBe(404);
+    expect((await fetch(`${base}/..%2F..%2Fetc%2Fpasswd.png`)).status).toBe(404);
   });
 });

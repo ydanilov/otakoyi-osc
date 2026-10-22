@@ -7,7 +7,7 @@ import { promptValue } from "@osc/controls";
 import type { ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
 import demo from "../../../packages/schema/examples/demo-installation.json";
-import { Bridge, type Peer } from "./bridge";
+import { Bridge, type Peer } from "@osc/bridge-core";
 import { PromptStore, UNDO_WINDOW_MS } from "./prompts";
 
 const limits = { maxLength: 500, maxPresets: 10 };

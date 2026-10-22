@@ -1,17 +1,23 @@
 import {
+  BlurMask,
   Canvas,
   Circle,
   Group,
-  Line,
   Path,
+  Shadow,
   Skia,
   SweepGradient,
   vec,
+  type SkPath,
 } from "@shopify/react-native-skia";
+import type { Theme } from "@osc/tokens";
 import {
   FINE_POINTERS,
+  KNOB_TRAVEL,
+  knobLightCenter,
   createDeltaAccumulator,
   createThrottle,
+  fineBadge,
   formatValue,
   hsvToHex,
   hueDrag,
@@ -21,6 +27,7 @@ import {
   positionToValue,
   relativeDrag,
   resetValue,
+  spreadDialTicks,
   startDrag,
   valueToPosition,
   wrapHue,
@@ -35,9 +42,18 @@ import {
   useSimultaneousGestures,
   useTapGesture,
 } from "react-native-gesture-handler";
-import { useDerivedValue, useSharedValue } from "react-native-reanimated";
+import { useDerivedValue, useSharedValue, type SharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
+import { InsetCircle, LitCircle, RaisedCircle } from "./skia";
+import {
+  TouchLightSkia,
+  useLightPoint,
+  useTouchLight,
+  useTouchLightSkia,
+  type TouchLight,
+} from "./TouchLight";
+import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
 import { useLayout } from "./useLayout";
@@ -53,7 +69,9 @@ const HUE_STOPS = Array.from({ length: 7 }, (_, i) => hsvToHex(i / 6, 1, 1));
  * - `absolute`: arc over `travel` degrees (240° by default), hard stops at min and max.
  * - `relative`: endless encoder, the needle turns freely and the change is sent.
  * - `hue`: colour wheel, 0..360° that wraps around.
- * Two fingers = fine mode (`fineFactor`); double-tap = back to default (absolute and hue).
+ * Two fingers = fine mode (`fineFactor`): the badge shows the coefficient and the tick ring
+ * spreads apart around the needle. Double-tap = back to default (absolute and hue). The lit arc
+ * glows, fully while touched (`@osc/controls` states).
  */
 export function Knob(props: ControlProps<"knob">) {
   const mode = knobMode(props.control);
@@ -62,14 +80,119 @@ export function Knob(props: ControlProps<"knob">) {
   return <AbsoluteKnob {...props} />;
 }
 
-/** Circle geometry shared by the three knobs. */
-function useDial(size: { width: number; height: number }) {
+/**
+ * Dial geometry shared by the three knobs, from the Figma Knob (a 160 pt body): arc ring
+ * r 59.4–66, well r 57, raised disc r 48, cap r 33, indicator at r 40, stops at r 72–80.
+ * Compact (`size: "compact"`) draws the dial at ~0.7×; labels keep their size.
+ */
+function useDial(size: { width: number; height: number }, compact: boolean) {
   const t = useTheme();
   const { width: w, height: h } = size;
-  const d = Math.min(w, h);
-  const stroke = t.size.knobArc;
-  const r = d / 2 - stroke;
-  return { w, h, d, stroke, r, cx: w / 2, cy: h / 2 };
+  // Leave room for the disc's drop shadow under the dial.
+  const fit = Math.max(0, Math.min(w, h - 8));
+  const d = compact ? fit * t.size.knobCompactScale : fit;
+  const k = d / 160;
+  return {
+    w,
+    h,
+    d,
+    k,
+    cx: w / 2,
+    cy: Math.min(h / 2, d / 2 + Math.max(0, (h - 8 - d) / 2)),
+    arcR: 62.7 * k,
+    arcW: 6.6 * k,
+    well: 57 * k,
+    disc: 48 * k,
+    cap: 33 * k,
+  };
+}
+
+type Dial = ReturnType<typeof useDial>;
+
+/** Knob touch light: on the disc, nudged toward the finger (`knobLightCenter`), ≈1.15 × the disc. */
+function useKnobLight(light: TouchLight, dial: Dial) {
+  const t = useTheme();
+  const tk = t.touchLight;
+  const at = useLightPoint(light, dial.w, dial.h);
+  const { cx, cy, disc } = dial;
+  const p = useDerivedValue(() =>
+    knobLightCenter({ x: at.x.value, y: at.y.value }, { x: cx, y: cy }, disc, tk),
+  );
+  const x = useDerivedValue(() => p.value.x);
+  const y = useDerivedValue(() => p.value.y);
+  return useTouchLightSkia(light, x, y, "knob", disc * 2);
+}
+
+/** End stops of the travel: short ticks just outside the arc (Figma `Stop`). */
+function stopsPath(dial: Dial, start: number, travel: number) {
+  const b = Skia.PathBuilder.Make();
+  for (const deg of [start, start + travel]) {
+    const a = ((deg - 90) * Math.PI) / 180;
+    const r1 = 72 * dial.k;
+    const r2 = 79 * dial.k;
+    b.moveTo(dial.cx + Math.cos(a) * r1, dial.cy + Math.sin(a) * r1).lineTo(
+      dial.cx + Math.cos(a) * r2,
+      dial.cy + Math.sin(a) * r2,
+    );
+  }
+  return b.build();
+}
+
+/**
+ * Well, raised disc and cap: the body every knob shares (Figma Well / Disc / Cap). The touch
+ * light (`light`) sits on the disc, below the cap and the indicator.
+ */
+function DialBody({
+  dial,
+  t,
+  cap,
+  light,
+}: {
+  dial: Dial;
+  t: Theme;
+  cap?: number;
+  light?: React.ReactNode;
+}) {
+  return (
+    <>
+      <InsetCircle t={t} cx={dial.cx} cy={dial.cy} r={dial.well} color={t.color.background} />
+      <RaisedCircle t={t} cx={dial.cx} cy={dial.cy} r={dial.disc} color={t.color.surfaceRaised} />
+      {light}
+      <InsetCircle
+        t={t}
+        pressed
+        cx={dial.cx}
+        cy={dial.cy}
+        r={cap ?? dial.cap}
+        color={t.color.surface}
+      />
+    </>
+  );
+}
+
+/** A lit stroke (value arc) with Glow/Primary scaled by `glow`. */
+function LitStroke({
+  path,
+  color,
+  width,
+  glow,
+}: {
+  path: SkPath | SharedValue<SkPath>;
+  color: string;
+  width: number;
+  glow: SharedValue<number>;
+}) {
+  return (
+    <>
+      <Path path={path} color={color} style="stroke" strokeWidth={width} opacity={glow}>
+        <BlurMask blur={4} style="outer" />
+      </Path>
+      <Path path={path} color={color} style="stroke" strokeWidth={width} opacity={glow}>
+        <BlurMask blur={1} style="outer" />
+      </Path>
+      <Path path={path} color={color} style="stroke" strokeWidth={width} />
+    </>
+  );
 }
 
 /** Needle end points for an angle (degrees, 0 = up, clockwise). */
@@ -95,6 +218,9 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   const dragging = useSharedValue(false);
   const [display, setDisplay] = React.useState(initial);
   const [fine, setFine] = React.useState(false);
+  const glow = useGlow();
+  const light = useTouchLight({ disabled: !!disabled });
+  const spread = useFineSpread(fine);
 
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
@@ -136,13 +262,21 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 4,
+    onBegin: (e) => {
+      "worklet";
+      animateGlow(glow, true);
+      light.down(e.x, e.y);
+    },
     onActivate: (e) => {
       "worklet";
       dragging.value = true;
       drag.value = startDrag(pos.value, e.numberOfPointers);
+      // Both fingers landed together: fine mode from the start.
+      if (e.numberOfPointers >= FINE_POINTERS) scheduleOnRN(setFine, true);
     },
     onUpdate: (e) => {
       "worklet";
+      light.move(e.x, e.y);
       const wasFine = drag.value.pointers >= 2;
       const r = relativeDrag(
         drag.value,
@@ -159,6 +293,8 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
+      light.up();
       if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, pos.value, true);
@@ -174,16 +310,15 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
   });
   const gesture = useSimultaneousGestures(pan, doubleTap);
 
-  const { w, h, d, stroke, r, cx, cy } = useDial(size);
+  const dial = useDial(size, c.size === "compact");
+  const lightProps = useKnobLight(light, dial);
+  const { w, h, d, cx, cy, arcR, arcW, k } = dial;
   const travel = c.travel;
   const start = knobStart(travel);
-  const oval = Skia.XYWHRect(cx - r, cy - r, r * 2, r * 2);
+  const oval = Skia.XYWHRect(cx - arcR, cy - arcR, arcR * 2, arcR * 2);
   // Skia measures angles from 3 o'clock; ours from 12 o'clock.
   const skStart = start - 90;
-  const track = React.useMemo(() => {
-    return Skia.PathBuilder.Make().addArc(oval, skStart, travel).build();
-  }, [oval.x, oval.y, oval.width, skStart, travel]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  const track = Skia.PathBuilder.Make().addArc(oval, skStart, travel).build();
   const centerPos = c.centered ? 0.5 : 0;
   const fillPath = useDerivedValue(() => {
     const from = skStart + centerPos * travel;
@@ -191,19 +326,18 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
       .addArc(oval, from, (pos.value - centerPos) * travel)
       .build();
   });
-  const tip = useDerivedValue(
-    () => needle(start + pos.value * travel, cx, cy, r * 0.25, r - stroke * 2).p2,
-  );
-  const innerTip = useDerivedValue(
-    () => needle(start + pos.value * travel, cx, cy, r * 0.25, r - stroke * 2).p1,
-  );
-
+  const dot = useDerivedValue(() => needle(start + pos.value * travel, cx, cy, 0, 40 * k).p2);
+  const dotX = useDerivedValue(() => dot.value.x);
+  const dotY = useDerivedValue(() => dot.value.y);
+  const lit = fine ? t.color.accent : t.control.fill;
+  const stops = stopsPath(dial, start, travel);
   const step = c.step ?? (c.max - c.min) / 100;
   return (
     <ControlFrame
       label={c.label}
+      align="center"
       value={c.showValue ? formatValue(display, { unit: c.unit }) : undefined}
-      badge={fine ? "FINE" : undefined}
+      badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
       <GestureDetector gesture={gesture}>
@@ -227,28 +361,21 @@ function AbsoluteKnob({ control: c, value, onChange, disabled }: ControlProps<"k
         >
           {d > 0 && (
             <Canvas style={{ width: w, height: h }}>
+              <Path path={track} color={t.control.track} style="stroke" strokeWidth={arcW}>
+                <Shadow dx={0} dy={3} blur={4} color={t.elevation.insetShadow} inner />
+                <Shadow dx={0} dy={-1} blur={2} color={t.elevation.insetHighlight} inner />
+              </Path>
+              {/* The lit value arc: full glow while touched, ~40 % at rest. */}
+              <LitStroke path={fillPath} color={lit} width={arcW} glow={glow} />
               <Path
-                path={track}
-                color={t.control.track}
+                path={stops}
+                color={t.control.tick}
                 style="stroke"
-                strokeWidth={stroke}
+                strokeWidth={2.5 * k}
                 strokeCap="round"
               />
-              <Path
-                path={fillPath}
-                color={t.control.fill}
-                style="stroke"
-                strokeWidth={stroke}
-                strokeCap="round"
-              />
-              <Circle cx={cx} cy={cy} r={r - stroke * 1.5} color={t.color.surfaceRaised} />
-              <Line
-                p1={innerTip}
-                p2={tip}
-                color={t.control.thumb}
-                strokeWidth={t.stroke.strong}
-                strokeCap="round"
-              />
+              <DialBody dial={dial} t={t} light={<TouchLightSkia {...lightProps} />} />
+              <LitCircle cx={dotX} cy={dotY} r={3.5 * k} color={lit} glow={glow} />
             </Canvas>
           )}
         </View>
@@ -264,6 +391,9 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
   const angle = useSharedValue(0);
   const last = useSharedValue(0);
   const [fine, setFine] = React.useState(false);
+  const glow = useGlow();
+  const light = useTouchLight({ disabled: !!disabled });
+  const spread = useFineSpread(fine);
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
   const acc = React.useMemo(
@@ -290,12 +420,18 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 4,
+    onBegin: (e) => {
+      "worklet";
+      animateGlow(glow, true);
+      light.down(e.x, e.y);
+    },
     onActivate: () => {
       "worklet";
       last.value = 0;
     },
     onUpdate: (e) => {
       "worklet";
+      light.move(e.x, e.y);
       const dist = e.translationX - e.translationY;
       const step = dist - last.value;
       last.value = dist;
@@ -305,15 +441,59 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
+      light.up();
       scheduleOnRN(end);
     },
   });
 
-  const { w, h, d, stroke, r, cx, cy } = useDial(size);
-  const p1 = useDerivedValue(() => needle(angle.value, cx, cy, r * 0.25, r - stroke * 2).p1);
-  const p2 = useDerivedValue(() => needle(angle.value, cx, cy, r * 0.25, r - stroke * 2).p2);
+  const dial = useDial(size, c.size === "compact");
+  const lightProps = useKnobLight(light, dial);
+  const { w, h, d, cx, cy, k } = dial;
+  const start = knobStart(KNOB_TRAVEL);
+  // The indicator turns freely; the dot ring (every 10° of the 240° face) lights the two dots
+  // next to it and spreads ×1.8 around it in fine mode.
+  const indicator = useDerivedValue(() => needle(angle.value, cx, cy, 0, 30 * k).p2);
+  const indX = useDerivedValue(() => indicator.value.x);
+  const indY = useDerivedValue(() => indicator.value.y);
+  const wrapped = useDerivedValue(() => ((((angle.value + 180) % 360) + 360) % 360) - 180);
+  const dots = useDerivedValue(() => {
+    const unlit = Skia.PathBuilder.Make();
+    const lit = Skia.PathBuilder.Make();
+    const ring = spreadDialTicks(25, start, KNOB_TRAVEL, wrapped.value, spread.value, 0);
+    for (const deg of ring) {
+      const a = ((deg - 90) * Math.PI) / 180;
+      const x = cx + Math.cos(a) * 64 * k;
+      const y = cy + Math.sin(a) * 64 * k;
+      if (Math.abs(deg - wrapped.value) <= 10 * spread.value) lit.addCircle(x, y, 2.5 * k);
+      else unlit.addCircle(x, y, 2 * k);
+    }
+    return { unlit: unlit.build(), lit: lit.build() };
+  });
+  const unlitDots = useDerivedValue(() => dots.value.unlit);
+  const litDots = useDerivedValue(() => dots.value.lit);
+  // Knurled disc edge: ribs that turn with the encoder.
+  const knurl = useDerivedValue(() => {
+    const b = Skia.PathBuilder.Make();
+    for (let i = 0; i < 56; i++) {
+      const a = ((angle.value + (i * 360) / 56 - 90) * Math.PI) / 180;
+      b.moveTo(cx + Math.cos(a) * 40.5 * k, cy + Math.sin(a) * 40.5 * k).lineTo(
+        cx + Math.cos(a) * 45 * k,
+        cy + Math.sin(a) * 45 * k,
+      );
+    }
+    return b.build();
+  });
+  const lit = fine ? t.color.accent : t.control.fill;
+  const stops = stopsPath(dial, start, KNOB_TRAVEL);
   return (
-    <ControlFrame label={c.label} badge={fine ? "FINE" : undefined} disabled={disabled}>
+    <ControlFrame
+      label={c.label}
+      align="center"
+      badge={fine ? fineBadge(fineFactor) : undefined}
+      relative
+      disabled={disabled}
+    >
       <GestureDetector gesture={pan}>
         <View
           className="flex-1"
@@ -331,22 +511,31 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
         >
           {d > 0 && (
             <Canvas style={{ width: w, height: h }}>
-              <Circle
-                cx={cx}
-                cy={cy}
-                r={r}
-                color={t.control.track}
+              <Path path={unlitDots} color={t.control.tick} />
+              <Path path={litDots} color={lit} opacity={glow}>
+                <BlurMask blur={4} style="outer" />
+              </Path>
+              <Path path={litDots} color={lit} />
+              <Path
+                path={stops}
+                color={t.control.tick}
                 style="stroke"
-                strokeWidth={stroke}
-              />
-              <Circle cx={cx} cy={cy} r={r - stroke * 1.5} color={t.color.surfaceRaised} />
-              <Line
-                p1={p1}
-                p2={p2}
-                color={t.control.fill}
-                strokeWidth={t.stroke.strong}
+                strokeWidth={2.5 * k}
                 strokeCap="round"
               />
+              <InsetCircle t={t} cx={cx} cy={cy} r={dial.well} color={t.color.background} />
+              <RaisedCircle t={t} cx={cx} cy={cy} r={dial.disc} color={t.color.surfaceRaised} />
+              {/* Touch light: on the disc, below the knurl, cap and indicator. */}
+              <TouchLightSkia {...lightProps} />
+              <Path
+                path={knurl}
+                color={t.control.track}
+                style="stroke"
+                strokeWidth={1.5 * k}
+                strokeCap="round"
+              />
+              <InsetCircle t={t} pressed cx={cx} cy={cy} r={35 * k} color={t.color.surface} />
+              <Circle cx={indX} cy={indY} r={3 * k} color={t.control.thumb} />
             </Canvas>
           )}
         </View>
@@ -365,6 +554,8 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
   const dragging = useSharedValue(false);
   const [display, setDisplay] = React.useState(initial);
   const [fine, setFine] = React.useState(false);
+  const glow = useGlow();
+  const light = useTouchLight({ disabled: !!disabled });
 
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
@@ -401,6 +592,11 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 4,
+    onBegin: (e) => {
+      "worklet";
+      animateGlow(glow, true);
+      light.down(e.x, e.y);
+    },
     onActivate: () => {
       "worklet";
       dragging.value = true;
@@ -408,6 +604,7 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
     },
     onUpdate: (e) => {
       "worklet";
+      light.move(e.x, e.y);
       const factor = e.numberOfPointers >= 2 ? fineFactor : 1;
       // One full turn per 1.5 sweeps of drag: precise enough to land on a colour.
       hue.value = hueDrag(startHue.value, e.translationX - e.translationY, SWEEP_PX * 1.5, factor);
@@ -415,6 +612,8 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
     },
     onFinalize: () => {
       "worklet";
+      animateGlow(glow, false);
+      light.up();
       if (!dragging.value) return;
       dragging.value = false;
       scheduleOnRN(report, hue.value, true, false);
@@ -430,16 +629,29 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
   });
   const gesture = useSimultaneousGestures(pan, doubleTap);
 
-  const { w, h, d, stroke, r, cx, cy } = useDial(size);
-  const dot = useDerivedValue(() => needle(hue.value, cx, cy, 0, r).p2);
+  const dial = useDial(size, c.size === "compact");
+  const lightProps = useKnobLight(light, dial);
+  const { w, h, d, cx, cy, k } = dial;
+  const start = knobStart(KNOB_TRAVEL);
+  // The spectrum runs over the 240° face: hue 0 at the start stop, 360 at the end stop.
+  const bandR = 61.5 * k;
+  const band = 9 * k;
+  const spectrum = Skia.PathBuilder.Make()
+    .addArc(Skia.XYWHRect(cx - bandR, cy - bandR, bandR * 2, bandR * 2), 0, KNOB_TRAVEL)
+    .build();
+  const dot = useDerivedValue(
+    () => needle(start + (hue.value / 360) * KNOB_TRAVEL, cx, cy, 0, bandR).p2,
+  );
   const dotX = useDerivedValue(() => dot.value.x);
   const dotY = useDerivedValue(() => dot.value.y);
+  const stops = stopsPath(dial, start, KNOB_TRAVEL);
   const current = hsvToHex(display / 360, 1, 1);
   return (
     <ControlFrame
       label={c.label}
+      align="center"
       value={c.showValue ? formatValue(Math.round(display), { unit: c.unit ?? "°" }) : undefined}
-      badge={fine ? "FINE" : undefined}
+      badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
     >
       <GestureDetector gesture={gesture}>
@@ -460,15 +672,45 @@ function HueKnob({ control: c, value, onChange, disabled }: ControlProps<"knob">
         >
           {d > 0 && (
             <Canvas style={{ width: w, height: h }}>
-              {/* Rotate so hue 0 sits at the top, like the needle. */}
-              <Group transform={[{ rotate: -Math.PI / 2 }]} origin={vec(cx, cy)}>
-                <Circle cx={cx} cy={cy} r={r} style="stroke" strokeWidth={stroke}>
-                  <SweepGradient c={vec(cx, cy)} colors={HUE_STOPS} />
-                </Circle>
+              <Group transform={[{ rotate: ((start - 90) * Math.PI) / 180 }]} origin={vec(cx, cy)}>
+                <Path path={spectrum} style="stroke" strokeWidth={band}>
+                  <SweepGradient
+                    c={vec(cx, cy)}
+                    colors={HUE_STOPS}
+                    positions={HUE_STOPS.map((_, i) => ((i / 6) * KNOB_TRAVEL) / 360)}
+                  />
+                </Path>
               </Group>
-              <Circle cx={cx} cy={cy} r={r - stroke * 1.5} color={t.color.surfaceRaised} />
-              <Circle cx={cx} cy={cy} r={(r - stroke * 1.5) * 0.45} color={current} />
-              <Circle cx={dotX} cy={dotY} r={stroke * 1.4} color={t.control.thumb} />
+              <Path
+                path={stops}
+                color={t.control.tick}
+                style="stroke"
+                strokeWidth={2.5 * k}
+                strokeCap="round"
+              />
+              <DialBody dial={dial} t={t} light={<TouchLightSkia {...lightProps} />} />
+              {/* The current colour is the lit value: it glows, fully while touched. */}
+              <Circle cx={cx} cy={cy} r={20 * k} color={current} opacity={glow}>
+                <BlurMask blur={5} style="outer" />
+              </Circle>
+              <Circle cx={cx} cy={cy} r={20 * k} color={current} />
+              <Circle
+                cx={cx}
+                cy={cy}
+                r={19 * k}
+                color={t.control.trackBorder}
+                style="stroke"
+                strokeWidth={2 * k}
+              />
+              <Circle cx={dotX} cy={dotY} r={5 * k} color={t.control.thumb} />
+              <Circle
+                cx={dotX}
+                cy={dotY}
+                r={5 * k}
+                color={t.color.background}
+                style="stroke"
+                strokeWidth={2 * k}
+              />
             </Canvas>
           )}
         </View>

@@ -1,37 +1,36 @@
-import { argValue, message, type OscMessage } from "@osc/core";
 import { parseConfig, type InstallationConfig } from "@osc/schema";
-import type { PultStore, Transport } from "@osc/ui";
+import { Simulator } from "@osc/sim";
 import demoJson from "../../../../packages/schema/examples/demo-installation.json";
+import { Session } from "./session";
 
 const parsed = parseConfig(demoJson);
 if (!parsed.ok) throw new Error("Demo config is invalid");
 export const demoConfig: InstallationConfig = parsed.config;
 
+/** The demo's assets, bundled with the app (`theme.logo` / `theme.splash`, picture pad images). */
+export const DEMO_ASSETS: Readonly<Record<string, number>> = {
+  "demo-logo.png": require("../../../../packages/schema/examples/assets/demo-logo.png"),
+  "demo-splash.jpg": require("../../../../packages/schema/examples/assets/demo-splash.jpg"),
+  "demo-pad.jpg": require("../../../../packages/schema/examples/assets/demo-pad.jpg"),
+};
+
 /**
- * Demo mode: no installation needed. Used before login and by App Review.
- * Echoes sent values back as feedback and simulates FPS and an audio meter,
- * so every control visibly works without a network.
+ * "Try the demo" (ADR-012): a simulated installation inside the app — the same bridge core and
+ * protocol as a real one (`@osc/sim`), with the demo config. App Review and prospective clients
+ * use it; nothing leaves the device.
  */
-export function createDemoTransport(
-  getStore: () => PultStore | null,
-): Transport & { start(): () => void } {
-  return {
-    send(_target, msgs: OscMessage[]) {
-      if (__DEV__) for (const m of msgs) console.log("[osc:demo]", m.address, m.args.map(argValue));
-    },
-    start() {
-      let t = 0;
-      const id = setInterval(() => {
-        const store = getStore();
-        if (!store) return;
-        t += 1;
-        const level =
-          0.35 + 0.3 * Math.abs(Math.sin(t / 7)) + 0.35 * Math.max(0, Math.sin(t / 3.1)) ** 8;
-        store.receive(message("/wall/audio/level", Math.min(1, level)));
-        if (t % 10 === 0)
-          store.receive(message("/sys/fps", 58 + Math.round(Math.random() * 20) / 10));
-      }, 100);
-      return () => clearInterval(id);
-    },
-  };
+export async function createDemoSession(
+  device: string,
+): Promise<{ session: Session; sim: Simulator }> {
+  const sim = new Simulator({ config: demoConfig });
+  await sim.seedPrompts();
+  sim.start();
+  const session = new Session({
+    kind: "demo",
+    name: demoConfig.installation.name,
+    device,
+    transport: sim.transport,
+    http: sim.http(device),
+  });
+  return { session, sim };
 }

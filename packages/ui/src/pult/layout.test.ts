@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { paginate, reflowForPhone, type Cell } from "./layout";
+import { baseTokens } from "@osc/tokens";
+import type { AnyControl } from "@osc/schema";
+import { minHeightFor, paginate, reflowForPhone, type Cell } from "./layout";
 
 const overlaps = (a: Cell, b: Cell) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -64,5 +66,55 @@ describe("paginate", () => {
 
   it("returns one empty screen for an empty page", () => {
     expect(paginate(new Map(), 10)).toEqual([{ ids: [], top: 0, rows: 1 }]);
+  });
+});
+
+describe("picture pads and sized pads", () => {
+  const sizes = baseTokens.control;
+  const pad = (extra: Record<string, unknown>) =>
+    ({
+      id: "p",
+      type: "toggle",
+      style: "button",
+      address: "/p",
+      ...extra,
+    }) as unknown as AnyControl;
+
+  it("knows the Figma sizes", () => {
+    expect(minHeightFor(pad({ image: "logo.jpg" }), sizes)).toBe(168);
+    expect(minHeightFor(pad({ image: "logo.jpg", size: "compact" }), sizes)).toBe(120);
+    expect(minHeightFor(pad({ size: "regular" }), sizes)).toBe(88);
+    expect(minHeightFor(pad({ size: "compact" }), sizes)).toBe(64);
+    expect(minHeightFor({ ...pad({ size: "compact" }), type: "button" } as AnyControl, sizes)).toBe(
+      64,
+    );
+    // No size: the pad stretches with its cell; switches never use pad sizes.
+    expect(minHeightFor(pad({}), sizes)).toBeUndefined();
+    expect(minHeightFor(pad({ style: "switch", image: "x.jpg" }), sizes)).toBeUndefined();
+  });
+
+  // Rows: header band (2 rows) and a band with a picture pad (2 rows); 8 pt gaps.
+  const cells = new Map<string, Cell>([
+    ["mode", { x: 0, y: 0, w: 12, h: 2 }],
+    ["fader", { x: 0, y: 2, w: 12, h: 2 }],
+    ["picture", { x: 0, y: 4, w: 6, h: 2 }],
+  ]);
+
+  it("moves a band to the next screen when the rows would squeeze a picture pad", () => {
+    // 360 pt / 6 rows ≈ 53 pt rows → the 2-row picture pad gets 114 pt < 168.
+    const fit = { height: 360, gap: 8, minHeight: new Map([["picture", 168]]) };
+    const screens = paginate(cells, 20, fit);
+    expect(screens.map((s) => s.ids)).toEqual([["mode", "fader"], ["picture"]]);
+    // On its own screen the band is 2 rows of 176 pt: it fits.
+    expect(screens[1]).toMatchObject({ top: 4, rows: 2 });
+  });
+
+  it("keeps one screen when there is room", () => {
+    const fit = { height: 800, gap: 8, minHeight: new Map([["picture", 168]]) };
+    expect(paginate(cells, 20, fit)).toHaveLength(1);
+  });
+
+  it("without fit behaves as before", () => {
+    expect(paginate(cells, 20)).toHaveLength(1);
   });
 });

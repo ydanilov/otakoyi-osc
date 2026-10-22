@@ -1,159 +1,40 @@
-import { PultStore } from "@osc/controls";
-import {
-  BridgeClient,
-  modeFor,
-  type BridgeConnection,
-  type ErrorCode,
-  type Holder,
-  type TargetStatus,
-} from "@osc/protocol";
-import { parseConfig, type InstallationConfig } from "@osc/schema";
-import * as React from "react";
+import { createBridgeHttp, httpBaseOf, webSocketTransport, type Pairing } from "@osc/protocol";
+import type { KeyValueStore } from "./pairing";
+import { Session } from "./session";
 
-export interface BridgeSession {
-  connection: BridgeConnection;
-  config: InstallationConfig | null;
-  stores: Map<string, PultStore>;
-  lease: Holder | null;
-  targets: TargetStatus[];
-  error: { code: ErrorCode; message: string } | null;
-  take(): void;
-}
-
+const DEVICE_KEY = "otakoyi.device";
 let cachedId: string | null = null;
 
 /**
- * Stable per-browser/device id, so a reconnect keeps the control lease. Cached for the process so
- * the socket and HTTP calls (image uploads, prompt presets) always present the same device.
+ * Stable per-device id, so a reconnect keeps the control lease. Kept in storage and cached for the
+ * process, so the socket and HTTP calls (image uploads, prompt presets) present the same device.
  */
-export function deviceId(): string {
+export async function deviceId(kv: KeyValueStore): Promise<string> {
   if (cachedId) return cachedId;
-  const key = "otakoyi.device";
-  try {
-    const existing = globalThis.localStorage?.getItem(key);
-    if (existing) return (cachedId = existing);
-    const id = `web-${Math.random().toString(36).slice(2, 10)}`;
-    globalThis.localStorage?.setItem(key, id);
-    return (cachedId = id);
-  } catch {
-    return (cachedId = `web-${Math.random().toString(36).slice(2, 10)}`);
-  }
+  const existing = await kv.get(DEVICE_KEY).catch(() => null);
+  if (existing) return (cachedId = existing);
+  const id = `dev-${Math.random().toString(36).slice(2, 10)}`;
+  await kv.set(DEVICE_KEY, id).catch(() => {});
+  return (cachedId = id);
+}
+
+/** A session with a real bridge on the installation's network (WebSocket + HTTP). */
+export function createBridgeSession(pairing: Pairing, device: string): Session {
+  return new Session({
+    kind: "bridge",
+    name: pairing.name,
+    bridge: pairing.bridge,
+    pin: pairing.pin,
+    device,
+    deviceName: typeof navigator !== "undefined" ? navigator.userAgent?.slice(0, 64) : undefined,
+    transport: webSocketTransport(pairing.bridge),
+    http: createBridgeHttp({ base: httpBaseOf(pairing.bridge), device, secret: pairing.pin }),
+  });
 }
 
 /**
- * Connect a pult to a bridge. The bridge sends the config and the shared state; every pult gets
- * a store whose interactions go to the bridge (which validates them and sends the OSC).
- */
-export function useBridge(url: string | null, secret: string | undefined): BridgeSession | null {
-  const [, rerender] = React.useReducer((n: number) => n + 1, 0);
-  const ref = React.useRef<BridgeSession | null>(null);
-
-  React.useEffect(() => {
-    if (!url) return;
-    const device = deviceId();
-    const session: BridgeSession = {
-      connection: "connecting",
-      config: null,
-      stores: new Map(),
-      lease: null,
-      targets: [],
-      error: null,
-      take: () => client.send({ t: "take" }),
-    };
-    ref.current = session;
-    const applyMode = () => {
-      const mode = session.connection === "open" ? modeFor(session.lease, device) : "offline";
-      for (const s of session.stores.values()) s.setMode(mode);
-    };
-    const client = new BridgeClient({
-      url,
-      device,
-      role: "client",
-      secret,
-      name: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 64) : undefined,
-      onConnection(state) {
-        session.connection = state;
-        applyMode();
-        rerender();
-      },
-      onMessage(msg) {
-        switch (msg.t) {
-          case "welcome": {
-            const parsed = parseConfig(msg.config);
-            if (!parsed.ok) {
-              session.error = {
-                code: "bad-message",
-                message: "The bridge sent a config this app can't read",
-              };
-              break;
-            }
-            const cfg = parsed.config;
-            // Same config revision → keep the stores (and the UI); otherwise rebuild.
-            if (session.config?.installation.revision !== cfg.installation.revision) {
-              session.stores = new Map(
-                cfg.pults.map((p) => [
-                  p.id,
-                  new PultStore(cfg, p, {
-                    send() {},
-                    interact: (pult, control, value) =>
-                      client.send({ t: "set", pult, id: control.id, value }),
-                  }),
-                ]),
-              );
-            }
-            session.config = cfg;
-            for (const [pult, values] of Object.entries(msg.state))
-              for (const [id, v] of Object.entries(values))
-                session.stores.get(pult)?.set(id, v as never);
-            session.lease = msg.lease;
-            session.targets = msg.targets;
-            session.error = null;
-            applyMode();
-            break;
-          }
-          case "value":
-            session.stores.get(msg.pult)?.set(msg.id, msg.value as never);
-            return; // stores notify their own subscribers; no screen rerender needed
-          case "lease":
-            session.lease = msg.holder;
-            applyMode();
-            break;
-          case "status":
-            session.targets = msg.targets;
-            break;
-          case "error":
-            session.error = { code: msg.code, message: msg.message };
-            break;
-          case "pong":
-            return;
-          case "prompt":
-            // Applying → applied / error for the prompt cards.
-            session.stores.get(msg.pult)?.setAck(msg.id, { state: msg.state, seq: msg.seq });
-            return;
-          case "data":
-            // Presets or the image library changed on another pult: controls refetch.
-            session.stores.get(msg.pult)?.bumpRev(msg.id);
-            return;
-          case "activity":
-          case "pairing":
-            return; // drawers (not built yet) will read these
-        }
-        rerender();
-      },
-    });
-    client.connect();
-    return () => {
-      client.close();
-      ref.current = null;
-    };
-  }, [url, secret]);
-
-  return url ? ref.current : null;
-}
-
-/**
- * Where is the bridge? The web pult served by a bridge talks to its own origin.
- * `?bridge=host:port` overrides it (dev). Native apps get it from login / discovery later.
+ * Web pult served by a bridge: its own origin is the bridge (`?bridge=host:port` overrides, dev).
+ * Returns the socket URL, or null when this page was not served by a bridge.
  */
 export async function findBridge(): Promise<string | null> {
   const loc = globalThis.location;
@@ -168,4 +49,13 @@ export async function findBridge(): Promise<string | null> {
     return null;
   }
   return http.replace(/^http/, "ws") + "/ws";
+}
+
+/** `?pin=` of the web pult URL (the QR for browsers carries it). */
+export function pinFromUrl(): string | undefined {
+  try {
+    return new URLSearchParams(globalThis.location?.search ?? "").get("pin") ?? undefined;
+  } catch {
+    return undefined;
+  }
 }

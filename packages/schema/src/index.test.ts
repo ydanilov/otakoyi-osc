@@ -94,6 +94,21 @@ describe("parseConfig", () => {
       expect(r.issues.some((i) => i.path === "theme.primary")).toBe(true);
   });
 
+  it("theme.splash: optional loading-screen image, an asset path or URL", () => {
+    expect(ok(demo).theme.splash).toBe("demo-splash.jpg");
+    const none = clone(demo) as any;
+    delete none.theme.splash;
+    expect(ok(none).theme.splash).toBeUndefined();
+    const url = clone(demo) as any;
+    url.theme.splash = "https://cdn.example.com/lobby.jpg";
+    expect(ok(url).theme.splash).toBe("https://cdn.example.com/lobby.jpg");
+    for (const bad of ["", "javascript:alert(1)", "data:image/png;base64,AAAA"]) {
+      const cfg = clone(demo) as any;
+      cfg.theme.splash = bad;
+      expect(parseConfig(cfg).ok, bad).toBe(false);
+    }
+  });
+
   it("resolves targets", () => {
     const cfg = ok(demo);
     const pult = cfg.pults[0]!;
@@ -202,6 +217,22 @@ describe("new control types (ADR-015)", () => {
   it("toggle style switch", () => {
     expect(find<"toggle">(cfg, "strobe").style).toBe("switch");
     expect(find<"toggle">(cfg, "logo").style).toBe("button");
+  });
+
+  it("pad sizes, picture pads and compact knobs (Figma Size / Content=Image)", () => {
+    expect(find<"toggle">(cfg, "visual")).toMatchObject({ image: "demo-pad.jpg", style: "button" });
+    expect(find<"toggle">(cfg, "visual").size).toBeUndefined();
+    expect(find<"button">(cfg, "flash").size).toBe("regular");
+    expect(find<"knob">(cfg, "zoom").size).toBe("compact");
+    expect(find<"knob">(cfg, "hue").size).toBe("regular");
+    const parse = (c: object) => Control.safeParse({ id: "p", address: "/p", ...c }).success;
+    expect(parse({ type: "button", size: "compact" })).toBe(true);
+    expect(parse({ type: "button", size: "huge" })).toBe(false);
+    expect(parse({ type: "toggle", image: "https://cdn.example.com/a.jpg", size: "compact" })).toBe(
+      true,
+    );
+    expect(parse({ type: "toggle", image: "javascript:alert(1)" })).toBe(false);
+    expect(parse({ type: "knob", size: "compact" })).toBe(true);
   });
 
   it("buttonGroup: unique button ids, defaults must exist", () => {

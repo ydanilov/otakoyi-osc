@@ -24,7 +24,19 @@
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": ["expo-router", "expo-font", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Otakoyi Control uses the camera to scan the pairing QR shown on the installation.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }

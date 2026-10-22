@@ -90,6 +90,28 @@ export function movePreset(ids: readonly string[], id: string, to: number): stri
   return out;
 }
 
+/**
+ * Drag to reorder (edit mode): where a card dragged by `offset` px lands, with cards `slot` px
+ * apart (card width + gap). It moves one place once dragged past half a slot. Runs as a worklet.
+ */
+export function dragTargetIndex(from: number, offset: number, slot: number, count: number): number {
+  "worklet";
+  if (count <= 0 || slot <= 0) return Math.max(0, from);
+  return Math.max(0, Math.min(count - 1, from + Math.round(offset / slot)));
+}
+
+/**
+ * While a card is dragged from `from` towards `to`, how far (in slots) the card at `index` shifts
+ * to make room: −1, 0 or +1. The dragged card itself follows the finger (0 here).
+ */
+export function dragShift(index: number, from: number, to: number): number {
+  "worklet";
+  if (index === from) return 0;
+  if (from < to && index > from && index <= to) return -1;
+  if (from > to && index < from && index >= to) return 1;
+  return 0;
+}
+
 // ---------- states (Figma: Prompt Preset card, Prompt Presets pattern) ----------
 
 /** Confirmation of the last prompt sent, from the bridge (`prompt` message). */

@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from "node:path";
 import type { Target } from "@osc/schema";
-import type { Supervisor } from "./supervisor";
+import type { Supervisor } from "@osc/bridge-core";
 
 /** The part of a child process the supervisor uses (node's ChildProcess fits; tests pass a fake). */
 export interface ChildLike {

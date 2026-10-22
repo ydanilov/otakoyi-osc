@@ -1,48 +1,58 @@
 import { parsePairing } from "@osc/protocol";
-import { ThemeProvider } from "@osc/ui";
-import { Button } from "@osc/ui/components/ui/button";
-import { Text } from "@osc/ui/components/ui/text";
+import { ConnectOptions, InfoCard, ThemeProvider, WarningIcon } from "@osc/ui";
 import { router, useLocalSearchParams } from "expo-router";
 import * as React from "react";
-import { ActivityIndicator, View } from "react-native";
-import { demoConfig } from "@/lib/demo";
-import { savePairing } from "@/lib/pairing";
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useApp } from "@/lib/app-context";
 
 /**
- * Deep link target: otakoyi-control://connect?bridge=ws://…/ws&pin=…&name=…
- * Opened by scanning the pairing QR with the phone camera. Saves the bridge and goes to the pult.
+ * First run (ADR-012, no client login): the DS Connect Options — scan the pairing QR, enter the
+ * address and PIN, or try the demo. Also the deep link target —
+ * `otakoyi-control://connect?bridge=…&pin=…&name=…` (the pairing QR, opened by the phone's
+ * camera) goes straight to the loading screen.
  */
 export default function Connect() {
+  const app = useApp();
   const params = useLocalSearchParams();
-  const pairing = React.useMemo(() => parsePairing(params as Record<string, unknown>), [params]);
+  const hasLink = typeof params.bridge === "string";
+  const pairing = React.useMemo(
+    () => (hasLink ? parsePairing(params as Record<string, unknown>) : null),
+    [hasLink, params],
+  );
+  const starting = React.useRef(false);
 
   React.useEffect(() => {
     if (!pairing) return;
-    savePairing(pairing).then(() => router.replace("/"));
-  }, [pairing]);
+    void app.connect(pairing).then(() => router.replace("/loading"));
+  }, [pairing]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const demo = async () => {
+    if (starting.current) return;
+    starting.current = true;
+    await app.startDemo();
+    router.replace("/loading");
+  };
 
   return (
-    <ThemeProvider brand={demoConfig.theme}>
-      <View className="bg-background flex-1 items-center justify-center gap-4 p-6">
-        {pairing ? (
-          <>
-            <ActivityIndicator />
-            <Text className="text-muted-foreground">
-              Connecting to {pairing.name ?? "the installation"}…
-            </Text>
-          </>
-        ) : (
-          <>
-            <Text className="text-foreground text-lg font-semibold">This link is not valid</Text>
-            <Text className="text-muted-foreground text-center">
-              Scan the QR code on the installation screen again, or ask the studio for a new one.
-            </Text>
-            <Button onPress={() => router.replace("/")}>
-              <Text>Open the demo</Text>
-            </Button>
-          </>
-        )}
-      </View>
+    <ThemeProvider>
+      <SafeAreaView className="flex-1" edges={["top", "bottom", "left", "right"]}>
+        <View className="w-full max-w-md flex-1 self-center">
+          {hasLink && !pairing && (
+            <View className="px-6 pt-6" testID="bad-link">
+              <InfoCard icon={WarningIcon}>
+                This pairing link is not valid. Scan the QR on the installation screen again, or ask
+                the studio for a new one.
+              </InfoCard>
+            </View>
+          )}
+          <ConnectOptions
+            onScan={() => router.push("/scan")}
+            onEnterAddress={() => router.push("/manual")}
+            onDemo={() => void demo()}
+          />
+        </View>
+      </SafeAreaView>
     </ThemeProvider>
   );
 }

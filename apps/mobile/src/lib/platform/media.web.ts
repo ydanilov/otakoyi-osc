@@ -20,7 +20,11 @@ export const imagePicker: ImagePicker = {
     new Promise<PickedImage | null>((resolve) => {
       const input = document.createElement("input");
       input.type = "file";
-      input.accept = opts.formats.map((f) => MIME[f] ?? `image/${f}`).join(",");
+      // Choose File: any file (the bridge checks the format by content); otherwise images, and
+      // Take Photo asks the browser for the camera where it has one (phones).
+      if (opts.source !== "files")
+        input.accept = opts.formats.map((f) => MIME[f] ?? `image/${f}`).join(",");
+      if (opts.source === "camera") input.setAttribute("capture", "environment");
       input.onchange = () => {
         const file = input.files?.[0];
         resolve(file ? { name: file.name, body: file, uri: URL.createObjectURL(file) } : null);

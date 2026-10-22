@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Control, ControlOf } from "@osc/schema";
-import type { Bridge } from "./bridge";
+import type { Bridge } from "@osc/bridge-core";
 import { ImageLibrary, validateImage } from "./images";
 import { PromptStore, UNDO_WINDOW_MS } from "./prompts";
 

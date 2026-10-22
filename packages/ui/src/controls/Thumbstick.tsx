@@ -18,6 +18,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
+import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 /**
@@ -77,10 +78,15 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
   }, []);
 
   const deadzone = c.deadzone;
+  const light = useTouchLight({ disabled: !!disabled });
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 2,
     shouldCancelWhenOutside: false,
+    onBegin: (e) => {
+      "worklet";
+      light.down(e.x, e.y);
+    },
     onActivate: (e) => {
       "worklet";
       const d = thumbstickDeflection({ x: e.x, y: e.y }, { width: w, height: h }, deadzone);
@@ -97,6 +103,7 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
     },
     onFinalize: () => {
       "worklet";
+      light.up();
       dx.value = withSpring(0);
       dy.value = withSpring(0);
       scheduleOnRN(release);
@@ -117,6 +124,8 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
   const capX = useDerivedValue(() => cx + dx.value * reach);
   const capY = useDerivedValue(() => cy - dy.value * reach);
   const stem = useDerivedValue(() => vec(capX.value, capY.value));
+  // Touch light: on the stick (it follows the finger within its reach).
+  const lightProps = useTouchLightSkia(light, capX, capY, "stick");
   return (
     <ControlFrame
       label={c.label}
@@ -149,6 +158,8 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
                 strokeWidth={t.stroke.strong}
               />
               <Circle cx={capX} cy={capY} r={t.size.xyDot / 2} color={t.color.surfaceRaised} />
+              {/* Touch light: above the stick, below its ring. */}
+              <TouchLightSkia {...lightProps} />
               <Circle
                 cx={capX}
                 cy={capY}
