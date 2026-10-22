@@ -25,12 +25,17 @@ export {
   usePressLight,
   useTouchLight,
   useTouchLightSkia,
+  InnerLight,
+  useInnerLight,
 } from "./controls/TouchLight";
 export { ImageUpload, MicControl } from "./controls/media";
 export { PromptControl } from "./controls/Prompt";
 export {
   ControlServicesProvider,
   createMemoryServices,
+  memoryViewPrefs,
+  viewPrefKey,
+  type ViewPrefs,
   stubServices,
   urlAsset,
   useControlServices,
@@ -43,11 +48,11 @@ export {
   type PromptPresets,
 } from "./platform/services";
 export { HoldToConfirm } from "./controls/HoldToConfirm";
+export { ColorPicker } from "./controls/ColorPicker";
 export {
   ButtonControl,
   ButtonGrid,
   ButtonGroup,
-  ColorPicker,
   Led,
   LabelControl,
   SceneList,
@@ -80,6 +85,7 @@ export {
 export { Glyph, toneColor, type Tone } from "./ds/Glyph";
 export { StatusLed } from "./ds/Led";
 export * from "./ds/icons";
+export { iconByName, ICON_NAMES } from "./ds/iconByName";
 export * from "./ds/logic";
 export {
   Button,
@@ -111,6 +117,7 @@ export { TextField, ValueInput, type FieldState } from "./forms/Field";
 export { Select, type SelectOption, type SelectProps } from "./forms/Select";
 export { Stepper } from "./forms/Stepper";
 export { LedSwitch } from "./forms/LedSwitch";
+export { MenuSwitch } from "./forms/MenuSwitch";
 export { ListRow, type ListRowTrailing } from "./forms/ListRow";
 export {
   ConsolePanel,
@@ -122,6 +129,7 @@ export {
 } from "./containers/Cards";
 export { Dialog } from "./containers/Dialog";
 export { Inspector } from "./containers/Inspector";
+export { Drawer, DrawerHeader } from "./containers/Drawer";
 export { EdgeSwipe } from "./containers/EdgeSwipe";
 export { PullDownMenu } from "./menus/PullDownMenu";
 export { ContextMenu } from "./menus/ContextMenu";
@@ -140,6 +148,7 @@ export {
   type ImageUploadState,
 } from "./media/Image";
 export * from "./patterns/Installation";
+export { Mix, PromptMix } from "./patterns/Mix";
 export {
   DebugHud,
   DebugTag,

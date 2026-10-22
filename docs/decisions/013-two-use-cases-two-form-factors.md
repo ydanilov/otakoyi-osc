@@ -26,10 +26,17 @@ the app and for every client pult. QA checks both before a delivery.
   side, connection status, **Installation** button on the trailing side. Edge swipes are shortcuts
   only, never the only way in: right edge → Installation (phone and tablet), left edge → Settings
   (phone only; on iPad the leading edge belongs to the system sidebar gesture).
-- **Settings**: iPhone → system sheet (large detent, grabber, Close × leading); iPad → form sheet
-  over a dimmed console. Contents: pairing QR, control preferences (haptics, keep awake; fine mode is always two fingers), what's new, help, forget this installation. No appearance switch — the theme mode ships in the config.
+- **Settings**: iPhone → system sheet (large detent, grabber, Close × leading); iPad → a floating
+  drawer from the leading edge (400 pt wide, 12 pt in from the left and the bottom, under the status
+  bar, radius 28, dark fill, large "Settings" title + round close button, inset-grouped sections
+  that scroll) over the dimmed console. It slides in from the left; a swipe to the left or a tap on
+  the dim closes it (the header button is the way in — the leading edge swipe stays the system's).
+  Contents: Pairing (show the pairing QR, pair another installation), Control preferences (haptics,
+  keep screen awake, status notifications; fine mode is always two fingers), Developer › Debug,
+  About (what's new, help & support, app version), Account (forget this installation). No
+  appearance switch — the theme mode ships in the config.
 - **Installation**: iPhone → system sheet (large detent); iPad → inspector panel on the trailing side
-  (390 pt, Close ×, no dimming). Contents: name and status with stats (state, FPS, devices, uptime), pult switcher, quick
+  (390 pt, round Close × top-right, no dimming). Contents: name and status with stats (state, FPS, devices, uptime), pult switcher, quick
   actions (Flash, Restart, Blackout with hold-to-confirm), modes (Idle, optional Pause) and an
   Activity row that pushes the activity list.
 - **Dialogs** are content inside the system sheet (iPhone medium detent) or form sheet (iPad); the

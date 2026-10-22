@@ -47,13 +47,14 @@ for state. Depth is meaningful (ADR-013):
   (tracks, toggle beds, inputs, tab bars).
 - **Flat** — information nested in a card (Chip, Stat Tile, icon wells, Label).
 - **Glow** (`Glow/*`) — lit values, LEDs, and buttons only while pressed. Never on resting buttons.
-- **Touch light** (`Touch Light`) — the press response: a soft light under the finger inside the
-  control's touch surface while it is held (iOS 26 text-field highlight). See Rules.
+- **Touch light** (`Touch Light`) — the press response (Apple Liquid Glass): the touched element
+  illuminates from within, starting under the fingertip — white only, clipped to the element. See
+  Rules.
 
 Effect colours are bound to `elevation/*` variables, so shadows and highlights switch with the
 theme mode. `Glow/*` is the resting glow of lit values; `Glow/* Active` is used while a control is
 touched or dragged (Fader/Knob `State=Active`, `State=Fine`, Button `State=Pressed`). While a finger is
-down, a Touch Light blooms under it inside the touch surface, follows it and fades on release.
+down, the touched element lights up from within under it, follows it and fades on release.
 
 Shape follows Apple: continuous corners (corner smoothing 0.6), radius scale 8 / 12 / 22 / 28,
 nested corners are concentric (inner radius = outer radius − inset), tab bars and segmented
@@ -61,8 +62,9 @@ controls are capsules, list separators are inset to the text (`Divider Type=Inse
 
 Pult screens never scroll; sheets may. Navigation follows the Apple HIG (ADR-013): Settings and
 Installation open from header buttons (edge swipes are shortcuts) as system sheets on iPhone; on iPad
-Settings is a form sheet and Installation a 390 pt trailing inspector, built from the **iOS 27 ·
-System** page (`Sheet - iPhone`, `Sheet - iPad`) with our content inside; context and pull-down menus
+Settings is a floating drawer from the left (400 pt, 12 pt inset left / bottom, radius 28, dark fill,
+large title + round close, over the dimmed pult — Tablet / 04 Settings) and Installation a 390 pt
+trailing inspector, built from the **iOS 27 · System** page (`Sheet - iPhone`, `Sheet - iPad`) with our content inside; context and pull-down menus
 use the iOS `Menu`. The scrim only dims (no blur). Debug never overlays the pult: it is a page pushed
 inside Installation (Phone / 20 Debug in the sheet, Tablet / 20 Debug in the inspector, with a back
 control) and from Settings › Developer › Debug. It is an inset-grouped list — Section + List Card of
@@ -86,7 +88,7 @@ brand colour. **Status colours live only in Base and are never aliased to Brand.
 
 ## Components
 
-Forms: Input, Value Input (label + recessed value with unit; Default / Focus / Error / Disabled; iOS number pad), Select (native iOS 27 popup button + pull-down menu; Default / Open / Disabled), Stepper, List Row, Switch.
+Forms: Input, Value Input (label + recessed value with unit; Default / Focus / Error / Disabled; iOS number pad), Select (native iOS 27 popup button + pull-down menu; Default / Open / Disabled), Stepper, List Row, Switch (big, on-stage), Menu Switch (iOS size, menus and lists).
 
 Chrome: Button (Primary / Secondary / Ghost / Destructive × Default / Pressed / Disabled), Icon
 Button, Badge, Connection, Pult Select, Screen Tab, Tab Bar, Pult Header, Input, List Row, Switch,
@@ -117,53 +119,66 @@ Docs for every component (purpose, states, behaviour, accessibility, content lim
 live in Storybook (`pnpm storybook`); Figma keeps a one-line description. Component and variant names
 are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 
-| Figma component (variants)                                                                            | Code                                                                          | File                                                                                          |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `Neu/*`, `Glow/*` effect styles                                                                       | `Surface depth glow`, `boxShadow()`                                           | `ds/depth.tsx`, `@osc/tokens` depth.ts                                                        |
-| Touch Light (press response)                                                                          | `useTouchLight` + `TouchLightSkia` / `TouchLightView`, `PinTouchLight`        | `controls/TouchLight.tsx`, `@osc/controls` touchLight.ts, tokens `touchLight`                 |
-| `Icon/<name>`                                                                                         | `<Name>Icon` + `Glyph`                                                        | `ds/icons.ts`, `ds/Glyph.tsx`                                                                 |
-| Button (Variant × State)                                                                              | `Button variant pressed disabled`                                             | `chrome/Button.tsx`                                                                           |
-| Icon Button (State=Default / Active)                                                                  | `IconButton active`                                                           | `chrome/Button.tsx`                                                                           |
-| Badge                                                                                                 | `Badge tone`                                                                  | `chrome/Status.tsx`                                                                           |
-| Connection (State=Online / Connecting / Offline)                                                      | `ConnectionStatus state`                                                      | `chrome/Status.tsx`                                                                           |
-| Pult Header (Mode=Control / View / Studio)                                                            | `PultHeader mode` (+ `StatusBanner`)                                          | `pult/PultHeader.tsx`                                                                         |
-| Pult Select                                                                                           | `PultSelect`                                                                  | `pult/PultSelect.tsx`                                                                         |
-| Screen Tab (State), Tab Bar                                                                           | `ScreenTab active`, `TabBar`                                                  | `chrome/Navigation.tsx`                                                                       |
-| Top Bar · Nav Item (State)                                                                            | `TopBar` · `NavItem active`                                                   | `chrome/Navigation.tsx`                                                                       |
-| Brand Mark (Size) · Wordmark (Size)                                                                   | `BrandMark size` · `Wordmark size`                                            | `chrome/Brand.tsx`                                                                            |
-| Stat Tile (Size) · Note · Info Card · Chip (Tone) · Divider (Type)                                    | `StatTile` · `Note` · `InfoCard` · `Chip` · `Divider`                         | `chrome/Status.tsx`                                                                           |
-| Page Dots (Count)                                                                                     | `PageDots count active`                                                       | `chrome/Status.tsx`                                                                           |
-| Loader (Tone) · Scrim (dim only) · Toast                                                              | `Loader tone` · `Scrim` · `Toast`                                             | `chrome/Loader.tsx`, `chrome/Scrim.tsx`, `chrome/Toast.tsx`                                   |
-| Master Bar (State=Default / Muted)                                                                    | `MasterBar muted`                                                             | `media/MasterBar.tsx`                                                                         |
-| Input (State)                                                                                         | `TextField focused error disabled`                                            | `forms/Field.tsx`                                                                             |
-| Value Input (State)                                                                                   | `ValueInput` (+ `parseValueInput`)                                            | `forms/Field.tsx`, `ds/logic.ts`                                                              |
-| Select (State=Default / Open / Disabled)                                                              | `Select` (iOS: `@expo/ui` Picker)                                             | `forms/Select.tsx`, `forms/Select.ios.tsx`                                                    |
-| List Row (Trailing=Chevron / Value / Switch / None / Destructive)                                     | `ListRow trailing`                                                            | `forms/ListRow.tsx`                                                                           |
-| Switch (State=Off / On / Disabled)                                                                    | `LedSwitch value disabled`                                                    | `forms/LedSwitch.tsx`                                                                         |
-| Stepper (State=Default / Changed / Disabled)                                                          | `Stepper defaultValue` (+ `stepValue`)                                        | `forms/Stepper.tsx`, `ds/logic.ts`                                                            |
-| Activity Row (Kind)                                                                                   | `ActivityRow kind`                                                            | `media/ActivityRow.tsx`                                                                       |
-| Quick Action (State, incl. Hold)                                                                      | `QuickAction holdMs pressed disabled`                                         | `media/QuickAction.tsx`                                                                       |
-| Image Tile (State) · Image Upload (State) — UI view                                                   | `ImageTile state` · `ImageUploadView state`                                   | `media/Image.tsx`                                                                             |
-| List Card · Section · Console Panel (slots)                                                           | `ListCard` · `Section` · `ConsolePanel`                                       | `containers/Cards.tsx`                                                                        |
-| Release Note (Latest) · Release Card · Pult Card (Primary)                                            | `ReleaseNote` · `ReleaseCard` · `PultCard`                                    | `containers/Cards.tsx`                                                                        |
-| Dialog (Container=Modal / Sheet) — content only                                                       | `Dialog` inside the sheet / form sheet (`presentationFor`)                    | `containers/Dialog.tsx`, `ds/logic.ts`                                                        |
-| Settings / Installation surfaces (sheet, form sheet, inspector)                                       | `presentationFor`, `Inspector`, `EdgeSwipe`                                   | `ds/logic.ts`, `containers/Inspector.tsx`, `containers/EdgeSwipe.tsx`                         |
-| Context menu (long-press, preview) · image source pull-down                                           | `ContextMenu` · `PullDownMenu` (iOS: `@expo/ui`)                              | `menus/*`                                                                                     |
-| Backdrop · Client Logo · Connect / Client loading screens                                             | `Backdrop` · `ClientLogo` · `ConnectOptions`, `ConnectForm`, `BrandedLoading` | `connect/*`                                                                                   |
-| Viewfinder (Size)                                                                                     | `Viewfinder size`                                                             | `containers/Viewfinder.tsx`                                                                   |
-| Fader · Knob · XY Pad · Meter · Hold to Confirm                                                       | `Fader` · `Knob` · `XYPad` · `Meter` · `HoldToConfirm`                        | `controls/*.tsx`                                                                              |
-| Toggle · Pad · Segmented · Button Grid · Scene List · Label · Color Picker · Unsupported              | `discrete.tsx` exports                                                        | `controls/discrete.tsx`                                                                       |
-| Pad (Size) · Toggle (Size × Content=Text / Image)                                                     | `size: regular \| compact`, toggle `image` (picture pad)                      | `controls/discrete.tsx`, `pult/layout.ts` (`minHeightFor`)                                    |
-| Knob (Size=Regular / Compact)                                                                         | `size: regular \| compact`                                                    | `controls/Knob.tsx`                                                                           |
-| Debug Row (Kind=Metric / Control) · OSC Log — the Debug page (Phone / Tablet 20 Debug)                | `DebugRow kind` · `OscLog` (+ `DebugStore` in `@osc/controls`)                | `debug/DebugRow.tsx`, `debug/OscLog.tsx`; page: `apps/mobile/src/components/DebugContent.tsx` |
-| Debug Tag · Debug HUD (in the library, not used in the app now)                                       | `DebugTag` · `DebugHud`                                                       | `debug/Debug.tsx`                                                                             |
-| Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log, Stepper Group | same names                                                                    | `patterns/Installation.tsx`                                                                   |
+| Figma component (variants)                                                                                | Code                                                                          | File                                                                                           |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `Neu/*`, `Glow/*` effect styles                                                                           | `Surface depth glow`, `boxShadow()`                                           | `ds/depth.tsx`, `@osc/tokens` depth.ts                                                         |
+| Touch Light (press response)                                                                              | `useTouchLight` + `TouchLightSkia` / `TouchLightView`, `PinTouchLight`        | `controls/TouchLight.tsx`, `@osc/controls` touchLight.ts, tokens `touchLight`                  |
+| `Icon/<name>`                                                                                             | `<Name>Icon` + `Glyph`                                                        | `ds/icons.ts`, `ds/Glyph.tsx`                                                                  |
+| Button (Variant × State)                                                                                  | `Button variant pressed disabled`                                             | `chrome/Button.tsx`                                                                            |
+| Icon Button (State=Default / Active)                                                                      | `IconButton active`                                                           | `chrome/Button.tsx`                                                                            |
+| Badge                                                                                                     | `Badge tone`                                                                  | `chrome/Status.tsx`                                                                            |
+| Connection (State=Online / Connecting / Offline)                                                          | `ConnectionStatus state`                                                      | `chrome/Status.tsx`                                                                            |
+| Pult Header (Mode=Control / View / Studio)                                                                | `PultHeader mode` (+ `StatusBanner`)                                          | `pult/PultHeader.tsx`                                                                          |
+| Pult Select                                                                                               | `PultSelect`                                                                  | `pult/PultSelect.tsx`                                                                          |
+| Screen Tab (State), Tab Bar                                                                               | `ScreenTab active`, `TabBar`                                                  | `chrome/Navigation.tsx`                                                                        |
+| Top Bar · Nav Item (State)                                                                                | `TopBar` · `NavItem active`                                                   | `chrome/Navigation.tsx`                                                                        |
+| Brand Mark (Size) · Wordmark (Size)                                                                       | `BrandMark size` · `Wordmark size`                                            | `chrome/Brand.tsx`                                                                             |
+| Stat Tile (Size) · Note · Info Card · Chip (Tone) · Divider (Type)                                        | `StatTile` · `Note` · `InfoCard` · `Chip` · `Divider`                         | `chrome/Status.tsx`                                                                            |
+| Page Dots (Count)                                                                                         | `PageDots count active`                                                       | `chrome/Status.tsx`                                                                            |
+| Loader (Tone) · Scrim (dim only) · Toast                                                                  | `Loader tone` · `Scrim` · `Toast`                                             | `chrome/Loader.tsx`, `chrome/Scrim.tsx`, `chrome/Toast.tsx`                                    |
+| Master Bar (State=Default / Muted)                                                                        | `MasterBar muted`                                                             | `media/MasterBar.tsx`                                                                          |
+| Input (State)                                                                                             | `TextField focused error disabled`                                            | `forms/Field.tsx`                                                                              |
+| Value Input (State)                                                                                       | `ValueInput` (+ `parseValueInput`)                                            | `forms/Field.tsx`, `ds/logic.ts`                                                               |
+| Select (State=Default / Open / Disabled)                                                                  | `Select` (iOS: `@expo/ui` Picker)                                             | `forms/Select.tsx`, `forms/Select.ios.tsx`                                                     |
+| List Row (Trailing=Chevron / Value / Switch / None / Destructive)                                         | `ListRow trailing`                                                            | `forms/ListRow.tsx`                                                                            |
+| Switch (State=Off / On / Disabled)                                                                        | `LedSwitch value disabled`                                                    | `forms/LedSwitch.tsx`                                                                          |
+| Stepper (State=Default / Changed / Disabled)                                                              | `Stepper defaultValue` (+ `stepValue`)                                        | `forms/Stepper.tsx`, `ds/logic.ts`                                                             |
+| Activity Row (Kind)                                                                                       | `ActivityRow kind`                                                            | `media/ActivityRow.tsx`                                                                        |
+| Quick Action (State, incl. Hold)                                                                          | `QuickAction holdMs pressed disabled`                                         | `media/QuickAction.tsx`                                                                        |
+| Image Tile (State) · Image Upload (State) — UI view                                                       | `ImageTile state` · `ImageUploadView state`                                   | `media/Image.tsx`                                                                              |
+| List Card · Section · Console Panel (slots)                                                               | `ListCard` · `Section` · `ConsolePanel`                                       | `containers/Cards.tsx`                                                                         |
+| Release Note (Latest) · Release Card · Pult Card (Primary)                                                | `ReleaseNote` · `ReleaseCard` · `PultCard`                                    | `containers/Cards.tsx`                                                                         |
+| Dialog (Container=Modal / Sheet) — content only                                                           | `Dialog` inside the sheet / form sheet (`presentationFor`)                    | `containers/Dialog.tsx`, `ds/logic.ts`                                                         |
+| Settings / Installation surfaces (sheet, iPad left drawer, inspector)                                     | `presentationFor`, `Drawer` + `DrawerHeader`, `Inspector`, `EdgeSwipe`        | `ds/logic.ts`, `containers/Drawer.tsx`, `containers/Inspector.tsx`, `containers/EdgeSwipe.tsx` |
+| Menu Switch (State=Off / On / Disabled) — List Row `Trailing=Switch`                                      | `MenuSwitch` (List Row draws it)                                              | `forms/MenuSwitch.tsx`, `forms/ListRow.tsx`                                                    |
+| Color Picker (Patterns, Style=Knobs / Square / Wheel)                                                     | `ColorPicker` (`pickerStyle`; maths in `@osc/controls` color.ts)              | `controls/ColorPicker.tsx`                                                                     |
+| Mix · Prompt Mix (Patterns)                                                                               | `Mix` · `PromptMix`; scene selects = `Select variant="button"`                | `patterns/Mix.tsx`, `forms/Select.tsx`                                                         |
+| Fader Bank · Knob Group · Knob Row · Layer Toggles · Camera Control · Scene Bar · Show Actions (Patterns) | page `panels` (`pattern`), drawn by `PanelView`; widths `panelMaxWidth`       | `pult/Panels.tsx`, `pult/layout.ts`, `@osc/schema` `Panel`                                     |
+| Channel Strip ON button · Group Button (single)                                                           | Toggle `style: "led"`                                                         | `controls/discrete.tsx`                                                                        |
+| Segmented (Content=Icon)                                                                                  | option `icon` (Phosphor name)                                                 | `controls/discrete.tsx`, `ds/iconByName.ts`                                                    |
+| Meter (Level=Normal / Warning / Critical)                                                                 | `Meter` (24 LEDs, peak hold, dB scale; maths in `@osc/controls` meter.ts)     | `controls/Meter.tsx`                                                                           |
+| Connect (phone / tablet) · Demo banner                                                                    | `ConnectOptions layout` · app `DemoBanner`                                    | `connect/Connect.tsx`, `apps/mobile/src/components/DemoBanner.tsx`                             |
+| Context menu (long-press, preview) · image source pull-down                                               | `ContextMenu` · `PullDownMenu` (iOS: `@expo/ui`)                              | `menus/*`                                                                                      |
+| Backdrop · Client Logo · Connect / Client loading screens                                                 | `Backdrop` · `ClientLogo` · `ConnectOptions`, `ConnectForm`, `BrandedLoading` | `connect/*`                                                                                    |
+| Viewfinder (Size)                                                                                         | `Viewfinder size`                                                             | `containers/Viewfinder.tsx`                                                                    |
+| Fader · Knob · XY Pad · Meter · Hold to Confirm                                                           | `Fader` · `Knob` · `XYPad` · `Meter` · `HoldToConfirm`                        | `controls/*.tsx`                                                                               |
+| Toggle · Pad · Segmented · Button Grid · Scene List · Label · Unsupported                                 | `discrete.tsx` exports                                                        | `controls/discrete.tsx`                                                                        |
+| Pad (Size) · Toggle (Size × Content=Text / Image)                                                         | `size: regular \| compact`, toggle `image` (picture pad)                      | `controls/discrete.tsx`, `pult/layout.ts` (`minHeightFor`)                                     |
+| Knob (Size=Regular / Compact)                                                                             | `size: regular \| compact`                                                    | `controls/Knob.tsx`                                                                            |
+| Debug Row (Kind=Metric / Control) · OSC Log — the Debug page (Phone / Tablet 20 Debug)                    | `DebugRow kind` · `OscLog` (+ `DebugStore` in `@osc/controls`)                | `debug/DebugRow.tsx`, `debug/OscLog.tsx`; page: `apps/mobile/src/components/DebugContent.tsx`  |
+| Debug Tag · Debug HUD (in the library, not used in the app now)                                           | `DebugTag` · `DebugHud`                                                       | `debug/Debug.tsx`                                                                              |
+| Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log, Stepper Group     | same names                                                                    | `patterns/Installation.tsx`                                                                    |
 
 New control types (ADR-015) — Fader Mode=Relative/Crossfade, Knob Mode=Relative/Color,
 Thumbstick, Button Group, Image, Mic, Prompt — live in `controls/*` (`Jog.tsx`, `Thumbstick.tsx`,
 `media.tsx`, `Prompt.tsx`, `discrete.tsx`) and have stories. Not in code on purpose: Status Bar and
 Home Indicator (device chrome in mockups). Control compositions on the Patterns page (Fader Bank,
-Knob Group, Camera Control, Scene Bar…) are built from config by the pult renderer.
+Knob Group, Camera Control, Scene Bar…) are page `panels` in the config, drawn by the pult renderer
+(`pult/Panels.tsx`).
+
+The "Try the demo" installation (`packages/schema/examples/try-the-demo.json`) is the Figma page
+**Demo · Try the demo**: VJ console (tablet: Mix / FX / Cues / Scenes), Lighting cues, Lobby wall
+(phone: Live / Scenes).
 
 ## Rules
 
@@ -171,13 +186,22 @@ Knob Group, Camera Control, Scene Bar…) are built from config by the pult rend
 - Component and variant names follow the code (`controlRegistry` types, ADRs).
 - Colours only through variables; a new colour starts in `tokens.json`, then here.
 - The control drawing in code (Skia) is the source of truth for geometry; Figma mirrors it.
-- **Touch light**: every pressable / draggable control (Fader, Knob, Pad, Toggle, Hold to Confirm,
-  Group Button, Segmented per segment, Quick Action, Button, XY Pad, Thumbstick) shows a Touch Light
-  while pressed — halo (primary, ~20 %) + core (white, ~20 %), centred on the touch, above the
-  surface fill and below labels / icons, clipped to the surface's shape (faders: on the thumb,
-  below its LED and grips; knob: on the disc, below the cap; thumbstick: on the stick). In 120 ms
-  ease-out (scale 0.6 → 1), follows 1:1, out 260 ms ease-in; Reduce Motion fades only. Never on
-  disabled or view-only controls. Sizes and timings: `touchLight` in `tokens.json`.
+- **Touch light** (Apple Liquid Glass): the touched element illuminates from within, starting under
+  the fingertip. **White only**, clipped to the touched element — never spilling onto the track or
+  the surroundings. Faders, knobs, thumbstick, jog wheel: no separate layer — the thumb / disc /
+  stick / wheel itself gets a radial white gradient (16 % at the touch point → 0), below its LED,
+  grips, cap and marks. Pads, buttons, toggles, segments, quick actions, XY pad: halo 7 % + core
+  12 % white, clipped to the surface, below labels / icons. In 120 ms ease-out (scale 0.6 → 1),
+  follows 1:1, out 260 ms; Reduce Motion fades only. Never on disabled or view-only controls.
+  Sizes and timings: `touchLight` in `tokens.json`.
+- **Relative controls** (jog wheel, encoder knob): the ↻ glyph next to a signed value (`+12`,
+  `−0.02`) — the change of the current / last drag. No REL badge (board "Relative indicator —
+  options", 131:406).
+- **Responsive panels**: Console-Panel patterns fill their column's width up to a maximum (Fader
+  Bank 640, Knob Row / Camera Control 480, others 560; centred when capped) and its height, never
+  below their content height. Vertical knobs / faders centre their body when stretched; Group
+  Buttons share the row (LED stays 40 wide, centred); Knob Group spaces knobs evenly; Scene Bar,
+  Layer Toggles and Show Actions centre their content vertically.
 
 ## Gallery in code
 

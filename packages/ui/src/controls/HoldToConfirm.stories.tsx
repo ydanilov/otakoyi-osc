@@ -28,7 +28,7 @@ function HoldStory({
     [tone, holdMs, label],
   );
   return (
-    <ControlHarness control={control} value={null} disabled={disabled} width={160} height={88} />
+    <ControlHarness control={control} value={null} disabled={disabled} width={150} height={88} />
   );
 }
 
@@ -80,5 +80,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Critical: Story = {};
-export const Default: Story = { args: { tone: "default", label: "Reset show" } };
+export const Default: Story = { args: { tone: "default", label: "Go" } };
 export const Disabled: Story = { args: { disabled: true } };

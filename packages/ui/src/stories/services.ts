@@ -1,4 +1,9 @@
-import { createMemoryServices, urlAsset, type ControlServices } from "../platform/services";
+import {
+  createMemoryServices,
+  memoryViewPrefs,
+  urlAsset,
+  type ControlServices,
+} from "../platform/services";
 import { SAMPLE_PAD, SAMPLE_WALL } from "./images";
 
 /**
@@ -10,6 +15,7 @@ export function storyServices(): ControlServices {
   const { media, prompts } = createMemoryServices("stories");
   return {
     pult: "stories",
+    viewPrefs: memoryViewPrefs(),
     // The demo config's picture pad image; anything else only as an http(s) URL.
     asset: (path) => (path === "demo-pad.jpg" ? SAMPLE_PAD : urlAsset(path)),
     media,

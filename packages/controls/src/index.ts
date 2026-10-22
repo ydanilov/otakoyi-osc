@@ -8,3 +8,5 @@ export * from "./coerce";
 export * from "./states";
 export * from "./debug";
 export * from "./touchLight";
+export * from "./color";
+export * from "./meter";

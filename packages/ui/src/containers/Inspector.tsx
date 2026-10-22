@@ -9,15 +9,15 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { IconButton } from "../chrome/Button";
-import { Text } from "../components/ui/text";
 import { useDepthStyle } from "../ds/depth";
 import { XIcon } from "../ds/icons";
 import { INSPECTOR_WIDTH } from "../ds/logic";
 import { useTheme } from "../theme/ThemeProvider";
 
 /**
- * iPad Installation inspector (ADR-013, HIG): a 390 pt panel on the trailing side of the pult
- * screen with a Close ×. It does not dim the console — the operator keeps playing while it is open.
+ * iPad Installation inspector (ADR-013, HIG; Figma Tablet / 05 Installation): a 390 pt panel on the
+ * trailing side of the pult screen with a round Close × floating top-right (the content shows its
+ * own header). It does not dim the console — the operator keeps playing while it is open.
  * The body scrolls; the pult never does. On iPhone the same content goes into a system sheet
  * (`presentationFor("installation", width)`). Place it in the full-screen pult view.
  */
@@ -74,17 +74,12 @@ export function Inspector({
       ]}
       accessibilityLabel={title}
     >
-      <View className="min-h-14 flex-row items-center gap-3 px-4">
-        <Text
-          className="text-foreground flex-1 text-xl font-semibold"
-          accessibilityRole="header"
-          numberOfLines={1}
-        >
-          {title}
-        </Text>
-        <IconButton icon={XIcon} label={`Close ${title}`} size={32} onPress={onClose} />
+      {/* Figma Tablet / 05 Installation: the content brings its own header; the round close
+          button floats top-right. */}
+      <ScrollView contentContainerClassName="gap-6 px-4 pb-6 pt-4">{children}</ScrollView>
+      <View className="absolute right-4" style={{ top: insets.top + 14 }}>
+        <IconButton icon={XIcon} label={`Close ${title}`} onPress={onClose} />
       </View>
-      <ScrollView contentContainerClassName="gap-6 px-4 pb-6 pt-2">{children}</ScrollView>
     </Animated.View>
   );
 }

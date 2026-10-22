@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Image, StyleSheet, View, type ImageSourcePropType } from "react-native";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from "react-native-svg";
 import { Text } from "../components/ui/text";
 import { cn } from "../lib/utils";
 import { useTheme } from "../theme/ThemeProvider";
@@ -27,7 +27,8 @@ export function Backdrop({
         <Image
           source={source}
           resizeMode="cover"
-          style={StyleSheet.absoluteFill}
+          // An explicit size: a bundled asset's own width / height would win over absoluteFill.
+          style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           accessible={!!label}
           accessibilityLabel={label}
           accessibilityIgnoresInvertColors
@@ -35,13 +36,19 @@ export function Backdrop({
       ) : null}
       <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
         <Defs>
+          {/* Figma Backdrop › Legibility: a linear wash top → bottom and a centre vignette. */}
           <LinearGradient id="legibility" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={t.color.background} stopOpacity={0.55} />
-            <Stop offset="0.35" stopColor={t.color.background} stopOpacity={0.1} />
-            <Stop offset="0.65" stopColor={t.color.background} stopOpacity={0.35} />
+            <Stop offset="0" stopColor={t.color.background} stopOpacity={0.6} />
+            <Stop offset="0.3" stopColor={t.color.background} stopOpacity={0.45} />
+            <Stop offset="0.6" stopColor={t.color.background} stopOpacity={0.55} />
             <Stop offset="1" stopColor={t.color.background} stopOpacity={0.95} />
           </LinearGradient>
+          <RadialGradient id="centre" cx="0.5" cy="0.5" rx="0.5" ry="0.5">
+            <Stop offset="0" stopColor={t.color.background} stopOpacity={0.55} />
+            <Stop offset="0.7" stopColor={t.color.background} stopOpacity={0} />
+          </RadialGradient>
         </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#centre)" />
         <Rect x="0" y="0" width="100%" height="100%" fill="url(#legibility)" />
       </Svg>
       <View style={StyleSheet.absoluteFill}>{children}</View>
@@ -49,9 +56,10 @@ export function Backdrop({
   );
 }
 
+/** Figma Client Logo: name bold 44 pt, tracking 18 %; tagline semibold 13 pt at 70 %. */
 const LOGO = {
-  sm: { h: 32, title: "text-xl", sub: "text-[9px]" },
-  lg: { h: 64, title: "text-display", sub: "text-xs" },
+  sm: { h: 32, title: "text-xl", sub: "text-[9px]", track: 4, gap: "gap-1" },
+  lg: { h: 64, title: "text-[44px] leading-[53px]", sub: "text-sm", track: 7.92, gap: "gap-1.5" },
 };
 
 /**
@@ -83,25 +91,21 @@ export function ClientLogo({
     );
   return (
     <View
-      className="items-center gap-1"
+      className={cn("items-center", s.gap)}
       accessible
       accessibilityRole="header"
       accessibilityLabel={subtitle ? `${name}, ${subtitle}` : name}
     >
       <Text
         className={cn("text-foreground font-bold uppercase", s.title)}
-        style={{ letterSpacing: size === "lg" ? 8 : 4 }}
+        style={{ letterSpacing: s.track }}
         numberOfLines={1}
         adjustsFontSizeToFit
       >
         {name}
       </Text>
       {subtitle ? (
-        <Text
-          className={cn("text-muted-foreground font-semibold uppercase tracking-widest", s.sub)}
-        >
-          {subtitle}
-        </Text>
+        <Text className={cn("text-foreground/70 font-semibold uppercase", s.sub)}>{subtitle}</Text>
       ) : null}
     </View>
   );

@@ -52,3 +52,5 @@ export { CameraIcon } from "phosphor-react-native/src/icons/Camera";
 export { FolderSimpleIcon } from "phosphor-react-native/src/icons/FolderSimple";
 export { CopyIcon } from "phosphor-react-native/src/icons/Copy";
 export { PencilSimpleIcon } from "phosphor-react-native/src/icons/PencilSimple";
+export { WaveformIcon } from "phosphor-react-native/src/icons/Waveform";
+export { VibrateIcon } from "phosphor-react-native/src/icons/Vibrate";

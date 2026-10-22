@@ -16,7 +16,7 @@ function ToggleStory({
   on: boolean;
   disabled: boolean;
   label: string;
-  style?: "button" | "switch";
+  style?: "button" | "switch" | "led";
   size?: "regular" | "compact" | undefined;
   /** Picture pad: an asset path (the story services serve the demo's `demo-pad.jpg`). */
   image?: string | undefined;
@@ -40,9 +40,11 @@ function ToggleStory({
       : 168
     : style === "switch"
       ? { w: 300, h: 56 }
-      : size
-        ? { w: 200, h: 120 }
-        : { w: 150, h: 88 };
+      : style === "led"
+        ? { w: 74, h: 56 }
+        : size
+          ? { w: 200, h: 120 }
+          : { w: 150, h: 88 };
   const w = typeof box === "number" ? box : box.w;
   const h = typeof box === "number" ? box : box.h;
   return <ControlHarness control={control} value={on} disabled={disabled} width={w} height={h} />;
@@ -52,7 +54,7 @@ const meta = {
   title: "Controls/Toggle",
   component: ToggleStory,
   args: { on: false, disabled: false, label: "Strobe", style: "button" },
-  argTypes: { style: { control: "inline-radio", options: ["button", "switch"] } },
+  argTypes: { style: { control: "inline-radio", options: ["button", "switch", "led"] } },
   parameters: {
     docs: {
       description: {
@@ -113,4 +115,15 @@ export const PictureOn: Story = {
 };
 export const PictureCompact: Story = {
   args: { image: "demo-pad.jpg", label: "Logo", size: "compact", on: true },
+};
+
+/** Toggle `style: "led"` (Figma Group Button / Channel Strip ON): without a label it reads ON / OFF. */
+export const LedStyle: Story = {
+  args: { style: "led", label: "", on: true },
+  play: async ({ canvas }) => {
+    const sw = await canvas.findByRole("switch");
+    await expect(canvas.getByText("ON")).toBeTruthy();
+    await userEvent.click(sw);
+    await expect(await canvas.findByText("OFF")).toBeTruthy();
+  },
 };

@@ -32,6 +32,14 @@ Figma conventions:
   people. The **Otakoyi Inspector** dev plugin (`tools/figma-plugin`) edits both, mirrors them into
   shared plugin data (`otakoyi` namespace) and previews the exporter's output for the selection.
 - Layout is read from the frame geometry and mapped to the 12-column grid per form factor.
+- In the config a Patterns instance built on a Console Panel (Fader Bank, Knob Group, Knob Row,
+  Layer Toggles, Camera Control, Scene Bar, Show Actions) is a page **panel**: `pattern` from the
+  component, `title` from the panel title, its controls in order (a Fader Bank strip = fader + its
+  ON toggle); the layout places the panel instead of the controls. A List Card of switch rows is a
+  panel with `pattern: "list"`. Icons on rows and segments are `icon` (the `Icon/<name>`). (The
+  exporter does not emit panels yet: it still flattens patterns into controls.)
+- A pult's primary form factor (`formFactor`, ADR-013) and its icon in the pult list (`icon`) are
+  config fields the studio sets.
 
 Exporter (`tools/figma-export`, TypeScript CLI; format and options in `docs/figma-export.md`):
 

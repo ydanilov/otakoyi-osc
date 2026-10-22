@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Text } from "../components/ui/text";
-import { Surface } from "../ds/depth";
+import { CONTINUOUS, Surface, useDepthStyle } from "../ds/depth";
 import { Glyph } from "../ds/Glyph";
 import { CaretUpDownIcon, CheckIcon } from "../ds/icons";
 import { cn } from "../lib/utils";
@@ -24,6 +24,8 @@ export function Select<T extends SelectValue>({
   onChange,
   disabled,
   defaultOpen,
+  variant = "row",
+  align = "start",
 }: SelectProps<T>) {
   const t = useTheme();
   const win = useWindowDimensions();
@@ -44,36 +46,65 @@ export function Select<T extends SelectValue>({
   }, [defaultOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = selectedLabel(options, value);
+  // The menu opens under the value: right-aligned to a row's value, aligned to a button's side.
+  const startAligned = variant === "button" && align === "start";
   const left = rect
-    ? Math.max(8, Math.min(rect.x + rect.w - MENU_WIDTH, win.width - MENU_WIDTH - 8))
+    ? Math.max(
+        8,
+        Math.min(startAligned ? rect.x : rect.x + rect.w - MENU_WIDTH, win.width - MENU_WIDTH - 8),
+      )
     : 0;
   const top = rect ? rect.y + rect.h + 4 : 0;
 
+  const button = variant === "button";
+  const raised = useDepthStyle("raisedSm");
+  const trigger = (
+    <Pressable
+      ref={anchor}
+      onPress={show}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${current}`}
+      accessibilityHint="Opens a menu"
+      aria-expanded={open}
+      aria-disabled={!!disabled}
+      hitSlop={button ? 0 : 8}
+      className={cn(
+        "min-h-touch flex-row items-center gap-1",
+        button && "bg-card min-h-10 gap-1.5 rounded-md px-3",
+        button && align === "end" && "justify-end",
+      )}
+      style={button ? [CONTINUOUS, raised] : undefined}
+    >
+      {button ? (
+        <>
+          <Text className="text-foreground text-md shrink" numberOfLines={1}>
+            {current}
+          </Text>
+          <Glyph icon={CaretUpDownIcon} tone="muted" size={16} />
+        </>
+      ) : (
+        <>
+          <Text className="text-brand-accent text-sm font-semibold" numberOfLines={1}>
+            {current}
+          </Text>
+          <Glyph icon={CaretUpDownIcon} tone="accent" size={14} />
+        </>
+      )}
+    </Pressable>
+  );
+
   return (
     <View
-      className="min-h-touch flex-row items-center gap-3"
+      className={button ? "flex-1" : "min-h-touch flex-row items-center gap-3"}
       style={disabled ? { opacity: t.control.disabledOpacity } : undefined}
     >
-      <Text className="text-foreground flex-1 text-sm" numberOfLines={1}>
-        {label}
-      </Text>
-      <Pressable
-        ref={anchor}
-        onPress={show}
-        disabled={disabled}
-        accessibilityRole="button"
-        accessibilityLabel={`${label}: ${current}`}
-        accessibilityHint="Opens a menu"
-        aria-expanded={open}
-        aria-disabled={!!disabled}
-        hitSlop={8}
-        className="min-h-touch flex-row items-center gap-1"
-      >
-        <Text className="text-brand-accent text-sm font-semibold" numberOfLines={1}>
-          {current}
+      {!button && (
+        <Text className="text-foreground flex-1 text-sm" numberOfLines={1}>
+          {label}
         </Text>
-        <Glyph icon={CaretUpDownIcon} tone="accent" size={14} />
-      </Pressable>
+      )}
+      {trigger}
 
       <Modal
         visible={open && !!rect}

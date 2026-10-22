@@ -89,7 +89,10 @@ export function quickActions(supported: readonly string[]): QuickAction[] {
 export function modeToggles(supported: readonly string[]): { name: ModeName; label: string }[] {
   return (["idle", "pause"] as const)
     .filter((n) => supported.includes(n))
-    .map((name) => ({ name, label: name === "idle" ? "Idle" : "Pause" }));
+    .map((name) => ({
+      name,
+      label: name === "idle" ? "Idle mode — ignore players" : "Pause playback",
+    }));
 }
 
 /** What to send for a quick action that was confirmed. */

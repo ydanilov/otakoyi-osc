@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { baseTokens } from "@osc/tokens";
 import type { AnyControl } from "@osc/schema";
-import { minHeightFor, paginate, reflowForPhone, type Cell } from "./layout";
+import {
+  minHeightFor,
+  paginate,
+  panelMaxWidth,
+  panelMinHeight,
+  reflowForPhone,
+  type Cell,
+} from "./layout";
 
 const overlaps = (a: Cell, b: Cell) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -116,5 +123,43 @@ describe("picture pads and sized pads", () => {
 
   it("without fit behaves as before", () => {
     expect(paginate(cells, 20)).toHaveLength(1);
+  });
+});
+
+describe("Console Panel patterns (Figma Patterns, responsive)", () => {
+  it("caps the width per pattern", () => {
+    expect(panelMaxWidth("faderBank")).toBe(640);
+    expect(panelMaxWidth("knobRow")).toBe(480);
+    expect(panelMaxWidth("cameraControl")).toBe(480);
+    for (const p of [
+      "knobGroup",
+      "layerToggles",
+      "sceneBar",
+      "showActions",
+      "list",
+      "stack",
+    ] as const)
+      expect(panelMaxWidth(p)).toBe(560);
+  });
+  it("never gets shorter than its content (Figma heights)", () => {
+    expect(panelMinHeight("faderBank", 8)).toBe(466);
+    expect(panelMinHeight("knobGroup", 4)).toBe(442);
+    expect(panelMinHeight("cameraControl", 2)).toBe(366);
+    expect(panelMinHeight("layerToggles", 1)).toBe(136);
+    expect(panelMinHeight("sceneBar", 1)).toBe(114);
+    expect(panelMinHeight("list", 3)).toBe(170);
+  });
+  it("moves a band to the next screen rather than squeezing a panel", () => {
+    const cells = new Map<string, Cell>([
+      ["bank", { x: 0, y: 0, w: 12, h: 6 }],
+      ["scene", { x: 0, y: 6, w: 12, h: 2 }],
+    ]);
+    const minHeight = new Map([
+      ["bank", panelMinHeight("faderBank", 8)],
+      ["scene", panelMinHeight("sceneBar", 1)],
+    ]);
+    // 600 pt: 8 rows of 68 — the bank gets 6 rows (448) < 466 → it is squeezed alone on screen 1.
+    const s = paginate(cells, 13, { height: 600, gap: 8, minHeight });
+    expect(s.map((x) => x.ids)).toEqual([["bank"], ["scene"]]);
   });
 });

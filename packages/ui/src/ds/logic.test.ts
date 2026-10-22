@@ -8,6 +8,8 @@ import {
   manualPairing,
   orderMenuItems,
   presentationFor,
+  DRAWER,
+  drawerCloses,
   formatStepped,
   holdFraction,
   parseValueInput,
@@ -68,7 +70,7 @@ describe("navigation (ADR-013, HIG)", () => {
     expect(formFactor(390)).toBe("phone");
     expect(formFactor(820)).toBe("tablet");
   });
-  it("presents Settings as a large sheet on iPhone and a form sheet on iPad", () => {
+  it("presents Settings as a large sheet on iPhone and a left drawer on iPad", () => {
     expect(presentationFor("settings", 390)).toEqual({
       kind: "sheet",
       options: {
@@ -78,10 +80,14 @@ describe("navigation (ADR-013, HIG)", () => {
         sheetInitialDetentIndex: 0,
       },
     });
-    expect(presentationFor("settings", 1180)).toMatchObject({
-      kind: "sheet",
-      options: { sheetAllowedDetents: [1], sheetGrabberVisible: false },
-    });
+    expect(presentationFor("settings", 1180)).toEqual({ kind: "drawer", width: 400 });
+    expect(DRAWER).toEqual({ width: 400, inset: 12, top: 12, radius: 28 });
+  });
+  it("closes the drawer on a swipe to the left (far or fast)", () => {
+    expect(drawerCloses(-100, 0)).toBe(true);
+    expect(drawerCloses(-30, -900)).toBe(true);
+    expect(drawerCloses(-30, -100)).toBe(false);
+    expect(drawerCloses(40, 0)).toBe(false);
   });
   it("presents Installation as a sheet on iPhone and a 390 pt inspector on iPad", () => {
     expect(presentationFor("installation", 390).kind).toBe("sheet");

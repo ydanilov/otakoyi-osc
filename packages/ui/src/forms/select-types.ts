@@ -15,6 +15,15 @@ export interface SelectProps<T extends SelectValue = string> {
   disabled?: boolean;
   /** Render the menu open (Figma `State=Open`, stories). Web/Android only. */
   defaultOpen?: boolean;
+  /**
+   * `row` (default): a settings row — label left, value + caret right (Figma `Select`).
+   * `button`: an iOS pop-up button on its own — a raised capsule with the value and the up/down
+   * caret (Figma `Pult Select`, Icon/caret-up-down), e.g. the scene selects of the Mix pattern;
+   * `label` is then only the VoiceOver name.
+   */
+  variant?: "row" | "button";
+  /** Button variant: the value and caret sit at the start (default) or the end of the button. */
+  align?: "start" | "end";
 }
 
 export const selectedLabel = <T extends SelectValue>(

@@ -1,7 +1,8 @@
 import { baseTokens } from "@osc/tokens";
 import { describe, expect, it } from "vitest";
 import {
-  knobLightCenter,
+  innerLightCenter,
+  innerLightRadius,
   pinMatches,
   pinPoint,
   touchLightAllowed,
@@ -12,28 +13,23 @@ import {
 const tk = baseTokens.touchLight;
 
 describe("touch light", () => {
-  it("sizes the halo per surface and the core as a fraction of it", () => {
-    // Pads / buttons: 0.8 × the surface width.
-    expect(touchLightSize("surface", 150, tk)).toEqual({ halo: 120, core: 120 * tk.coreScale });
-    // Faders: a fixed ~112 px on the thumb, whatever the track length.
-    expect(touchLightSize("fader", 999, tk).halo).toBe(112);
-    // Knob: ≈1.15 × the disc.
-    expect(touchLightSize("knob", 96, tk).halo).toBeCloseTo(110.4);
-    // Thumbstick / XY: 116–120.
-    const stick = touchLightSize("stick", 0, tk).halo;
-    expect(stick).toBeGreaterThanOrEqual(116);
-    expect(stick).toBeLessThanOrEqual(120);
-    expect(touchLightSize("surface", 100, tk).core).toBeCloseTo(100 * 0.8 * 0.45);
+  it("is white only, subtle: halo 7 %, core 12 %, inner 16 %", () => {
+    expect(tk.color).toBe("#FFFFFF");
+    expect(tk.haloOpacity).toBe(0.07);
+    expect(tk.coreOpacity).toBe(0.12);
+    expect(tk.innerOpacity).toBe(0.16);
   });
 
-  it("is subtle: halo and core stay at ~20 %", () => {
-    expect(tk.haloOpacity).toBeLessThanOrEqual(0.25);
-    expect(tk.coreOpacity).toBeLessThanOrEqual(0.25);
+  it("sizes a pad's halo (Figma: 112 on a 150 pad) and the core at half of it", () => {
+    expect(touchLightSize(150, tk).halo).toBeCloseTo(112, 0);
+    expect(touchLightSize(150, tk).core).toBeCloseTo(56, 0);
+    // A wide surface (XY pad, block button) keeps a fingertip-sized light.
+    expect(touchLightSize(2000, tk).halo).toBe(tk.haloMax);
   });
 
   it("has no size for an unmeasured surface", () => {
-    expect(touchLightSize("surface", 0, tk)).toEqual({ halo: 0, core: 0 });
-    expect(touchLightSize("knob", Number.NaN, tk).halo).toBe(0);
+    expect(touchLightSize(0, tk)).toEqual({ halo: 0, core: 0 });
+    expect(touchLightSize(Number.NaN, tk).halo).toBe(0);
   });
 
   it("is never shown when disabled or view-only", () => {
@@ -47,22 +43,22 @@ describe("touch light", () => {
   });
 
   it("drops the scale under Reduce Motion but keeps the fade", () => {
-    const m = touchLightMotion(true, tk);
-    expect(m.fromScale).toBe(1);
-    expect(m.inMs).toBe(120);
-    expect(m.outMs).toBe(260);
+    expect(touchLightMotion(true, tk)).toEqual({ fromScale: 1, inMs: 120, outMs: 260 });
   });
 
-  it("offsets the knob light slightly toward the touch, never off the disc", () => {
-    const c = { x: 100, y: 100 };
-    expect(knobLightCenter(c, c, 48, tk)).toEqual(c);
-    const near = knobLightCenter({ x: 110, y: 100 }, c, 48, tk);
-    expect(near.y).toBe(100);
-    expect(near.x).toBeCloseTo(100 + 10 * tk.knobOffset);
-    // Far away: capped at knobOffset × the disc radius.
-    const far = knobLightCenter({ x: 100, y: 0 }, c, 48, tk);
-    expect(far.x).toBe(100);
-    expect(far.y).toBeCloseTo(100 - 48 * tk.knobOffset);
+  it("starts the inner light under the finger, kept inside the element", () => {
+    const thumb = { kind: "rect", x: 156, y: 4, width: 40, height: 48 } as const;
+    expect(innerLightCenter({ x: 170, y: 20 }, thumb)).toEqual({ x: 170, y: 20 });
+    // Finger slid past the thumb: the light stays on its edge.
+    expect(innerLightCenter({ x: 260, y: -40 }, thumb)).toEqual({ x: 196, y: 4 });
+    const disc = { kind: "circle", cx: 80, cy: 80, r: 48 } as const;
+    expect(innerLightCenter({ x: 90, y: 80 }, disc)).toEqual({ x: 90, y: 80 });
+    const far = innerLightCenter({ x: 80, y: 0 }, disc);
+    expect(far.x).toBeCloseTo(80);
+    expect(far.y).toBeCloseTo(32);
+    expect(innerLightCenter({ x: 80, y: 80 }, disc)).toEqual({ x: 80, y: 80 });
+    expect(innerLightRadius(disc)).toBe(48);
+    expect(innerLightRadius(thumb)).toBe(24);
   });
 
   it("pins at a fraction of the surface, per cell", () => {

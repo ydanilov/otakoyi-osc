@@ -1,18 +1,21 @@
-import type { ControlValue } from "@osc/controls";
-import type { AnyControl, Control, Page } from "@osc/schema";
+import type { Page } from "@osc/schema";
 import * as React from "react";
 import { ScrollView, View, type ScrollViewInstance } from "react-native";
 import { ScreenTab } from "../chrome/Navigation";
 import { PageDots } from "../chrome/Status";
-import { UnsupportedPlaceholder } from "../controls/discrete";
 import { Surface } from "../ds/depth";
-import { controlRegistry } from "../controls/registry";
-import type { ControlProps } from "../controls/types";
 import { useLayout } from "../controls/useLayout";
 import { useTheme } from "../theme/ThemeProvider";
-import { PHONE_BREAKPOINT, minHeightFor, paginate, type Cell, type Screen } from "./layout";
-
-import { useControlMode, useControlValue, usePultStore } from "./context";
+import { ConnectedControl } from "./ConnectedControl";
+import {
+  PHONE_BREAKPOINT,
+  minHeightFor,
+  paginate,
+  panelMinHeight,
+  type Cell,
+  type Screen,
+} from "./layout";
+import { PanelView } from "./Panels";
 
 export {
   PultProvider,
@@ -21,30 +24,6 @@ export {
   useControlValue,
   usePultStore,
 } from "./context";
-
-/** One control wired to the store. Studio-only controls are hidden unless the session is a studio session. */
-function ConnectedControl({ control, studio }: { control: AnyControl; studio: boolean }) {
-  const store = usePultStore();
-  const value = useControlValue(control.id);
-  const mode = useControlMode();
-  const onChange = React.useCallback(
-    (v: ControlValue) => store.interact(control, v),
-    [store, control],
-  );
-  if (control.type === "unsupported") return <UnsupportedPlaceholder control={control} />;
-  if (control.studioOnly && !studio) return null;
-  const Component = controlRegistry[control.type] as React.ComponentType<
-    ControlProps<Control["type"]>
-  >;
-  return (
-    <Component
-      control={control as never}
-      value={value}
-      onChange={onChange}
-      disabled={mode !== "control"}
-    />
-  );
-}
 
 /** Minimum row height (pt) before a page is split into another screen. */
 const MIN_ROW = 40;
@@ -86,6 +65,9 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
         const m = minHeightFor(c, t.size);
         if (m !== undefined) minHeight.set(c.id, m);
       }
+      // Console-Panel patterns never get shorter than their content (Figma heights).
+      for (const p of page.panels)
+        minHeight.set(p.id, panelMinHeight(p.pattern, p.controls.length));
       const split = paginate(cells, maxRows, { height: innerH, gap, minHeight });
       return split.map((screen, i) => ({
         key: `${page.id}:${i}`,
@@ -132,9 +114,13 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
             }}
             scrollEventThrottle={64}
           >
-            {screens.map((s) => (
+            {screens.map((s, i) => (
               <View key={s.key} style={{ width: W, height: H, padding: pad }}>
-                <ScreenGrid screen={s} width={innerW} height={innerH} gap={gap} studio={studio} />
+                {/* Only the screen on show and its neighbours are mounted: every continuous
+                    control is a canvas, and browsers cap live WebGL contexts (~16). */}
+                {Math.abs(i - index) <= 1 && (
+                  <ScreenGrid screen={s} width={innerW} height={innerH} gap={gap} studio={studio} />
+                )}
               </View>
             ))}
           </ScrollView>
@@ -167,12 +153,14 @@ function ScreenGrid({
   const rows = screen.screen.rows;
   const rowH = (height - gap * (rows - 1)) / rows;
   const byId = new Map(screen.page.controls.map((c) => [c.id, c]));
+  const panels = new Map(screen.page.panels.map((p) => [p.id, p]));
   return (
     <View style={{ width, height }}>
       {screen.screen.ids.map((id) => {
         const c = byId.get(id);
+        const panel = panels.get(id);
         const g = screen.cells.get(id);
-        if (!c || !g) return null;
+        if ((!c && !panel) || !g) return null;
         return (
           <View
             key={id}
@@ -184,13 +172,20 @@ function ScreenGrid({
               height: g.h * rowH + (g.h - 1) * gap,
             }}
           >
-            <ConnectedControl control={c} studio={studio} />
+            {panel ? (
+              <PanelView panel={panel} controls={byId} studio={studio} />
+            ) : (
+              <ConnectedControl control={c!} studio={studio} />
+            )}
           </View>
         );
       })}
     </View>
   );
 }
+
+/** Tablet tab width (Figma Tab Bar: four tabs in 460 pt). */
+const TAB_MIN = 110;
 
 /**
  * Screen tabs: the DS Tab Bar — a recessed capsule track with an inset capsule thumb. Phone: the
@@ -209,7 +204,7 @@ function ScreenTabs({
 }) {
   const many = labels.length > (fill ? 4 : 8);
   const tabs = labels.map((label, i) => (
-    <View key={label + i} style={fill && !many ? { flex: 1, minWidth: 0 } : { minWidth: 96 }}>
+    <View key={label + i} style={fill && !many ? { flex: 1, minWidth: 0 } : { minWidth: TAB_MIN }}>
       <ScreenTab
         label={label}
         active={i === index}

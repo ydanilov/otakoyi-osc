@@ -76,8 +76,9 @@ export const DEFAULT_MODES: ModeItem[] = [
 ];
 
 /**
- * Pattern `Installation Actions`: the body of the Installation surface (iPhone sheet, iPad inspector) — quick actions
- * on top, mode switches below.
+ * Pattern `Installation Actions` (Figma 62:846): the body of the Installation surface (iPhone sheet,
+ * iPad inspector) — the quick actions spread across under a "Quick actions" caption (no panel), the
+ * mode switches (Menu Switches) in a List Card under "Modes".
  */
 export function InstallationActions({
   actions,
@@ -85,30 +86,49 @@ export function InstallationActions({
   modes = DEFAULT_MODES,
   modeState,
   onModeChange,
+  modesDisabled,
 }: {
   actions?: QuickActionItem[];
   onAction?: (id: string) => void;
   modes?: ModeItem[];
   modeState: Record<string, boolean>;
   onModeChange: (id: string, on: boolean) => void;
+  modesDisabled?: boolean;
 }) {
   return (
     <View className="gap-6 self-stretch">
-      <QuickActionsRow actions={actions} onAction={onAction} />
-      <Section title="Modes">
-        <ListCard>
-          {modes.map((m) => (
-            <ListRow
-              key={m.id}
-              icon={m.icon}
-              title={m.label}
-              trailing="switch"
-              checked={!!modeState[m.id]}
-              onCheckedChange={(on) => onModeChange(m.id, on)}
+      <Section title="Quick actions">
+        <View className="flex-row justify-between">
+          {(actions ?? DEFAULT_QUICK_ACTIONS).map((a) => (
+            <QuickAction
+              key={a.id}
+              icon={a.icon}
+              label={a.label}
+              tone={a.tone}
+              holdMs={a.holdMs}
+              disabled={a.disabled}
+              onAction={() => onAction?.(a.id)}
             />
           ))}
-        </ListCard>
+        </View>
       </Section>
+      {modes.length > 0 && (
+        <Section title="Modes">
+          <ListCard>
+            {modes.map((m) => (
+              <ListRow
+                key={m.id}
+                icon={m.icon}
+                title={m.label}
+                trailing="switch"
+                checked={!!modeState[m.id]}
+                disabled={modesDisabled}
+                onCheckedChange={(on) => onModeChange(m.id, on)}
+              />
+            ))}
+          </ListCard>
+        </Section>
+      )}
     </View>
   );
 }

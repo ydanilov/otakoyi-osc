@@ -5,29 +5,44 @@ import { ControlHarness } from "../stories/ControlHarness";
 import { makeControl } from "../stories/controls";
 import { componentDocs, OSC_SOURCE } from "../stories/docs";
 
-function SegmentedStory({ selected, disabled }: { selected: number; disabled: boolean }) {
+function SegmentedStory({
+  selected,
+  disabled,
+  icons = false,
+}: {
+  selected: number;
+  disabled: boolean;
+  icons?: boolean;
+}) {
   const control = React.useMemo(
     () =>
       makeControl({
         type: "segmented",
         id: "mode",
         address: "/mode",
-        label: "Mode",
-        options: [
-          { label: "Calm", value: 0 },
-          { label: "Pulse", value: 1 },
-          { label: "Storm", value: 2 },
-        ],
+        label: icons ? "Scene" : "Mode",
+        options: icons
+          ? [
+              { label: "Show", value: 0, icon: "lightning" },
+              { label: "Day", value: 1, icon: "sun" },
+              { label: "Night", value: 2, icon: "moon" },
+              { label: "Mono", value: 3, icon: "circle-half" },
+            ]
+          : [
+              { label: "Calm", value: 0 },
+              { label: "Pulse", value: 1 },
+              { label: "Storm", value: 2 },
+            ],
       }),
-    [],
+    [icons],
   );
   return (
     <ControlHarness
       control={control}
       value={selected}
       disabled={disabled}
-      width={320}
-      height={88}
+      width={icons ? 370 : 320}
+      height={icons ? 78 : 88}
     />
   );
 }
@@ -82,3 +97,13 @@ export const Default: Story = {
   },
 };
 export const Disabled: Story = { args: { disabled: true } };
+
+/** Figma Segmented Content=Icon (Scene Bar): icons instead of text; the label is the VoiceOver name. */
+export const Icons: Story = {
+  args: { icons: true },
+  play: async ({ canvas }) => {
+    const night = await canvas.findByRole("radio", { name: "Night" });
+    await userEvent.click(night);
+    await expect(canvas.getByLabelText("Last OSC message").textContent).toContain("/mode 2");
+  },
+};

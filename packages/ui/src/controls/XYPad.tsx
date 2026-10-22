@@ -8,16 +8,17 @@ import {
   rrect,
   vec,
 } from "@shopify/react-native-skia";
-import { createThrottle, formatValue } from "@osc/controls";
+import { createThrottle } from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import { useDerivedValue, useSharedValue, withSpring } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
+import { InsetRRect, LitCircle } from "./skia";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
-import { TouchLightSkia, useLightPoint, useTouchLight, useTouchLightSkia } from "./TouchLight";
+import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 type Point = { x: number; y: number };
@@ -63,8 +64,7 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
   const { width: w, height: h } = size;
   const spring = c.springBack;
   const light = useTouchLight({ disabled: !!disabled });
-  const lightAt = useLightPoint(light, w, h);
-  const lightProps = useTouchLightSkia(light, lightAt.x, lightAt.y, "stick");
+  const lightProps = useTouchLightSkia(light, w, h, t.radius.md);
   const pan = usePanGesture({
     enabled: !disabled,
     minDistance: 0,
@@ -104,11 +104,12 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
   const vBottom = useDerivedValue(() => vec(px.value * w, h));
   const hLeft = useDerivedValue(() => vec(0, (1 - py.value) * h));
   const hRight = useDerivedValue(() => vec(w, (1 - py.value) * h));
-  const dotR = useDerivedValue(() => t.size.xyDot / 2 + active.value * 4);
+  const haloFill = useDerivedValue(() => active.value * 0.15);
+  const glow = useDerivedValue(() => 0.4 + active.value * 0.6);
   const r = t.radius.md;
 
   const axis = (v: number, a: { min: number; max: number }) =>
-    formatValue(a.min + v * (a.max - a.min));
+    (a.min + v * (a.max - a.min)).toFixed(2);
   return (
     <ControlFrame
       label={c.label}
@@ -125,36 +126,39 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
         >
           {w > 0 && (
             <Canvas style={{ width: w, height: h }}>
-              <RoundedRect x={0} y={0} width={w} height={h} r={r} color={t.control.track} />
+              <InsetRRect t={t} color={t.control.track} x={0} y={0} width={w} height={h} r={r} />
               <Group clip={rrect(rect(0, 0, w, h), r, r)}>
                 {/* Touch light: under the finger, clipped to the pad, below the cursor. */}
                 <TouchLightSkia {...lightProps} />
-                <Line
-                  p1={vec(w / 2, 0)}
-                  p2={vec(w / 2, h)}
-                  color={t.control.tick}
+                {/* Crosshair through the cursor: the signal colour at 10 %. */}
+                <Line p1={vTop} p2={vBottom} color={t.control.fill} strokeWidth={1} opacity={0.1} />
+                <Line p1={hLeft} p2={hRight} color={t.control.fill} strokeWidth={1} opacity={0.1} />
+                {/* While dragging: a 52 pt halo ring around the cursor. */}
+                <Circle cx={dotX} cy={dotY} r={26} color={t.control.fill} opacity={haloFill} />
+                <Circle
+                  cx={dotX}
+                  cy={dotY}
+                  r={25.5}
+                  color={t.control.fill}
+                  style="stroke"
                   strokeWidth={1}
+                  opacity={active}
                 />
-                <Line
-                  p1={vec(0, h / 2)}
-                  p2={vec(w, h / 2)}
-                  color={t.control.tick}
-                  strokeWidth={1}
+                {/* Cursor: a raised dot ringed in the signal colour, glowing. */}
+                <LitCircle
+                  cx={dotX}
+                  cy={dotY}
+                  r={t.size.xyDot / 2}
+                  color={t.control.fill}
+                  glow={glow}
                 />
-                <Line p1={vTop} p2={vBottom} color={t.control.fill} strokeWidth={1} opacity={0.6} />
-                <Line p1={hLeft} p2={hRight} color={t.control.fill} strokeWidth={1} opacity={0.6} />
-                <Circle cx={dotX} cy={dotY} r={dotR} color={t.control.fill} />
+                <Circle
+                  cx={dotX}
+                  cy={dotY}
+                  r={t.size.xyDot / 2 - 3}
+                  color={t.color.surfaceRaised}
+                />
               </Group>
-              <RoundedRect
-                x={0.5}
-                y={0.5}
-                width={w - 1}
-                height={h - 1}
-                r={r}
-                color={t.control.trackBorder}
-                style="stroke"
-                strokeWidth={1}
-              />
             </Canvas>
           )}
         </View>

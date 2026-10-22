@@ -1,4 +1,4 @@
-import { formatValue, hexToRgb, isGroupValue, toggleInGroup } from "@osc/controls";
+import { formatValue, isGroupValue, toggleInGroup } from "@osc/controls";
 import type { UnsupportedControl } from "@osc/schema";
 import type { PadSize } from "@osc/schema";
 import * as React from "react";
@@ -17,6 +17,9 @@ import { Text } from "@osc/ui/components/ui/text";
 import { cn } from "@osc/ui/lib/utils";
 import { CONTINUOUS, useDepthStyle, usePressState } from "../ds/depth";
 import { LedSwitch } from "../forms/LedSwitch";
+import { Glyph } from "../ds/Glyph";
+import { iconByName } from "../ds/iconByName";
+import type { PhosphorIcon } from "../ds/icons";
 import { useControlServices } from "../platform/services";
 import { useTheme } from "../theme/ThemeProvider";
 import { ControlFrame } from "./ControlFrame";
@@ -189,10 +192,40 @@ function LedBar({ on }: { on: boolean }) {
 }
 
 export function ToggleControl(props: ControlProps<"toggle">) {
-  return props.control.style === "switch" ? (
-    <SwitchToggle {...props} />
-  ) : (
-    <ButtonToggle {...props} />
+  if (props.control.style === "switch") return <SwitchToggle {...props} />;
+  if (props.control.style === "led") return <LedToggle {...props} />;
+  return <ButtonToggle {...props} />;
+}
+
+/**
+ * Toggle `style: "led"` (Figma Group Button, the channel strip's ON button): a raised key that stays
+ * raised; the LED strip under the label lights when on. Without a label it reads ON / OFF.
+ */
+function LedToggle({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
+  const on = value === true;
+  const label = c.label || (on ? "ON" : "OFF");
+  return (
+    <View className="flex-1">
+      <Pad
+        disabled={disabled}
+        className="min-h-0 gap-1.5 px-1"
+        onPress={() => onChange(!on)}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: on, disabled: !!disabled }}
+        accessibilityLabel={c.label || c.id}
+      >
+        <Text
+          className={cn(
+            "text-center text-sm font-semibold uppercase",
+            on ? "text-foreground" : "text-muted-foreground",
+          )}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+        <LedBar on={on} />
+      </Pad>
+    </View>
   );
 }
 
@@ -367,6 +400,7 @@ export function Segmented({ control: c, value, onChange, disabled }: ControlProp
               key={i}
               index={i}
               label={o.label}
+              icon={iconByName(o.icon)}
               active={i === selected}
               disabled={disabled}
               well={well}
@@ -383,6 +417,7 @@ export function Segmented({ control: c, value, onChange, disabled }: ControlProp
 function SegmentOption({
   index,
   label,
+  icon,
   active,
   disabled,
   well,
@@ -390,6 +425,8 @@ function SegmentOption({
 }: {
   index: number;
   label: string;
+  /** Figma Segmented Content=Icon: the icon instead of the text (the label stays its name). */
+  icon?: PhosphorIcon | null;
   active: boolean;
   disabled?: boolean;
   well: { boxShadow: string };
@@ -407,6 +444,7 @@ function SegmentOption({
       onPressMove={lit.onPressMove}
       onPressOut={lit.onPressOut}
       accessibilityRole="radio"
+      accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       className={cn(
         "flex-1 items-center justify-center rounded-full px-2",
@@ -416,22 +454,26 @@ function SegmentOption({
     >
       {/* Touch light: inside the segment's capsule, below the label. */}
       <TouchLightView light={light} radius={t.radius.full} />
-      <Text
-        className="text-sm"
-        style={
-          active
-            ? {
-                color: t.control.fill,
-                textShadowColor: t.control.fill,
-                textShadowRadius: 8,
-                textShadowOffset: { width: 0, height: 0 },
-              }
-            : { color: t.color.textMuted }
-        }
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
+      {icon ? (
+        <Glyph icon={icon} size={22} color={active ? t.control.fill : t.color.textMuted} />
+      ) : (
+        <Text
+          className="text-sm"
+          style={
+            active
+              ? {
+                  color: t.control.fill,
+                  textShadowColor: t.control.fill,
+                  textShadowRadius: 8,
+                  textShadowOffset: { width: 0, height: 0 },
+                }
+              : { color: t.color.textMuted }
+          }
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -530,35 +572,40 @@ export function ButtonGroup({
         {c.buttons.map((b, i) => {
           const on = lit.has(b.id);
           return (
-            <Pad
-              key={b.id}
-              lightIndex={i}
-              disabled={disabled}
-              className="min-h-0 gap-1.5 px-1"
-              onPress={() => onChange(toggleInGroup(c, value, b.id))}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: on, disabled: !!disabled }}
-              accessibilityLabel={b.label}
-            >
-              {/* Figma Button Group: the key stays raised; the LED strip and the label light up. */}
-              <Text
-                className={cn(
-                  "text-center text-sm font-semibold uppercase",
-                  on ? "text-foreground" : "text-muted-foreground",
-                )}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
+            <View key={b.id} className="flex-1 gap-1.5">
+              <Pad
+                lightIndex={i}
+                disabled={disabled}
+                className="min-h-0 gap-1.5 px-1"
+                onPress={() => onChange(toggleInGroup(c, value, b.id))}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: on, disabled: !!disabled }}
+                accessibilityLabel={b.caption ? `${b.label}, ${b.caption}` : b.label}
               >
-                {b.label}
-              </Text>
-              <LedBar on={on} />
+                {/* Figma Group Button: the key stays raised; the LED strip and the label light up. */}
+                <Text
+                  className={cn(
+                    "text-center text-sm font-semibold uppercase",
+                    on ? "text-foreground" : "text-muted-foreground",
+                  )}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
+                  {b.label}
+                </Text>
+                <LedBar on={on} />
+              </Pad>
+              {/* The caption sits under the key (Figma Layer Toggles: BRAND, LIVE FEED…). */}
               {b.caption && (
-                <Text className="text-muted-foreground font-mono text-xs" numberOfLines={1}>
+                <Text
+                  className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wider"
+                  numberOfLines={1}
+                >
                   {b.caption}
                 </Text>
               )}
-            </Pad>
+            </View>
           );
         })}
       </View>
@@ -566,9 +613,19 @@ export function ButtonGroup({
   );
 }
 
-const LABEL_SIZE = { sm: "text-sm", md: "text-lg", lg: "text-2xl", xl: "text-display" } as const;
+/**
+ * Figma `Label` (Size=MD / LG): a raised-surface card (radius 14, hairline border) with the text
+ * centred in mono — MD 13 regular, LG 28 bold. `sm` and `xl` extend the scale (11 / 40).
+ */
+const LABEL_SIZE = {
+  sm: "text-xs font-normal",
+  md: "text-sm font-normal",
+  lg: "text-2xl font-bold",
+  xl: "text-display font-bold",
+} as const;
 
 export function LabelControl({ control: c, value }: ControlProps<"label">) {
+  const t = useTheme();
   const text =
     value === null || value === undefined || value === ""
       ? c.text || "—"
@@ -576,12 +633,13 @@ export function LabelControl({ control: c, value }: ControlProps<"label">) {
   return (
     <ControlFrame label={c.label}>
       <View
-        className="bg-card flex-1 justify-center rounded-md border border-border px-3"
+        className="bg-secondary flex-1 items-center justify-center border border-border px-3"
+        style={[CONTINUOUS, { borderRadius: t.size.padRadius }]}
         accessible
         accessibilityRole="text"
       >
         <Text
-          className={cn("text-foreground font-mono font-semibold", LABEL_SIZE[c.size])}
+          className={cn("text-foreground text-center font-mono", LABEL_SIZE[c.size])}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.5}
@@ -589,54 +647,6 @@ export function LabelControl({ control: c, value }: ControlProps<"label">) {
           {text}
         </Text>
       </View>
-    </ControlFrame>
-  );
-}
-
-/** Colour picker: a palette of swatches (the client's brand colours by default). Free picking is planned for V2. */
-export function ColorPicker({
-  control: c,
-  value,
-  onChange,
-  disabled,
-}: ControlProps<"colorPicker">) {
-  const current = typeof value === "string" ? value.toUpperCase() : (c.default ?? "#FFFFFF");
-  const swatches = c.swatches ?? [
-    "#FFFFFF",
-    "#FF3B30",
-    "#FF9500",
-    "#FFCC00",
-    "#34C759",
-    "#00C7BE",
-    "#007AFF",
-    "#AF52DE",
-  ];
-  const [r, g, b] = hexToRgb(current);
-  return (
-    <ControlFrame label={c.label} value={current} disabled={disabled}>
-      <View className="flex-1 flex-row flex-wrap gap-2">
-        {swatches.map((hex) => {
-          const active = hex.toUpperCase() === current;
-          return (
-            <Pressable
-              key={hex}
-              disabled={disabled}
-              onPress={() => onChange(hex.toUpperCase())}
-              accessibilityRole="radio"
-              accessibilityLabel={hex}
-              accessibilityState={{ selected: active }}
-              style={{ backgroundColor: hex }}
-              className={cn(
-                "min-h-touch min-w-touch flex-1 rounded-md border-2",
-                active ? "border-foreground" : "border-transparent",
-              )}
-            />
-          );
-        })}
-      </View>
-      <Text className="text-muted-foreground mt-2 font-mono text-xs">
-        RGB {r} {g} {b}
-      </Text>
     </ControlFrame>
   );
 }

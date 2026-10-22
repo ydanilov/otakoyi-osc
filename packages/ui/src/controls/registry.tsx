@@ -4,12 +4,12 @@ import {
   ButtonControl,
   ButtonGrid,
   ButtonGroup,
-  ColorPicker,
   LabelControl,
   SceneList,
   Segmented,
   ToggleControl,
 } from "./discrete";
+import { ColorPicker } from "./ColorPicker";
 import { Fader } from "./Fader";
 import { HoldToConfirm } from "./HoldToConfirm";
 import { Knob } from "./Knob";

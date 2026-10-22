@@ -7,6 +7,59 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-22 — Figma port: Color Picker, Mix, Menu Switch, Meter, Settings drawer, Touch light from within, panels, demo
+
+**Added**
+
+- **Color Picker** (Patterns 139:1797, Style=Knobs / Square / Wheel) replaces the swatch-only
+  colour control: header with live swatch + hex, a capsule segmented control to switch styles (a
+  per-device view preference, `viewPrefs`), the same h / s / b value in every style. Knobs: hue ring
+  (segments and swatch tinted with S and B) + Saturation / Brightness knobs with gradient arcs;
+  Square: S × B field, hue strip, H / S / B readout; Wheel: hue × saturation wheel, brightness
+  slider, readout. Schema: `colorPicker.pickerStyle` (default style); `swatches` keeps the palette.
+- **Menu Switch** (156:14369): iOS-size 64×28 switch with an LED on a raised thumb (signal + glow
+  on, dim tick off; the track stays dark). List Row `Trailing=Switch` now draws it — Settings,
+  Installation › Modes, switch lists. The big Switch with grips stays for on-stage controls.
+- **Mix** and **Prompt Mix** patterns (84:1027, 84:934): two scene / prompt pop-up buttons (new
+  `Select variant="button"`, Icon/caret-up-down; B right-aligned in Mix) over the crossfade. No cut /
+  auto row, no A / B captions in Mix, no fader header in Mix.
+- **Drawer** + **DrawerHeader**: iPad Settings is a 400 pt floating drawer from the left (12 pt
+  inset, radius 28, dark fill, large title, round close) over the dimmed pult; swipe left or tap the
+  dim to close (`presentationFor("settings", tablet)` → `drawer`).
+- **Console-Panel patterns in the pult**: page `panels` (`faderBank`, `knobGroup`, `knobRow`,
+  `layerToggles`, `cameraControl`, `sceneBar`, `showActions`, `list`, `stack`). Responsive: max widths
+  640 / 480 / 560, centred when capped; never shorter than their Figma height (the pager moves them
+  to the next screen instead).
+- Toggle `style: "led"` (Group Button / Channel Strip ON button), Segmented option `icon`
+  (Content=Icon), control `icon` (list rows), pult `formFactor` (opens first on that device) and
+  `icon`. Fader `muted` (Figma State=Off) for an off strip.
+- **Connect** phone layout per Figma (106:8): centred brand, hero tile with the scan icon and glow,
+  actions pinned at the bottom, no "or" divider; tablet layout (106:161).
+
+**Changed**
+
+- **Touch light** reworked (Liquid Glass): white only, clipped to the touched element. Faders,
+  knobs, thumbstick, jog wheel: the thumb / disc / stick / wheel itself gets a radial white gradient
+  (16 % → 0) at the touch point — no separate halo. Pads, buttons, toggles, segments, quick actions,
+  XY: halo 7 % + core 12 % white. Tokens `touchLight` changed (`color`, `innerOpacity`,
+  `haloOpacity` 0.07, `coreOpacity` 0.12, `padScale`, `haloMax`); `knobLightCenter` →
+  `innerLightCenter`; new `InnerLight` / `useInnerLight`.
+- **Horizontal fader thumb** symmetric: the LED in the middle, two grip lines on each side (all
+  horizontal variants incl. Crossfade). Crossfade: no A / B letters (LED dots stay), the rail inset
+  28 pt, 22 pt lit centre detent; the shares move to the header ("A 30 · B 70").
+- **Meter** (11:172): 24-segment LED column in a recessed well; zones 70 / 90 %; unlit segments at
+  13 %; top 3 lit glow; white peak-hold line (1.5 s, then falls); dB scale 0 / −6 / −12 / −24 / −48.
+- **Relative indicator**: jog wheel and encoder knob show the ↻ glyph and a signed value (`+12`).
+- **Thumbstick** drawn as the Figma stick (raised base, collar, guide ring, knurled stick, dish,
+  lit direction arc). **XY Pad**: inset bed, faint crosshair, ringed glowing cursor, drag halo,
+  values with 2 decimals. **Label**: centred mono on a raised-surface card (MD 13, LG 28 bold).
+  **Hold to Confirm**: raised key (radius 14), accent ring while held, critical fill when sent.
+- **Inspector** (iPad Installation): round close button top-right; the content brings its header
+  ("Installation", name, status, stats, Pults, Quick actions, Modes). **Installation Actions**:
+  quick actions under a caption, no panel. **Chip** 36 pt with an 8 pt LED. **Button** LG 52 pt.
+- **Try the demo** is the Figma page "Demo · Try the demo" (`examples/try-the-demo.json`): VJ console
+  (tablet), Lighting cues, Lobby wall (phone); demo banner per Figma; no preview strip.
+
 ## 2026-10-22 — Touch light: press response on all controls
 
 **Added**

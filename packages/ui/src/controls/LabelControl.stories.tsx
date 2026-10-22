@@ -17,7 +17,7 @@ function LabelStory({ value, size }: { value: string; size: "sm" | "md" | "lg" |
 const meta = {
   title: "Controls/Label",
   component: LabelStory,
-  args: { value: "59.9", size: "md" },
+  args: { value: "59.9 fps", size: "md" },
   argTypes: { size: { control: "inline-radio", options: ["sm", "md", "lg", "xl"] } },
   parameters: {
     docs: {

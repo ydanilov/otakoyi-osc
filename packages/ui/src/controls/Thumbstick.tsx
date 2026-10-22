@@ -1,9 +1,9 @@
-import { Canvas, Circle, Line, vec } from "@shopify/react-native-skia";
+import { BlurMask, Canvas, Circle, Path, Skia, type SkPath } from "@shopify/react-native-skia";
 import {
   createThumbstick,
-  formatValue,
   thumbstickDeflection,
   type Deflection,
+  type LitShape,
 } from "@osc/controls";
 import * as React from "react";
 import { View } from "react-native";
@@ -13,12 +13,18 @@ import {
   useSimultaneousGestures,
   useTapGesture,
 } from "react-native-gesture-handler";
-import { useDerivedValue, useSharedValue, withSpring } from "react-native-reanimated";
+import {
+  useDerivedValue,
+  useSharedValue,
+  withSpring,
+  type SharedValue,
+} from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
+import { InsetCircle, RaisedCircle } from "./skia";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
-import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
+import { InnerLight, useInnerLight, useTouchLight } from "./TouchLight";
 import { useLayout } from "./useLayout";
 
 /**
@@ -96,6 +102,7 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
     },
     onUpdate: (e) => {
       "worklet";
+      light.move(e.x, e.y);
       const d = thumbstickDeflection({ x: e.x, y: e.y }, { width: w, height: h }, deadzone);
       dx.value = d.x;
       dy.value = d.y;
@@ -118,18 +125,62 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
   });
   const gesture = useSimultaneousGestures(pan, tap);
 
-  const reach = Math.min(w, h) / 2 - t.size.xyDot / 2;
+  // Figma Thumbstick (a 180 pt body, scaled to the cell): raised base r 88, recessed collar r 75 with
+  // a guide ring r 69 and four ticks; the raised stick r 48 with a knurl of dots, a dish r 34 and
+  // a centre dot; while pushed, a lit arc on the collar points where the stick goes.
+  const k = Math.max(0, Math.min(w, h)) / 180;
   const cx = w / 2;
   const cy = h / 2;
+  const reach = 47 * k;
   const capX = useDerivedValue(() => cx + dx.value * reach);
   const capY = useDerivedValue(() => cy - dy.value * reach);
-  const stem = useDerivedValue(() => vec(capX.value, capY.value));
-  // Touch light: on the stick (it follows the finger within its reach).
-  const lightProps = useTouchLightSkia(light, capX, capY, "stick");
+  // Touch light: the stick itself lights up from where the finger is on it.
+  const stickShape = useDerivedValue<LitShape>(() => ({
+    kind: "circle",
+    cx: capX.value,
+    cy: capY.value,
+    r: 48 * k,
+  }));
+  const lightProps = useInnerLight(light, stickShape);
+  const knurl = useDerivedValue(() => {
+    const b = Skia.PathBuilder.Make();
+    for (let i = 0; i < 36; i++) {
+      const a = (i / 36) * Math.PI * 2;
+      const a2 = a + Math.PI / 36;
+      b.addCircle(capX.value + Math.cos(a) * 45 * k, capY.value + Math.sin(a) * 45 * k, 1.5 * k);
+      b.addCircle(capX.value + Math.cos(a2) * 41 * k, capY.value + Math.sin(a2) * 41 * k, 1.5 * k);
+    }
+    return b.build();
+  });
+  const ticks = React.useMemo(() => {
+    const b = Skia.PathBuilder.Make();
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2;
+      b.moveTo(cx + Math.cos(a) * 58 * k, cy + Math.sin(a) * 58 * k).lineTo(
+        cx + Math.cos(a) * 66 * k,
+        cy + Math.sin(a) * 66 * k,
+      );
+    }
+    return b.build();
+  }, [cx, cy, k]);
+  // Direction arc: centred on the push, 30° + 90° × the deflection wide.
+  const direction = useDerivedValue(() => {
+    const b = Skia.PathBuilder.Make();
+    const m = Math.min(1, Math.hypot(dx.value, dy.value));
+    if (m > 0.02) {
+      const deg = (Math.atan2(-dy.value, dx.value) * 180) / Math.PI;
+      const span = 30 + 90 * m;
+      const r = 77 * k;
+      b.addArc(Skia.XYWHRect(cx - r, cy - r, r * 2, r * 2), deg - span / 2, span);
+    }
+    return b.build();
+  });
+  const dishX = capX;
+  const dishY = capY;
   return (
     <ControlFrame
       label={c.label}
-      value={`${formatValue(display.x, { decimals: 2 })}, ${formatValue(display.y, { decimals: 2 })}`}
+      value={`${display.x.toFixed(2)}, ${display.y.toFixed(2)}`}
       disabled={disabled}
     >
       <GestureDetector gesture={gesture}>
@@ -142,36 +193,54 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
         >
           {w > 0 && (
             <Canvas style={{ width: w, height: h }}>
-              <Circle cx={cx} cy={cy} r={reach + t.size.xyDot / 2} color={t.control.track} />
+              <RaisedCircle t={t} cx={cx} cy={cy} r={88 * k} color={t.color.surface} />
+              <InsetCircle t={t} cx={cx} cy={cy} r={75 * k} color={t.control.track} />
               <Circle
                 cx={cx}
                 cy={cy}
-                r={reach * c.deadzone + 1}
+                r={69 * k}
+                color={t.control.trackBorder}
+                style="stroke"
+                strokeWidth={Math.max(1, k)}
+              />
+              <Path
+                path={ticks}
                 color={t.control.tick}
                 style="stroke"
-                strokeWidth={t.stroke.hairline}
+                strokeWidth={2 * k}
+                strokeCap="butt"
               />
-              <Line
-                p1={vec(cx, cy)}
-                p2={stem}
-                color={t.control.fill}
-                strokeWidth={t.stroke.strong}
-              />
-              <Circle cx={capX} cy={capY} r={t.size.xyDot / 2} color={t.color.surfaceRaised} />
-              {/* Touch light: above the stick, below its ring. */}
-              <TouchLightSkia {...lightProps} />
-              <Circle
-                cx={capX}
-                cy={capY}
-                r={t.size.xyDot / 2}
-                color={t.control.fill}
-                style="stroke"
-                strokeWidth={t.stroke.strong}
-              />
+              <LitArc path={direction} color={t.control.fill} width={4 * k} />
+              <RaisedCircle t={t} cx={capX} cy={capY} r={48 * k} color={t.color.surfaceRaised} />
+              {/* Touch light: the stick lit from within, below its knurl and dish. */}
+              <InnerLight {...lightProps} />
+              <Path path={knurl} color={t.control.track} />
+              <InsetCircle t={t} pressed cx={dishX} cy={dishY} r={34 * k} color={t.color.surface} />
+              <InsetCircle t={t} cx={dishX} cy={dishY} r={5 * k} color={t.control.track} />
             </Canvas>
           )}
         </View>
       </GestureDetector>
     </ControlFrame>
+  );
+}
+
+/** The lit direction arc on the collar (Glow/Primary). */
+function LitArc({
+  path,
+  color,
+  width,
+}: {
+  path: SharedValue<SkPath>;
+  color: string;
+  width: number;
+}) {
+  return (
+    <>
+      <Path path={path} color={color} style="stroke" strokeWidth={width} strokeCap="round">
+        <BlurMask blur={4} style="outer" />
+      </Path>
+      <Path path={path} color={color} style="stroke" strokeWidth={width} strokeCap="round" />
+    </>
   );
 }

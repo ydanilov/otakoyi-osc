@@ -2,9 +2,10 @@ import { parsePairing } from "@osc/protocol";
 import { ConnectOptions, InfoCard, ThemeProvider, WarningIcon } from "@osc/ui";
 import { router, useLocalSearchParams } from "expo-router";
 import * as React from "react";
-import { View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useApp } from "@/lib/app-context";
+import { formFactorOf } from "@/lib/nav";
 
 /**
  * First run (ADR-012, no client login): the DS Connect Options — scan the pairing QR, enter the
@@ -21,6 +22,7 @@ export default function Connect() {
     [hasLink, params],
   );
   const starting = React.useRef(false);
+  const ff = formFactorOf(useWindowDimensions().width);
 
   React.useEffect(() => {
     if (!pairing) return;
@@ -37,7 +39,7 @@ export default function Connect() {
   return (
     <ThemeProvider>
       <SafeAreaView className="flex-1" edges={["top", "bottom", "left", "right"]}>
-        <View className="w-full max-w-md flex-1 self-center">
+        <View className={ff === "tablet" ? "flex-1" : "w-full max-w-md flex-1 self-center"}>
           {hasLink && !pairing && (
             <View className="px-6 pt-6" testID="bad-link">
               <InfoCard icon={WarningIcon}>
@@ -50,6 +52,7 @@ export default function Connect() {
             onScan={() => router.push("/scan")}
             onEnterAddress={() => router.push("/manual")}
             onDemo={() => void demo()}
+            layout={ff}
           />
         </View>
       </SafeAreaView>

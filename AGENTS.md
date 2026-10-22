@@ -55,7 +55,7 @@ pnpm --filter @osc/figma-plugin build # Otakoyi Inspector → tools/figma-plugin
 
 App flow (ADR-012, ADR-013): **Connect** (scan pairing QR / enter address and PIN / try the demo) →
 client-branded **loading** screen → **pult**. No accounts and no login. Settings, Installation and
-dialogs are sheets (iPad: Installation is a trailing inspector). The app talks to a real bridge or to
+dialogs are sheets (iPad: Settings is a drawer from the left, Installation a trailing inspector). The app talks to a real bridge or to
 the in-app simulator through the same `TransportFactory` (`@osc/protocol`) and HTTP API shape
 (`BridgeHttp`); `apps/mobile/src/lib/session.ts` holds what the bridge said.
 
@@ -103,13 +103,14 @@ Run `pnpm verify` before every commit.
 apps/mobile/            Expo app (iOS now, Android later) + web pult build
   src/app/              routes: connect, manual, scan, loading, pult, settings, installation, dialog
   src/lib/              session, pairing storage, loading / navigation / installation logic (tested)
-  src/components/       app compositions of the DS (Installation / Settings content, Preview)
+  src/components/       app compositions of the DS (Installation / Settings content, Demo banner)
 apps/bridge/            the bridge program: sockets, UDP/TCP OSC, files, pairing page, runtime
 packages/bridge-core/   the bridge's core (Bridge, Lease, PromptStore) — shared with packages/sim
 packages/sim/           simulated installation for demo mode: transport, HTTP API, preview model
 packages/protocol/      pult ↔ bridge protocol, transports, HTTP client, pairing links
 packages/osc-core/      OSC codec
-packages/schema/        installation config schema + examples/demo-installation.json
+packages/schema/        installation config schema + examples (demo-installation.json: bridge sample with
+                        every control; try-the-demo.json: the in-app demo, = Figma "Demo · Try the demo")
 packages/tokens/        base tokens, createTheme(brand), contrast checks, generated CSS/preset
 packages/controls/      control logic (pure TS)
 packages/ui/            design system: Reusables components, Skia controls, pult renderer
