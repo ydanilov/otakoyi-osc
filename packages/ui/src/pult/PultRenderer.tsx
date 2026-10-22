@@ -114,9 +114,13 @@ export function PultPager({ pages, studio = false }: { pages: Page[]; studio?: b
             }}
             scrollEventThrottle={64}
           >
-            {screens.map((s) => (
+            {screens.map((s, i) => (
               <View key={s.key} style={{ width: W, height: H, padding: pad }}>
-                <ScreenGrid screen={s} width={innerW} height={innerH} gap={gap} studio={studio} />
+                {/* Only the screen on show and its neighbours are mounted: every continuous
+                    control is a canvas, and browsers cap live WebGL contexts (~16). */}
+                {Math.abs(i - index) <= 1 && (
+                  <ScreenGrid screen={s} width={innerW} height={innerH} gap={gap} studio={studio} />
+                )}
               </View>
             ))}
           </ScrollView>
@@ -180,6 +184,9 @@ function ScreenGrid({
   );
 }
 
+/** Tablet tab width (Figma Tab Bar: four tabs in 460 pt). */
+const TAB_MIN = 110;
+
 /**
  * Screen tabs: the DS Tab Bar — a recessed capsule track with an inset capsule thumb. Phone: the
  * tabs share the full width; tablet: the bar hugs its tabs. Scrolls sideways when there are many.
@@ -197,7 +204,7 @@ function ScreenTabs({
 }) {
   const many = labels.length > (fill ? 4 : 8);
   const tabs = labels.map((label, i) => (
-    <View key={label + i} style={fill && !many ? { flex: 1, minWidth: 0 } : { minWidth: 96 }}>
+    <View key={label + i} style={fill && !many ? { flex: 1, minWidth: 0 } : { minWidth: TAB_MIN }}>
       <ScreenTab
         label={label}
         active={i === index}

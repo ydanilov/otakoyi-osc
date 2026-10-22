@@ -19,6 +19,13 @@ Figma conventions:
 - Every control is an instance of a library component. Component set + variants give the type and
   mode (`Fader Mode=Relative` → `fader` with `relative: true`, `Knob Mode=Color` → hue knob, …).
 - Instance text properties are the copy: `Label`, captions, option labels, scene names.
+- A Patterns instance built on a Console Panel (Fader Bank, Knob Group, Knob Row, Layer Toggles,
+  Camera Control, Scene Bar, Show Actions) becomes a page **panel**: `pattern` from the component,
+  `title` from the panel title, its controls in order (a Fader Bank strip = fader + its ON toggle);
+  the layout places the panel (by its layer name) instead of the controls. A List Card of switch
+  rows is a panel with `pattern: "list"`. Icons on rows and segments are `icon` (the `Icon/<name>`).
+- A pult's primary form factor (`formFactor`, ADR-013) and its icon in the pult list come from the
+  page / frame the studio marks as primary.
 - Behaviour that has no visual — OSC address, range, curve, step, target, preset, lock, studioOnly —
   lives in the instance's shared plugin data (`otakoyi` namespace, JSON), edited with a small studio
   Figma plugin ("Otakoyi Inspector"). The layer name is the control `id`.

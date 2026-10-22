@@ -17,14 +17,14 @@ How the pieces fit on a screen. Component pages cover the details; these rules c
 
 ## Two use cases, two form factors (ADR-013)
 
-|                | Lobby / permanent installation        | Live event                              |
-| -------------- | ------------------------------------- | --------------------------------------- |
-| Device         | usually a **phone**, portrait         | usually a **tablet**, landscape         |
-| Pult           | few controls: scenes, modes, steppers | dense VJ console: faders, knobs, groups |
-| Settings       | system sheet (large detent)           | form sheet over a dimmed console        |
-| Installation   | system sheet (large detent)           | 390 pt trailing inspector, no dimming   |
-| Dialogs        | content in a sheet (medium detent)    | content in a form sheet                 |
-| Primary layout | phone (designed first)                | tablet (designed first)                 |
+|                | Lobby / permanent installation        | Live event                               |
+| -------------- | ------------------------------------- | ---------------------------------------- |
+| Device         | usually a **phone**, portrait         | usually a **tablet**, landscape          |
+| Pult           | few controls: scenes, modes, steppers | dense VJ console: faders, knobs, groups  |
+| Settings       | system sheet (large detent)           | 400 pt drawer from the left, dimmed pult |
+| Installation   | system sheet (large detent)           | 390 pt trailing inspector, no dimming    |
+| Dialogs        | content in a sheet (medium detent)    | content in a form sheet                  |
+| Primary layout | phone (designed first)                | tablet (designed first)                  |
 
 Every delivery ships **both** layouts from one config. Components choose by window width, not by
 platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for the grid,
@@ -42,7 +42,8 @@ platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for
   (leading), Connection, **Installation** button (trailing) — and, when this device is not in
   control, the **View only — Take control** or **studio** banner. Take control is never in a sheet.
 - **Settings** (control preferences, pairing QR, what's new, help, _Forget this installation_):
-  iPhone → system sheet, large detent; iPad → form sheet over a dimmed console.
+  iPhone → system sheet, large detent; iPad → a floating 400 pt drawer from the left over the
+  dimmed pult (swipe left or tap the dim to close).
 - **Installation** (name and status, pult switcher, Quick Actions — Flash, Restart and Blackout with
   hold — modes, activity): iPhone → system sheet; iPad → 390 pt trailing **Inspector** with Close ×,
   no dimming.

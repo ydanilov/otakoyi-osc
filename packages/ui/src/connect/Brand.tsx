@@ -27,7 +27,8 @@ export function Backdrop({
         <Image
           source={source}
           resizeMode="cover"
-          style={StyleSheet.absoluteFill}
+          // An explicit size: a bundled asset's own width / height would win over absoluteFill.
+          style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           accessible={!!label}
           accessibilityLabel={label}
           accessibilityIgnoresInvertColors

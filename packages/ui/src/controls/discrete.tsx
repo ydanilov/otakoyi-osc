@@ -203,7 +203,7 @@ export function ToggleControl(props: ControlProps<"toggle">) {
  */
 function LedToggle({ control: c, value, onChange, disabled }: ControlProps<"toggle">) {
   const on = value === true;
-  const label = c.label ?? (on ? "ON" : "OFF");
+  const label = c.label || (on ? "ON" : "OFF");
   return (
     <View className="flex-1">
       <Pad
@@ -212,7 +212,7 @@ function LedToggle({ control: c, value, onChange, disabled }: ControlProps<"togg
         onPress={() => onChange(!on)}
         accessibilityRole="switch"
         accessibilityState={{ checked: on, disabled: !!disabled }}
-        accessibilityLabel={c.label ?? c.id}
+        accessibilityLabel={c.label || c.id}
       >
         <Text
           className={cn(
@@ -618,9 +618,19 @@ export function ButtonGroup({
   );
 }
 
-const LABEL_SIZE = { sm: "text-sm", md: "text-lg", lg: "text-2xl", xl: "text-display" } as const;
+/**
+ * Figma `Label` (Size=MD / LG): a raised-surface card (radius 14, hairline border) with the text
+ * centred in mono — MD 13 regular, LG 28 bold. `sm` and `xl` extend the scale (11 / 40).
+ */
+const LABEL_SIZE = {
+  sm: "text-xs font-normal",
+  md: "text-sm font-normal",
+  lg: "text-2xl font-bold",
+  xl: "text-display font-bold",
+} as const;
 
 export function LabelControl({ control: c, value }: ControlProps<"label">) {
+  const t = useTheme();
   const text =
     value === null || value === undefined || value === ""
       ? c.text || "—"
@@ -628,12 +638,13 @@ export function LabelControl({ control: c, value }: ControlProps<"label">) {
   return (
     <ControlFrame label={c.label}>
       <View
-        className="bg-card flex-1 justify-center rounded-md border border-border px-3"
+        className="bg-secondary flex-1 items-center justify-center border border-border px-3"
+        style={[CONTINUOUS, { borderRadius: t.size.padRadius }]}
         accessible
         accessibilityRole="text"
       >
         <Text
-          className={cn("text-foreground font-mono font-semibold", LABEL_SIZE[c.size])}
+          className={cn("text-foreground text-center font-mono", LABEL_SIZE[c.size])}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.5}

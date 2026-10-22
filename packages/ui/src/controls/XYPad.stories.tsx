@@ -19,12 +19,10 @@ function XYStory({
     () =>
       makeControl({
         type: "xy",
-        id: "cam",
-        address: "/camera/pan",
-        label: "Camera",
+        id: "focus",
+        address: "/wall/focus",
+        label: "Focus point",
         springBack,
-        x: { min: -1, max: 1 },
-        y: { min: -1, max: 1 },
       }),
     [springBack],
   );
@@ -33,8 +31,8 @@ function XYStory({
       control={control}
       value={{ x, y }}
       disabled={disabled}
-      width={280}
-      height={240}
+      width={300}
+      height={246}
     />
   );
 }

@@ -99,7 +99,7 @@
               "label": "Hue shift",
               "address": "/vj/hue-shift",
               "min": 0,
-              "max": 360,
+              "max": 72,
               "int": true,
               "unit": "°",
               "default": 45
@@ -110,7 +110,7 @@
               "label": "Speed",
               "address": "/vj/speed",
               "min": 0,
-              "max": 360,
+              "max": 72,
               "int": true,
               "unit": "°",
               "default": 45
@@ -138,7 +138,6 @@
             {
               "id": "layers",
               "type": "buttonGroup",
-              "label": "Layers",
               "buttons": [
                 {
                   "id": "logo",
@@ -189,7 +188,6 @@
               "id": "scene",
               "type": "segmented",
               "address": "/vj/scene",
-              "label": "Scene",
               "options": [
                 {
                   "label": "Show",
@@ -919,14 +917,6 @@
                   "value": 4
                 }
               ]
-            },
-            {
-              "id": "wall-tint",
-              "type": "colorPicker",
-              "label": "Tint",
-              "address": "/wall/tint",
-              "default": "#3A4CA6",
-              "pickerStyle": "square"
             }
           ],
           "panels": [],
@@ -936,24 +926,12 @@
                 "x": 0,
                 "y": 0,
                 "w": 12,
-                "h": 6
-              },
-              "wall-tint": {
-                "x": 0,
-                "y": 6,
-                "w": 12,
                 "h": 8
               }
             },
             "tablet": {
               "wall-scene-list": {
-                "x": 0,
-                "y": 0,
-                "w": 6,
-                "h": 8
-              },
-              "wall-tint": {
-                "x": 6,
+                "x": 3,
                 "y": 0,
                 "w": 6,
                 "h": 8

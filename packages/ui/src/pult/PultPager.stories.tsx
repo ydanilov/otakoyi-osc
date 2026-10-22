@@ -1,21 +1,32 @@
 import demoJson from "@osc/schema/examples/demo-installation.json";
+import tryJson from "@osc/schema/examples/try-the-demo.json";
 import { parseConfig } from "@osc/schema";
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import * as React from "react";
 import { View } from "react-native";
+import { expect } from "storybook/test";
 import { ControlServicesProvider } from "../platform/services";
 import { componentDocs } from "../stories/docs";
 import { storyServices } from "../stories/services";
 import { PultPager, PultProvider } from "./PultRenderer";
 import { PultStore } from "./store";
 
-function Demo({ pultIndex = 0, height = 700 }: { pultIndex?: number; height?: number }) {
+function Demo({
+  pultIndex = 0,
+  height = 700,
+  config = "sample",
+}: {
+  pultIndex?: number;
+  height?: number;
+  /** `sample`: every control type; `try`: the Figma "Try the demo" installation (panels). */
+  config?: "sample" | "try";
+}) {
   const store = React.useMemo(() => {
-    const parsed = parseConfig(demoJson);
+    const parsed = parseConfig(config === "try" ? tryJson : demoJson);
     if (!parsed.ok) throw new Error("demo config invalid");
     const pult = parsed.config.pults[pultIndex] ?? parsed.config.pults[0]!;
     return new PultStore(parsed.config, pult, { send: () => {} });
-  }, [pultIndex]);
+  }, [pultIndex, config]);
   const services = React.useMemo(storyServices, []);
   return (
     <View style={{ height }}>
@@ -48,8 +59,9 @@ const meta = {
           dont: ["Don't wrap it in a ScrollView."],
           anatomy: [
             "Screen tabs (when a page splits)",
-            "Horizontal pager",
-            "Grid of controls (12 columns, rows stretch to the height)",
+            "Horizontal pager (the screen on show and its neighbours are mounted)",
+            "Grid of controls and Console-Panel patterns (12 columns, rows stretch to the height)",
+            "Panels: Fader Bank, Knob Group, Knob Row, Layer Toggles, Camera Control, Scene Bar, Show Actions, List — max width 640 / 480 / 560, centred when capped, never shorter than their content",
           ],
           behaviour: [
             "Rows fill the height; below the 40 pt minimum row height a page splits (`paginate`, unit-tested).",
@@ -72,3 +84,24 @@ export const DemoPult: Story = {};
 export const Phone: Story = { globals: { viewport: { value: "phone" } } };
 /** The demo's live pult: picture pad, compact knobs and sized pads. */
 export const LivePult: Story = { args: { pultIndex: 2 } };
+
+/** Figma Demo › Tablet / 03 Demo pult: the VJ console's Mix page from Console-Panel patterns. */
+export const PanelsVjConsole: Story = {
+  name: "Panels · VJ console (Try the demo)",
+  args: { config: "try", pultIndex: 0, height: 640 },
+  globals: { viewport: { value: "tablet" } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByTestId("panel-mix")).toBeTruthy();
+    await expect(canvas.getByTestId("panel-shape")).toBeTruthy();
+    await expect(canvas.getByText("Layer 3")).toBeTruthy();
+  },
+};
+/** Figma Demo › Phone / 03 Demo pult: the Lobby wall's Live page (switches as a List panel). */
+export const PanelsLobbyPhone: Story = {
+  name: "Panels · Lobby wall (phone)",
+  args: { config: "try", pultIndex: 2, height: 640 },
+  globals: { viewport: { value: "phone" } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole("switch", { name: "Live data" })).toBeTruthy();
+  },
+};

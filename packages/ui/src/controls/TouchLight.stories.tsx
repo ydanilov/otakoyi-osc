@@ -276,16 +276,17 @@ const meta = {
             "Clip it to the surface's rounded shape on pads, buttons, toggles, segments, quick actions and the XY pad.",
           ],
           dont: [
-            "Don't make it brighter: it must never wash out a label (halo and core ≈ 20 %).",
+            "Don't make it brighter or tint it: white only, it must never wash out a label (halo 7 %, core 12 %, inner 16 %).",
+            "Don't let it spill onto the track or around the control.",
             "Don't show it on disabled or view-only controls.",
           ],
           anatomy: [
-            "Halo — brand primary at `touchLight.haloOpacity`, radial gradient to 0; 0.8 × the surface width (pads, buttons), 112 px on fader thumbs, 1.15 × the disc on knobs, 118 px on thumbstick / XY",
-            "Core — `touchLight.core` at `touchLight.coreOpacity`, 0.45 × the halo",
+            "Inner light (faders, knobs, thumbstick, jog wheel) — the thumb / disc / stick / wheel itself gets a radial white gradient, `touchLight.innerOpacity` (16 %) at the touch point → 0, clipped to it (`InnerLight`)",
+            "Halo (pads, buttons, toggles, segments, quick actions, XY) — white at `touchLight.haloOpacity` (7 %), 0.75 × the surface width up to 112 px; core white at `touchLight.coreOpacity` (12 %), half the halo; clipped to the surface",
           ],
           behaviour: [
             "In: 120 ms ease-out, scale 0.6 → 1, opacity 0 → 1. Follows the finger 1:1 (no lag). Out: 260 ms ease-in.",
-            "Faders: centred on the thumb, above the thumb shape, below its LED and grip lines. Knob: on the disc, below the cap, nudged toward the touch. Thumbstick: on the stick, below its ring.",
+            "Starts under the fingertip and stays inside the touched element: on a fader thumb, below its LED and grips; on the knob disc, below the cap; on the stick, below its knurl and dish; on the jog wheel, below the detents.",
             "Story args `pinned` / `pinX` / `pinY` / `pinIndex` pin it at a point (`PinTouchLight`) so it shows in static snapshots.",
           ],
           a11y: [
