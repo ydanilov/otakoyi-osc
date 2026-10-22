@@ -306,3 +306,25 @@ describe("new control types (ADR-015)", () => {
     ).toBe(true);
   });
 });
+
+describe("enabledWhen (Figma “Depends on”, ADR-014)", () => {
+  it("is optional and holds control = value conditions", () => {
+    expect(Control.parse({ id: "f", type: "button", address: "/f" }).enabledWhen).toBeUndefined();
+    expect(
+      Control.parse({
+        id: "f",
+        type: "button",
+        address: "/f",
+        enabledWhen: [{ control: "blackout", equals: 0 }],
+      }).enabledWhen,
+    ).toEqual([{ control: "blackout", equals: 0 }]);
+    expect(
+      Control.safeParse({
+        id: "f",
+        type: "button",
+        address: "/f",
+        enabledWhen: [{ control: "bad id!" }],
+      }).success,
+    ).toBe(false);
+  });
+});

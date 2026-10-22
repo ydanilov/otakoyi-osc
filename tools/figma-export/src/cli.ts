@@ -5,7 +5,8 @@
  *   figma-export --file <key> --page "Client · Phase One" [--section Phone] --out config.json
  *   figma-export --snapshot fixtures/phase-one.json --out config.json --report report.md
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync as write } from "node:fs";
+import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { exportSnapshot, type BaseConfig, type OscContract } from "./export";
 import { formatReport } from "./report";
@@ -30,8 +31,13 @@ Options:
   --allow-gaps            exit 0 even with errors (the config is always written if it validates)
 `;
 
+/** pnpm runs scripts in the package folder; paths are relative to where the command was typed. */
+const CWD = process.env.INIT_CWD ?? process.cwd();
+const at = (p: string) => resolve(CWD, p);
+const writeFileSync = (p: string, data: string) => write(at(p), data);
+
 function readJson(path: string): unknown {
-  return JSON.parse(readFileSync(path, "utf8"));
+  return JSON.parse(readFileSync(at(path), "utf8"));
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -102,7 +108,7 @@ async function main(argv: string[]): Promise<number> {
   return errors && !a["allow-gaps"] ? 1 : 0;
 }
 
-main(process.argv.slice(2)).then(
+main(process.argv.slice(2).filter((a, i) => !(i === 0 && a === "--"))).then(
   (code) => process.exit(code),
   (e: unknown) => {
     process.stderr.write(`figma-export: ${e instanceof Error ? e.message : String(e)}\n`);
