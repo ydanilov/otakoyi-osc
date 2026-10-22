@@ -5,7 +5,7 @@
 //   pnpm build-storybook && pnpm test-storybook
 //   STORY=chrome-button pnpm test-storybook      # only stories whose id contains "chrome-button"
 //   SHOTS=/tmp/shots pnpm test-storybook          # also save a screenshot per story and theme
-//   WORKERS=2 pnpm test-storybook                 # parallel pages (default 4)
+//   WORKERS=2 pnpm test-storybook                 # parallel pages (default: cores, max 4)
 //   CHROMIUM=/path/to/chrome pnpm test-storybook  # another Chromium build (default: Playwright's)
 //
 // Why it is built this way (it used to be slow and flaky locally):
@@ -23,6 +23,7 @@
 //   stories' handlers get plain data instead (see `stories/handlers.ts`).
 import { createReadStream, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { createServer } from "node:http";
+import { availableParallelism } from "node:os";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -115,7 +116,8 @@ const recorder = () => {
 const failures = [];
 const timings = [];
 let done = 0;
-const TIMEOUT = 30000;
+// Per story: render + play. A full pult page is ~3 s alone; leave room for a loaded CI runner.
+const TIMEOUT = 60000;
 
 async function worker() {
   const context = await browser.newContext({ viewport: { width: 900, height: 760 } });
@@ -169,7 +171,8 @@ async function worker() {
   await context.close();
 }
 
-const workers = Math.max(1, Number(process.env.WORKERS ?? 4));
+// One page per core (max 4): Skia stories are CPU-bound software WebGL in headless Chromium.
+const workers = Math.max(1, Number(process.env.WORKERS ?? Math.min(4, availableParallelism())));
 const t0 = Date.now();
 await Promise.all(Array.from({ length: workers }, worker));
 await browser.close();

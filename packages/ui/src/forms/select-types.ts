@@ -24,6 +24,8 @@ export interface SelectProps<T extends SelectValue = string> {
   variant?: "row" | "button";
   /** Button variant: the value and caret sit at the start (default) or the end of the button. */
   align?: "start" | "end";
+  /** Pop-up button glyph: ⌃⌄ for a choice (Mix), ⌄ for a pull-down (Prompt Mix, Figma caret-down). */
+  caret?: "updown" | "down";
 }
 
 export const selectedLabel = <T extends SelectValue>(
