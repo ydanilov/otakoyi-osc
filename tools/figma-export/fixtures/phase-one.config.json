@@ -15,14 +15,24 @@
       "feedbackPort": 9000
     }
   ],
+  "theme": {
+    "primary": "#5CE6C8",
+    "onPrimary": "#06140F",
+    "primaryPressed": "#3BBFA3",
+    "primarySubtle": "#132723",
+    "accent": "#B7A6FF",
+    "onAccent": "#0D0A1A",
+    "primarySignalLight": "#1F8C75"
+  },
   "pults": [
     {
       "id": "phase-one",
       "name": "Phase One",
+      "formFactor": "phone",
       "pages": [
         {
-          "id": "live-1",
-          "title": "Live 1",
+          "id": "live",
+          "title": "Live",
           "controls": [
             {
               "id": "scene",
@@ -31,16 +41,24 @@
               "address": "/wall/mode",
               "options": [
                 {
-                  "label": "Ambient",
-                  "value": "ambient"
-                },
-                {
                   "label": "React",
-                  "value": "react"
+                  "value": "react",
+                  "icon": "lightning"
                 },
                 {
-                  "label": "Show",
-                  "value": "show"
+                  "label": "Day",
+                  "value": "day",
+                  "icon": "sun"
+                },
+                {
+                  "label": "Night",
+                  "value": "night",
+                  "icon": "moon"
+                },
+                {
+                  "label": "Contrast",
+                  "value": "contrast",
+                  "icon": "circle-half"
                 }
               ]
             },
@@ -49,7 +67,7 @@
               "type": "toggle",
               "label": "Logo",
               "address": "/wall/logo",
-              "default": true,
+              "icon": "device-mobile",
               "style": "switch"
             },
             {
@@ -57,7 +75,7 @@
               "type": "toggle",
               "label": "Live data",
               "address": "/wall/live-data",
-              "default": true,
+              "icon": "sliders-horizontal",
               "style": "switch"
             },
             {
@@ -65,7 +83,7 @@
               "type": "toggle",
               "label": "Audio react",
               "address": "/wall/audio-react",
-              "default": true,
+              "icon": "waveform",
               "style": "switch"
             },
             {
@@ -85,79 +103,66 @@
               "orientation": "horizontal"
             }
           ],
+          "panels": [
+            {
+              "id": "list-card",
+              "pattern": "list",
+              "controls": [
+                "logo",
+                "live-data",
+                "audio-react"
+              ]
+            }
+          ],
           "layout": {
             "phone": {
+              "list-card": {
+                "x": 0,
+                "y": 1,
+                "w": 12,
+                "h": 2
+              },
               "scene": {
                 "x": 0,
                 "y": 0,
                 "w": 12,
                 "h": 1
               },
-              "logo": {
-                "x": 0,
-                "y": 1,
-                "w": 12,
-                "h": 1
-              },
-              "live-data": {
-                "x": 0,
-                "y": 2,
-                "w": 12,
-                "h": 1
-              },
-              "audio-react": {
+              "brightness": {
                 "x": 0,
                 "y": 3,
                 "w": 12,
                 "h": 1
               },
-              "brightness": {
-                "x": 0,
-                "y": 4,
-                "w": 12,
-                "h": 2
-              },
               "hue-drift": {
                 "x": 0,
-                "y": 6,
+                "y": 4,
                 "w": 12,
                 "h": 1
               }
             },
             "tablet": {
+              "list-card": {
+                "x": 0,
+                "y": 1,
+                "w": 12,
+                "h": 2
+              },
               "scene": {
                 "x": 0,
                 "y": 0,
                 "w": 12,
                 "h": 1
               },
-              "logo": {
-                "x": 0,
-                "y": 1,
-                "w": 12,
-                "h": 1
-              },
-              "live-data": {
-                "x": 0,
-                "y": 2,
-                "w": 12,
-                "h": 1
-              },
-              "audio-react": {
+              "brightness": {
                 "x": 0,
                 "y": 3,
                 "w": 12,
                 "h": 1
               },
-              "brightness": {
-                "x": 0,
-                "y": 4,
-                "w": 12,
-                "h": 2
-              },
               "hue-drift": {
                 "x": 0,
-                "y": 6,
+                "y": 4,
                 "w": 12,
                 "h": 1
               }
@@ -169,9 +174,8 @@
           "title": "Prompts",
           "controls": [
             {
-              "id": "prompts",
+              "id": "prompt-presets",
               "type": "prompt",
-              "label": "Prompts",
               "address": "/prompt/text",
               "blend": true
             },
@@ -190,7 +194,7 @@
           ],
           "layout": {
             "phone": {
-              "prompts": {
+              "prompt-presets": {
                 "x": 0,
                 "y": 0,
                 "w": 12,
@@ -204,7 +208,7 @@
               }
             },
             "tablet": {
-              "prompts": {
+              "prompt-presets": {
                 "x": 0,
                 "y": 0,
                 "w": 12,
@@ -235,7 +239,8 @@
               "type": "toggle",
               "label": "Power",
               "address": "/mix/layer/1/on",
-              "default": true
+              "default": true,
+              "style": "led"
             },
             {
               "id": "layer-2",
@@ -249,7 +254,8 @@
               "type": "toggle",
               "label": "Power",
               "address": "/mix/layer/2/on",
-              "default": true
+              "default": true,
+              "style": "led"
             },
             {
               "id": "layer-3",
@@ -262,7 +268,8 @@
               "id": "power-3",
               "type": "toggle",
               "label": "Power",
-              "address": "/mix/layer/3/on"
+              "address": "/mix/layer/3/on",
+              "style": "led"
             },
             {
               "id": "master",
@@ -276,7 +283,8 @@
               "type": "toggle",
               "label": "Power",
               "address": "/mix/layer/4/on",
-              "default": true
+              "default": true,
+              "style": "led"
             },
             {
               "id": "hue-shift",
@@ -345,6 +353,15 @@
               "address": "/camera/aim"
             },
             {
+              "id": "zoom-nudge",
+              "type": "fader",
+              "label": "Zoom nudge",
+              "address": "/camera/zoom",
+              "mode": "relative",
+              "orientation": "horizontal",
+              "throttleHz": 30
+            },
+            {
               "id": "mix-scene",
               "type": "sceneList",
               "address": "/scene",
@@ -372,189 +389,122 @@
               ]
             }
           ],
+          "panels": [
+            {
+              "id": "mix",
+              "title": "Mix",
+              "pattern": "faderBank",
+              "controls": [
+                "layer-1",
+                "power-1",
+                "layer-2",
+                "power-2",
+                "layer-3",
+                "power-3",
+                "master",
+                "power-4"
+              ]
+            },
+            {
+              "id": "shape",
+              "title": "Shape",
+              "pattern": "knobGroup",
+              "controls": [
+                "hue-shift",
+                "speed",
+                "zoom",
+                "rotate"
+              ]
+            },
+            {
+              "id": "layers-panel",
+              "title": "Layers",
+              "pattern": "layerToggles",
+              "controls": [
+                "layers"
+              ]
+            },
+            {
+              "id": "camera",
+              "title": "Camera",
+              "pattern": "cameraControl",
+              "controls": [
+                "pan-tilt",
+                "zoom-nudge"
+              ]
+            },
+            {
+              "id": "scene-panel",
+              "title": "Scene",
+              "pattern": "sceneBar",
+              "controls": [
+                "mix-scene"
+              ]
+            }
+          ],
           "layout": {
             "phone": {
-              "layer-1": {
+              "mix": {
                 "x": 0,
                 "y": 0,
-                "w": 6,
-                "h": 9
-              },
-              "power-1": {
-                "x": 0,
-                "y": 29,
-                "w": 6,
-                "h": 1
-              },
-              "layer-2": {
-                "x": 6,
-                "y": 0,
-                "w": 6,
-                "h": 9
-              },
-              "power-2": {
-                "x": 6,
-                "y": 29,
-                "w": 6,
-                "h": 1
-              },
-              "layer-3": {
-                "x": 0,
-                "y": 9,
-                "w": 6,
-                "h": 9
-              },
-              "power-3": {
-                "x": 0,
-                "y": 30,
-                "w": 6,
-                "h": 1
-              },
-              "master": {
-                "x": 6,
-                "y": 9,
-                "w": 6,
-                "h": 9
-              },
-              "power-4": {
-                "x": 6,
-                "y": 30,
-                "w": 6,
-                "h": 1
-              },
-              "hue-shift": {
-                "x": 0,
-                "y": 18,
-                "w": 6,
-                "h": 3
-              },
-              "speed": {
-                "x": 6,
-                "y": 18,
-                "w": 6,
-                "h": 3
-              },
-              "zoom": {
-                "x": 0,
-                "y": 25,
-                "w": 6,
-                "h": 3
-              },
-              "rotate": {
-                "x": 6,
-                "y": 25,
-                "w": 6,
-                "h": 3
-              },
-              "layers": {
-                "x": 0,
-                "y": 31,
                 "w": 12,
-                "h": 1
+                "h": 7
               },
-              "pan-tilt": {
+              "shape": {
                 "x": 0,
-                "y": 21,
+                "y": 7,
+                "w": 12,
+                "h": 5
+              },
+              "layers-panel": {
+                "x": 0,
+                "y": 19,
+                "w": 12,
+                "h": 2
+              },
+              "camera": {
+                "x": 0,
+                "y": 12,
                 "w": 12,
                 "h": 4
               },
-              "mix-scene": {
+              "scene-panel": {
                 "x": 0,
-                "y": 28,
+                "y": 16,
                 "w": 12,
-                "h": 1
+                "h": 3
               }
             },
             "tablet": {
-              "layer-1": {
+              "mix": {
                 "x": 0,
                 "y": 0,
-                "w": 1,
-                "h": 9
-              },
-              "power-1": {
-                "x": 0,
-                "y": 9,
-                "w": 1,
-                "h": 1
-              },
-              "layer-2": {
-                "x": 1,
-                "y": 0,
-                "w": 1,
-                "h": 9
-              },
-              "power-2": {
-                "x": 1,
-                "y": 9,
-                "w": 1,
-                "h": 1
-              },
-              "layer-3": {
-                "x": 2,
-                "y": 0,
-                "w": 1,
-                "h": 9
-              },
-              "power-3": {
-                "x": 2,
-                "y": 9,
-                "w": 1,
-                "h": 1
-              },
-              "master": {
-                "x": 3,
-                "y": 0,
-                "w": 1,
-                "h": 9
-              },
-              "power-4": {
-                "x": 3,
-                "y": 9,
-                "w": 1,
-                "h": 1
-              },
-              "hue-shift": {
-                "x": 4,
-                "y": 0,
-                "w": 2,
-                "h": 3
-              },
-              "speed": {
-                "x": 6,
-                "y": 0,
-                "w": 2,
-                "h": 3
-              },
-              "zoom": {
-                "x": 4,
-                "y": 4,
-                "w": 2,
-                "h": 3
-              },
-              "rotate": {
-                "x": 6,
-                "y": 4,
-                "w": 2,
-                "h": 3
-              },
-              "layers": {
-                "x": 4,
-                "y": 9,
                 "w": 4,
-                "h": 1
+                "h": 7
               },
-              "pan-tilt": {
+              "shape": {
+                "x": 4,
+                "y": 0,
+                "w": 4,
+                "h": 5
+              },
+              "layers-panel": {
+                "x": 4,
+                "y": 5,
+                "w": 4,
+                "h": 2
+              },
+              "camera": {
                 "x": 8,
                 "y": 0,
                 "w": 4,
                 "h": 4
               },
-              "mix-scene": {
+              "scene-panel": {
                 "x": 8,
-                "y": 8,
+                "y": 4,
                 "w": 4,
-                "h": 1
+                "h": 3
               }
             }
           }

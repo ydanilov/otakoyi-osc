@@ -94,6 +94,12 @@ export const Theme = z
     accent: hex.optional(),
     background: hex.optional(),
     surface: hex.optional(),
+    /** Figma Brand mode colours (exporter `--brand`, ADR-014); derived from primary when missing. */
+    primaryPressed: hex.optional(),
+    primarySubtle: hex.optional(),
+    onAccent: hex.optional(),
+    /** Primary darkened to ≥ 3:1 on the light background, for lines and LEDs in light mode. */
+    primarySignalLight: hex.optional(),
     font: z.string().optional(),
     /** Asset paths relative to the config's asset bundle. */
     logo: z.string().optional(),
@@ -148,8 +154,8 @@ const base = {
     .optional(),
   /**
    * Enable conditions from the Figma "Depends on" annotation (`when <control> = <value>`, ADR-014):
-   * the control is meant to be usable only while every listed control holds that value. Carried in
-   * the config by the exporter; the pult renderer does not evaluate it yet.
+   * the control is usable only while every listed control holds that value; otherwise the pult
+   * draws it in its Disabled state (`isEnabled` in `@osc/controls`).
    */
   enabledWhen: z.array(z.object({ control: id, equals: oscValue })).optional(),
 };

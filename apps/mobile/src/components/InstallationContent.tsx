@@ -145,7 +145,7 @@ function Main({
   return (
     <View className="gap-6" testID="installation-panel">
       <View className="gap-3 pr-14">
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
           Installation
         </Text>
         <Text className="text-foreground text-xl font-semibold" numberOfLines={1}>

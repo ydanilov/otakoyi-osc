@@ -78,9 +78,9 @@ Run `pnpm verify` before every commit.
    `bg-status-online`). Never hardcode hex in components.
 2. **Brand ≠ status.** A client brand overrides `primary`, `accent`, neutrals, font and logo only.
    Status colours (online, warning, critical, offline, studio) are never brandable.
-3. **The pult never scrolls vertically.** (Sheets may: Settings, Installation, Activity.) Rows fill
-   the screen height; pages that do not fit are split into screens that swipe horizontally
-   (`paginate` in `packages/ui/src/pult/layout.ts`).
+3. **The pult never scrolls vertically.** (Sheets may: Settings, Installation, Activity.) Controls
+   are packed from the top at their Figma heights with the Figma gaps (ADR-006); pages that do not
+   fit are split into screens that swipe horizontally (`layoutPage` in `packages/ui/src/pult/layout.ts`).
 4. **Config, not code, defines a pult** — and the config is exported from Figma (ADR-014). New pults ship as config revisions, never as app releases.
    A new control type = schema entry + logic + component + tests, in one PR.
 5. **Platform code behind interfaces.** UDP/TCP, discovery and keep-awake live behind TS interfaces;

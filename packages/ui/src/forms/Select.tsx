@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from "react-n
 import { Text } from "../components/ui/text";
 import { CONTINUOUS, Surface, useDepthStyle } from "../ds/depth";
 import { Glyph } from "../ds/Glyph";
-import { CaretUpDownIcon, CheckIcon } from "../ds/icons";
+import { CaretDownIcon, CaretUpDownIcon, CheckIcon } from "../ds/icons";
 import { cn } from "../lib/utils";
 import { ThemeLayer, useTheme } from "../theme/ThemeProvider";
 import { selectedLabel, type SelectProps, type SelectValue } from "./select-types";
@@ -26,6 +26,7 @@ export function Select<T extends SelectValue>({
   defaultOpen,
   variant = "row",
   align = "start",
+  caret = "updown",
 }: SelectProps<T>) {
   const t = useTheme();
   const win = useWindowDimensions();
@@ -70,8 +71,9 @@ export function Select<T extends SelectValue>({
       aria-disabled={!!disabled}
       hitSlop={button ? 0 : 8}
       className={cn(
-        "min-h-touch flex-row items-center gap-1",
-        button && "bg-card min-h-10 gap-1.5 rounded-md px-3",
+        "flex-row items-center gap-1",
+        // Figma Pult Select (pop-up button): 40 pt; the plain variant keeps the 44 pt touch row.
+        button ? "bg-card h-10 gap-1.5 rounded-md px-3" : "min-h-touch",
         button && align === "end" && "justify-end",
       )}
       style={button ? [CONTINUOUS, raised] : undefined}
@@ -81,7 +83,7 @@ export function Select<T extends SelectValue>({
           <Text className="text-foreground text-md shrink" numberOfLines={1}>
             {current}
           </Text>
-          <Glyph icon={CaretUpDownIcon} tone="muted" size={16} />
+          <Glyph icon={caret === "down" ? CaretDownIcon : CaretUpDownIcon} tone="muted" size={16} />
         </>
       ) : (
         <>

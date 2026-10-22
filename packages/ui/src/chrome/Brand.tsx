@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 import { Text } from "../components/ui/text";
 import { Surface } from "../ds/depth";
 import { cn } from "../lib/utils";
@@ -18,18 +18,31 @@ function arc(cx: number, cy: number, r: number, from: number, to: number) {
 }
 
 /**
- * Figma `Brand Mark`: the Otakoyi knob — a raised dial with a lit arc over the 240° travel of
- * the pult knobs. Arc and dot use the brand signal colour, so a client brand recolours it.
+ * Figma `Brand Mark` (Size=SM 40 / MD 128 / LG 180): the Otakoyi knob — a recessed well, a lit
+ * arc (inner 90 % of a ring 5 % in from the edge) from −120° to +30° of the knob travel with its
+ * glow, a raised disc (66 %), a recessed cap (44 %) and the LED at +30°. Arc and LED use the brand
+ * signal colour, so a client brand recolours it.
  */
 export function BrandMark({ size = "md" }: { size?: keyof typeof MARK }) {
   const t = useTheme();
   const s = MARK[size];
-  const stroke = Math.max(2, s * 0.05);
-  const r = s / 2 - stroke;
-  const knob = s * 0.62;
-  const tip = -120 + 240 * 0.72;
-  const tipRad = ((tip - 90) * Math.PI) / 180;
-  const dotR = r - stroke * 2.2;
+  const outer = s * 0.45;
+  const ring = outer * 0.1;
+  const r = outer - ring / 2;
+  const disc = s * 0.66;
+  const cap = s * 0.44;
+  const led = s * 0.07;
+  const ledAt = ((30 - 90) * Math.PI) / 180;
+  const ledDist = s * 0.24;
+  const d = arc(s / 2, s / 2, r, -120, 30);
+  const sig = t.control.fill;
+  const centred = (w: number) => ({
+    position: "absolute" as const,
+    width: w,
+    height: w,
+    left: (s - w) / 2,
+    top: (s - w) / 2,
+  });
   return (
     <View
       style={{ width: s, height: s }}
@@ -37,45 +50,47 @@ export function BrandMark({ size = "md" }: { size?: keyof typeof MARK }) {
       accessibilityRole="image"
       accessibilityLabel="Otakoyi"
     >
-      <Svg width={s} height={s} style={{ position: "absolute" }}>
+      <Surface depth="inset" radius="full" style={centred(s)} />
+      <Svg width={s} height={s} style={{ position: "absolute" }} pointerEvents="none">
+        {/* Glow/Primary (8 pt + 2 pt) approximated by wider, fainter strokes under the arc. */}
         <Path
-          d={arc(s / 2, s / 2, r, -120, 120)}
-          stroke={t.control.track}
-          strokeWidth={stroke}
+          d={d}
+          stroke={sig}
+          strokeOpacity={0.12}
+          strokeWidth={ring + 8}
           strokeLinecap="round"
           fill="none"
         />
         <Path
-          d={arc(s / 2, s / 2, r, -120, tip)}
-          stroke={t.control.fill}
-          strokeWidth={stroke}
+          d={d}
+          stroke={sig}
+          strokeOpacity={0.3}
+          strokeWidth={ring + 3}
           strokeLinecap="round"
           fill="none"
         />
+        <Path d={d} stroke={sig} strokeWidth={ring} fill="none" />
       </Svg>
-      {size !== "sm" && (
-        <Surface
-          depth="raised"
-          radius="full"
-          style={{
-            position: "absolute",
-            width: knob,
-            height: knob,
-            left: (s - knob) / 2,
-            top: (s - knob) / 2,
-          }}
-        />
-      )}
-      {size !== "sm" && (
-        <Svg width={s} height={s} style={{ position: "absolute" }} pointerEvents="none">
-          <Circle
-            cx={s / 2 + Math.cos(tipRad) * dotR}
-            cy={s / 2 + Math.sin(tipRad) * dotR}
-            r={stroke * 0.8}
-            fill={t.control.fill}
-          />
-        </Svg>
-      )}
+      <Surface depth="raised" radius="full" style={centred(disc)} />
+      <Surface
+        depth="pressed"
+        radius="full"
+        fill={false}
+        className="bg-card"
+        style={centred(cap)}
+      />
+      <View
+        style={{
+          position: "absolute",
+          width: led,
+          height: led,
+          borderRadius: led,
+          left: s / 2 + Math.cos(ledAt) * ledDist - led / 2,
+          top: s / 2 + Math.sin(ledAt) * ledDist - led / 2,
+          backgroundColor: sig,
+          boxShadow: `0px 0px 8px 0px ${sig}, 0px 0px 2px 0px ${sig}`,
+        }}
+      />
     </View>
   );
 }
@@ -98,16 +113,16 @@ export function Wordmark({
     >
       <Text
         className={cn(
-          "text-foreground font-semibold tracking-tight",
-          size === "lg" ? "text-display" : "text-lg",
+          "text-foreground",
+          size === "lg" ? "text-display font-bold" : "text-lg font-semibold",
         )}
       >
         otakoyi
       </Text>
       <Text
         className={cn(
-          "text-muted-foreground font-medium uppercase",
-          size === "lg" ? "text-xs tracking-[3px]" : "text-[8px] tracking-[2px]",
+          "text-muted-foreground tracking-overline text-xs font-medium uppercase",
+          size === "lg" && "mt-1",
         )}
       >
         Controls

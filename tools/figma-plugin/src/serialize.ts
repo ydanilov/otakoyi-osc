@@ -2,7 +2,7 @@
  * Figma plugin API nodes → exporter snapshot nodes (`FNode`), the same shape the REST converter and
  * the test fixtures use, so the plugin runs exactly the exporter's mapping.
  */
-import type { FAnnotation, FNode } from "@osc/figma-export";
+import type { FAnnotation, FNode, Snapshot } from "@osc/figma-export";
 
 const SKIP = new Set<string>([
   "VECTOR",
@@ -25,11 +25,81 @@ export async function categoryLabels(): Promise<Map<string, string>> {
   return new Map(cats.map((c) => [c.id, c.label]));
 }
 
+/** The file's `Brand` variable collection: its modes (one per client) and their colours. */
+export interface BrandContext {
+  collectionId: string;
+  modeNames: Map<string, string>;
+  snapshot: NonNullable<Snapshot["brand"]>;
+}
+
+const hex = (c: RGB | RGBA) =>
+  "#" +
+  [c.r, c.g, c.b]
+    .map((v) =>
+      Math.round(v * 255)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")
+    .toUpperCase();
+
+/** Reads the `Brand` collection (Variables are local to the file; REST needs Enterprise). */
+export async function brandContext(): Promise<BrandContext | undefined> {
+  const cols = await figma.variables.getLocalVariableCollectionsAsync();
+  const col = cols.find((c) => c.name === "Brand");
+  if (!col) return undefined;
+  const modes: Record<string, Record<string, string>> = {};
+  const modeNames = new Map(col.modes.map((m) => [m.modeId, m.name]));
+  for (const m of col.modes) modes[m.name] = {};
+  for (const id of col.variableIds) {
+    const v = await figma.variables.getVariableByIdAsync(id);
+    if (!v || v.resolvedType !== "COLOR") continue;
+    for (const m of col.modes) {
+      let val: VariableValue | undefined = v.valuesByMode[m.modeId];
+      // Follow aliases (in their own collection's default mode).
+      for (
+        let i = 0;
+        i < 5 && val && typeof val === "object" && "type" in val && val.type === "VARIABLE_ALIAS";
+        i++
+      ) {
+        const target = await figma.variables.getVariableByIdAsync((val as VariableAlias).id);
+        const tc = target
+          ? await figma.variables.getVariableCollectionByIdAsync(target.variableCollectionId)
+          : null;
+        val = target && tc ? target.valuesByMode[tc.defaultModeId] : undefined;
+      }
+      if (val && typeof val === "object" && "r" in val) modes[m.name]![v.name] = hex(val);
+    }
+  }
+  return {
+    collectionId: col.id,
+    modeNames,
+    snapshot: {
+      collection: col.name,
+      defaultMode: modeNames.get(col.defaultModeId) ?? col.modes[0]!.name,
+      modes,
+    },
+  };
+}
+
+/** The Brand mode explicitly set on a node (section, frame or page), if any. */
+export function brandModeOf(
+  n: SceneNode | PageNode,
+  brand: BrandContext | undefined,
+): string | undefined {
+  if (!brand || !("explicitVariableModes" in n)) return undefined;
+  const id = n.explicitVariableModes[brand.collectionId];
+  return id ? brand.modeNames.get(id) : undefined;
+}
+
 export async function serialize(
   n: SceneNode | PageNode,
   cats: Map<string, string>,
+  brand?: BrandContext,
 ): Promise<FNode> {
   const o: FNode = { id: n.id, name: n.name, type: n.type };
+  const mode = (n.type === "SECTION" || n.type === "FRAME") && brandModeOf(n, brand);
+  if (mode) o.brandMode = mode;
   if ("visible" in n && n.visible === false) o.visible = false;
   const b = "absoluteBoundingBox" in n ? n.absoluteBoundingBox : null;
   if (b && BOXED.has(n.type))
@@ -65,7 +135,7 @@ export async function serialize(
   }
   if (!leaf && "children" in n) {
     const kids: FNode[] = [];
-    for (const c of n.children) if (!SKIP.has(c.type)) kids.push(await serialize(c, cats));
+    for (const c of n.children) if (!SKIP.has(c.type)) kids.push(await serialize(c, cats, brand));
     if (kids.length) o.children = kids;
   }
   return o;

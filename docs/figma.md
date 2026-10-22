@@ -75,12 +75,12 @@ control, 6 pt apart; horizontal faders keep label left / value right (`ControlFr
 
 ## Variables
 
-| Collection  | Modes                     | Contents                                                                   | Code                        |
-| ----------- | ------------------------- | -------------------------------------------------------------------------- | --------------------------- |
-| `Base`      | Value                     | Neutrals for dark and light, status colours (hidden primitives)            | `tokens.json → color`       |
-| `Brand`     | one mode per client brand | `brand/*` incl. `primary-signal-light` (primary darkened to ≥ 3:1)         | installation config `theme` |
-| `Theme`     | Dark / Light              | `color/*`, `control/*` (incl. `control/signal`), `status/*`, `elevation/*` | `createTheme()` output      |
-| `Dimension` | Value                     | `space/*`, `radius/*`, `stroke/*`, `touch/*`, `control/*` sizes            | `tokens.json`               |
+| Collection  | Modes                     | Contents                                                                   | Code                                                                                                                                                                                                 |
+| ----------- | ------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Base`      | Value                     | Neutrals for dark and light, status colours (hidden primitives)            | `tokens.json → color`                                                                                                                                                                                |
+| `Brand`     | one mode per client brand | `brand/*` incl. `primary-signal-light` (primary darkened to ≥ 3:1)         | installation config `theme` (exporter, `docs/figma-export.md` › Adding a client theme); Otakoyi = `brandDefaults`, checked against `packages/tokens/figma/brand-modes.json`; Storybook Brand toolbar |
+| `Theme`     | Dark / Light              | `color/*`, `control/*` (incl. `control/signal`), `status/*`, `elevation/*` | `createTheme()` output                                                                                                                                                                               |
+| `Dimension` | Value                     | `space/*`, `radius/*`, `stroke/*`, `touch/*`, `control/*` sizes            | `tokens.json`                                                                                                                                                                                        |
 
 `control/fill` and `control/signal` use the brand primary in dark mode and the darkened signal
 colour in light mode — same rule as `createTheme()` (`SIGNAL_CONTRAST = 3`). Buttons keep the exact
@@ -163,7 +163,7 @@ are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 | Viewfinder (Size)                                                                                         | `Viewfinder size`                                                             | `containers/Viewfinder.tsx`                                                                    |
 | Fader · Knob · XY Pad · Meter · Hold to Confirm                                                           | `Fader` · `Knob` · `XYPad` · `Meter` · `HoldToConfirm`                        | `controls/*.tsx`                                                                               |
 | Toggle · Pad · Segmented · Button Grid · Scene List · Label · Unsupported                                 | `discrete.tsx` exports                                                        | `controls/discrete.tsx`                                                                        |
-| Pad (Size) · Toggle (Size × Content=Text / Image)                                                         | `size: regular \| compact`, toggle `image` (picture pad)                      | `controls/discrete.tsx`, `pult/layout.ts` (`minHeightFor`)                                     |
+| Pad (Size) · Toggle (Size × Content=Text / Image)                                                         | `size: regular \| compact`, toggle `image` (picture pad)                      | `controls/discrete.tsx`, `pult/layout.ts` (`naturalHeightFor`)                                 |
 | Knob (Size=Regular / Compact)                                                                             | `size: regular \| compact`                                                    | `controls/Knob.tsx`                                                                            |
 | Debug Row (Kind=Metric / Control) · OSC Log — the Debug page (Phone / Tablet 20 Debug)                    | `DebugRow kind` · `OscLog` (+ `DebugStore` in `@osc/controls`)                | `debug/DebugRow.tsx`, `debug/OscLog.tsx`; page: `apps/mobile/src/components/DebugContent.tsx`  |
 | Debug Tag · Debug HUD (in the library, not used in the app now)                                           | `DebugTag` · `DebugHud`                                                       | `debug/Debug.tsx`                                                                              |
@@ -195,11 +195,18 @@ The "Try the demo" installation (`packages/schema/examples/try-the-demo.json`) i
   follows 1:1, out 260 ms; Reduce Motion fades only. Never on disabled or view-only controls.
   Sizes and timings: `touchLight` in `tokens.json`.
 - **Relative controls** (jog wheel, encoder knob): the ↻ glyph next to a signed value (`+12`,
-  `−0.02`) — the change of the current / last drag. No REL badge (board "Relative indicator —
-  options", 131:406).
+  `−0.02`, `0.00`) — the change accumulated since the session started, kept while the pult is
+  open. No REL badge (board "Relative indicator — options", 131:406).
+- **Instance constraints**: a control's parts keep their component size when the instance is
+  stretched (Center, not Scale): a fader thumb is 40 × 48 / 60 × 44 at any length. The code
+  draws them at the component size.
+- **Pult layout** (ADR-006): controls and panels are packed from the top at their component
+  height — phone 16 pt sides, 12 pt top, 18 pt gaps, free space left at the bottom; tablet Console
+  20 pt sides, 10 pt top / bottom, 16 pt gaps, the last item of each column stretched to the
+  bottom. Stretchable controls (vertical faders, XY pad, meter, grids, lists) share the free height.
 - **Responsive panels**: Console-Panel patterns fill their column's width up to a maximum (Fader
-  Bank 640, Knob Row / Camera Control 480, others 560; centred when capped) and its height, never
-  below their content height. Vertical knobs / faders centre their body when stretched; Group
+  Bank 640, Knob Row / Camera Control 480, others 560; centred when capped), never below their
+  content height. Vertical knobs / faders centre their body when stretched; Group
   Buttons share the row (LED stays 40 wide, centred); Knob Group spaces knobs evenly; Scene Bar,
   Layer Toggles and Show Actions centre their content vertically.
 

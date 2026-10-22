@@ -11,10 +11,11 @@ import {
 import { Text } from "@osc/ui/components/ui/text";
 import { router } from "expo-router";
 import * as React from "react";
-import { View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { useBrand } from "@/lib/brand";
+import { formFactorOf } from "@/lib/nav";
 import { loadingPhase, nextLoadingTick, type LoadingAction } from "@/lib/loading";
 
 /**
@@ -30,6 +31,7 @@ export default function Loading() {
   const brand = useBrand();
   const s = useSessionState();
   const insets = useSafeAreaInsets();
+  const tablet = formFactorOf(useWindowDimensions().width) === "tablet";
   const [now, setNow] = React.useState(Date.now());
   // The minimum time counts from when this screen is on screen (or from a retry).
   const [shownAt] = React.useState(Date.now());
@@ -69,17 +71,22 @@ export default function Loading() {
       <Backdrop source={brand.splash ?? undefined}>
         <View
           className="flex-1 items-center justify-center gap-7 px-6"
-          style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+          // Figma 02 Loading: the logo + loader block sits 6 pt below the centre of the safe area.
+          style={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom }}
           testID="loading-screen"
         >
           {demo ? (
             // Figma Demo › 02 Loading: the studio's name over the simulated installation.
-            <ClientLogo name="Otakoyi" subtitle="Demo · Simulated installation" size="lg" />
+            <ClientLogo
+              name="Otakoyi"
+              subtitle="Demo · Simulated installation"
+              size={tablet ? "xl" : "lg"}
+            />
           ) : (
             <ClientLogo
               name={logoName}
               source={brand.logo ?? undefined}
-              size={brand.name ? "lg" : "sm"}
+              size={brand.name ? (tablet ? "xl" : "lg") : "sm"}
             />
           )}
           <View className="w-full max-w-sm items-center gap-6">

@@ -115,7 +115,7 @@ function PadState({ on }: { on: boolean }) {
   const t = useTheme();
   return (
     <Text
-      className="text-xs font-medium uppercase tracking-wider"
+      className="text-xs font-medium uppercase tracking-overline"
       style={
         on
           ? {
@@ -599,7 +599,7 @@ export function ButtonGroup({
               {/* The caption sits under the key (Figma Layer Toggles: BRAND, LIVE FEED…). */}
               {b.caption && (
                 <Text
-                  className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wider"
+                  className="text-muted-foreground text-center text-xs font-medium uppercase tracking-overline"
                   numberOfLines={1}
                 >
                   {b.caption}

@@ -216,8 +216,8 @@ describe("mapFrame — controls", () => {
         label: "Mode",
         address: "/mode",
         options: [
-          { label: "Ambient", value: "ambient" },
-          { label: "Show", value: "show" },
+          { label: "Ambient", value: "ambient", icon: "sun" },
+          { label: "Show", value: "show", icon: "moon" },
         ],
       },
       {
@@ -357,5 +357,61 @@ describe("slug", () => {
     expect(slug("Pan / tilt")).toBe("pan-tilt");
     expect(slug("Live 1")).toBe("live-1");
     expect(slug("Ünïcode ✓")).toBe("unicode");
+  });
+});
+
+describe("mapFrame — panels and icons", () => {
+  it("turns the outermost pattern instance into a panel around its controls", () => {
+    const r = mapFrame(
+      frame(
+        inst("Knob Group", {
+          annotations: osc("**/fx/{knob-id}** `float 0–1`"),
+          children: [
+            inst("Console Panel", {
+              props: { Title: "SHAPE" },
+              children: [
+                inst("Knob", { name: "hue", props: { Label: "Hue" } }),
+                inst("Knob", { name: "speed", props: { Label: "Speed" } }),
+              ],
+            }),
+          ],
+        }),
+        inst("Fader", {
+          name: "solo",
+          props: { Orientation: "Horizontal" },
+          annotations: osc("**/solo** `float 0–1`"),
+        }),
+      ),
+    );
+    expect(
+      r.panels.map((p) => [p.id, p.pattern, p.title, p.controls.map((c) => c.control.id)]),
+    ).toEqual([["shape", "knobGroup", "Shape", ["hue", "speed"]]]);
+    expect(r.controls.map((c) => c.control.address)).toEqual(["/fx/hue", "/fx/speed", "/solo"]);
+  });
+
+  it("takes a control's own icon, never the component's glyphs", () => {
+    const r = mapFrame(
+      frame(
+        inst("List Card", {
+          annotations: osc("**/a**, **/b** → `1 | 0`"),
+          children: [
+            inst("List Row", {
+              props: { Title: "Logo", Trailing: "Switch" },
+              children: [inst("Icon/device-mobile"), inst("Icon/caret-right")],
+            }),
+            inst("List Row", {
+              props: { Title: "Data", Trailing: "Switch" },
+              children: [inst("Icon/caret-right")],
+            }),
+          ],
+        }),
+      ),
+    );
+    expect(r.controls.map((c) => [c.control.id, c.control.icon, c.control.style])).toEqual([
+      ["logo", "device-mobile", "switch"],
+      ["data", undefined, "switch"],
+    ]);
+    expect(r.panels[0]).toMatchObject({ pattern: "list", id: "list-card" });
+    expect(r.panels[0]!.title).toBeUndefined();
   });
 });

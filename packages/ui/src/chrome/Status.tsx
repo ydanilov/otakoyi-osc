@@ -91,10 +91,13 @@ export function StatTile({
   value,
   size = "md",
   block,
+  outlined,
 }: {
   label: string;
   value: string;
   size?: "md" | "lg";
+  /** Figma Prompt Mix › Weight: a raised-colour tile with a 1 pt border. */
+  outlined?: boolean;
   /** Fill the width it is given (Installation stats: four equal tiles). */
   block?: boolean;
 }) {
@@ -104,12 +107,17 @@ export function StatTile({
       radius="md"
       className={cn(
         block ? "self-stretch" : "self-start",
-        size === "lg" || block ? "gap-0.5 px-3 py-2.5" : "gap-0.5 px-2 py-1.5",
+        size === "lg"
+          ? "gap-0.5 p-[13px]"
+          : block
+            ? "gap-0.5 px-[13px] py-[11px]"
+            : "gap-0.5 px-2 py-1.5",
+        outlined && "bg-secondary border-border border",
       )}
       accessible
       accessibilityLabel={`${label}: ${value}`}
     >
-      <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+      <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
         {label}
       </Text>
       <Text

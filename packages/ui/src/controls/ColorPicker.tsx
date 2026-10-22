@@ -136,7 +136,7 @@ function HsbPicker({ control: c, value, onChange, disabled }: ControlProps<"colo
     >
       <View className="min-h-[18px] flex-row items-center gap-2">
         <Text
-          className="text-muted-foreground flex-1 text-xs font-medium uppercase tracking-wider"
+          className="text-muted-foreground flex-1 text-xs font-medium uppercase tracking-overline"
           numberOfLines={1}
         >
           {c.label ?? "Colour"}
@@ -552,7 +552,7 @@ function WheelBody({
         </View>
       </GestureDetector>
       <View className="gap-2">
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
           Brightness
         </Text>
         <Strip
@@ -576,7 +576,7 @@ function SwatchPicker({ control: c, value, onChange, disabled }: ControlProps<"c
   return (
     <View className={cn("flex-1 gap-2", disabled && "opacity-40")}>
       <View className="min-h-5 flex-row items-center justify-between gap-2">
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
           {c.label ?? "Colour"}
         </Text>
         <Text className="text-foreground font-mono text-sm">{current}</Text>

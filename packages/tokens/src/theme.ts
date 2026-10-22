@@ -15,6 +15,15 @@ export interface BrandInput {
   /** Optional overrides of the neutral surfaces, e.g. a client's own background. */
   background?: string;
   surface?: string;
+  /**
+   * Figma Brand mode colours (`brand/*` variables, one mode per client): primary while pressed,
+   * the primary-tinted surface (dark mode), text on accent, and the primary darkened to ≥ 3:1 on
+   * the light background for lines and LEDs (`primary-signal-light`). Derived when missing.
+   */
+  primaryPressed?: string;
+  primarySubtle?: string;
+  onAccent?: string;
+  primarySignalLight?: string;
 }
 
 export interface Theme {
@@ -28,6 +37,11 @@ export interface Theme {
     text: string;
     textMuted: string;
     overlay: string;
+    /** iOS system sheet background (Figma iOS 27 · System › Sheet) and its grabber. */
+    sheet: string;
+    sheetGrabber: string;
+    /** The sheet toolbar's round Close / Back button (iOS glass button). */
+    sheetButton: string;
     primary: string;
     onPrimary: string;
     primaryPressed: string;
@@ -90,7 +104,17 @@ export const CONTRAST_TEXT = 4.5;
  */
 export function checkBrand(brand: BrandInput): BrandIssue[] {
   const issues: BrandIssue[] = [];
-  for (const k of ["primary", "onPrimary", "accent", "background", "surface"] as const) {
+  for (const k of [
+    "primary",
+    "onPrimary",
+    "accent",
+    "background",
+    "surface",
+    "primaryPressed",
+    "primarySubtle",
+    "onAccent",
+    "primarySignalLight",
+  ] as const) {
     const v = brand[k];
     if (v !== undefined && !isHex(v))
       issues.push({ level: "error", token: k, message: `${k} must be a hex colour, got "${v}"` });
@@ -114,6 +138,17 @@ export function checkBrand(brand: BrandInput): BrandIssue[] {
       message: `Text on primary needs ${CONTRAST_TEXT}:1`,
       ratio: round(onPrimary),
     });
+  if (brand.primarySignalLight) {
+    const light = createTheme({ ...brand, mode: "light" }).color.background;
+    const r = contrast(brand.primarySignalLight, light);
+    if (r < SIGNAL_CONTRAST)
+      issues.push({
+        level: "error",
+        token: "primarySignalLight",
+        message: `primary-signal-light needs ${SIGNAL_CONTRAST}:1 against the light background (lines, LEDs)`,
+        ratio: round(r),
+      });
+  }
   const accentOnBg = contrast(t.color.accent, t.color.background);
   if (accentOnBg < CONTRAST_UI)
     issues.push({
@@ -153,12 +188,27 @@ export function createTheme(brand: BrandInput = {}): Theme {
     "#FFFFFF",
     "#000000",
   ];
-  const onPrimary = brand.onPrimary ?? bestOn(primary, ink);
+  const defaults = base.brandDefaults as Record<string, string>;
+  // A brand without its own primary (or with the default one) takes the Otakoyi mode's other
+  // colours too (Figma Brand).
+  const stock = !brand.primary || brand.primary.toUpperCase() === defaults.primary!.toUpperCase();
+  const own = (k: keyof BrandInput) =>
+    (brand[k] as string | undefined) ?? (stock ? defaults[k] : undefined);
+  const onPrimary = brand.onPrimary ?? own("onPrimary") ?? bestOn(primary, ink);
   const towardBg = mode === "dark" ? "#000000" : "#FFFFFF";
+  const primaryPressed = own("primaryPressed") ?? mix(primary, towardBg, 0.18);
   const { $description: _d, ...status } = base.color.status;
   // Lines, arcs and LEDs must read on the background. A pale brand colour (neon lime on a light
   // theme) is darkened for those uses only; buttons keep the exact brand colour.
   let signal = primary;
+  const signalLight = own("primarySignalLight");
+  if (
+    mode === "light" &&
+    signalLight &&
+    contrast(primary, background) < SIGNAL_CONTRAST &&
+    contrast(signalLight, background) >= SIGNAL_CONTRAST
+  )
+    signal = signalLight;
   for (let i = 0; i < 20 && contrast(signal, background) < SIGNAL_CONTRAST; i++) {
     signal = mix(signal, mode === "dark" ? "#FFFFFF" : "#000000", 0.08);
   }
@@ -174,12 +224,17 @@ export function createTheme(brand: BrandInput = {}): Theme {
       text: n.text,
       textMuted: n.textMuted,
       overlay: n.overlay,
+      sheet: n.sheet,
+      sheetGrabber: n.sheetGrabber,
+      sheetButton: n.sheetButton,
       primary,
       onPrimary,
-      primaryPressed: mix(primary, towardBg, 0.18),
-      primarySubtle: mix(background, primary, 0.16),
+      primaryPressed,
+      primarySubtle:
+        (mode === "dark" && !brand.background ? own("primarySubtle") : undefined) ??
+        mix(background, primary, 0.16),
       accent,
-      onAccent: bestOn(accent, ink),
+      onAccent: own("onAccent") ?? bestOn(accent, ink),
       focus: accent,
     },
     control: {
@@ -189,7 +244,7 @@ export function createTheme(brand: BrandInput = {}): Theme {
       trackBorder:
         mode === "dark" ? mix(background, "#000000", 0.36) : mix(background, n.text, 0.15),
       fill: signal,
-      fillPressed: mix(primary, towardBg, 0.18),
+      fillPressed: primaryPressed,
       thumb: n.text,
       tick: mix(background, n.text, mode === "dark" ? 0.22 : 0.33),
       label: n.textMuted,

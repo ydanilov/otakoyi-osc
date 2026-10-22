@@ -83,7 +83,7 @@ export function SettingsContent({
   return (
     <View className="flex-1" testID="settings-panel">
       <Top title="Settings" />
-      <ScrollView contentContainerClassName="gap-6 px-4 pb-10 pt-2">
+      <ScrollView contentContainerClassName="gap-6 px-4 pb-10 pt-3">
         <Section title="Pairing">
           <ListCard>
             <ListRow

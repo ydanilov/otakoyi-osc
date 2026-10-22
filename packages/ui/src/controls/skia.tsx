@@ -1,4 +1,4 @@
-import { BlurMask, Circle, Group, RoundedRect, Shadow } from "@shopify/react-native-skia";
+import { BlurMask, Canvas, Circle, Group, RoundedRect, Shadow } from "@shopify/react-native-skia";
 import type { Theme } from "@osc/tokens";
 import type * as React from "react";
 import type { SharedValue } from "react-native-reanimated";
@@ -16,7 +16,7 @@ import type { SharedValue } from "react-native-reanimated";
 
 type Num = number | SharedValue<number>;
 
-const sigma = (cssBlur: number) => cssBlur / 2;
+export const sigma = (cssBlur: number) => cssBlur / 2;
 
 export interface Box {
   x: Num;
@@ -162,5 +162,38 @@ export function LitCircle({
       </Circle>
       <Circle {...c} color={color} />
     </Group>
+  );
+}
+
+/**
+ * A canvas the size of its control that may draw `overhang` pt beyond it on every side (Figma lets
+ * a disc's drop shadow or a glow spill out of the component). Children draw in the control's own
+ * coordinates; touches go to the view underneath.
+ */
+export function OverhangCanvas({
+  width,
+  height,
+  overhang = 24,
+  children,
+}: {
+  width: number;
+  height: number;
+  overhang?: number;
+  children: React.ReactNode;
+}) {
+  const o = overhang;
+  return (
+    <Canvas
+      style={{
+        position: "absolute",
+        left: -o,
+        top: -o,
+        width: width + o * 2,
+        height: height + o * 2,
+      }}
+      pointerEvents="none"
+    >
+      <Group transform={[{ translateX: o }, { translateY: o }]}>{children}</Group>
+    </Canvas>
   );
 }

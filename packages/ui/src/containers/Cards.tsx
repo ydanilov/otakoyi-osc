@@ -54,9 +54,9 @@ export function Section({
 }) {
   return (
     <View className={cn("gap-2 self-stretch", className)}>
-      <View className="min-h-5 flex-row items-center justify-between px-1">
+      <View className="min-h-[14px] flex-row items-center justify-between">
         <Text
-          className="text-muted-foreground text-xs font-medium uppercase tracking-wider"
+          className="text-muted-foreground text-xs font-medium uppercase tracking-overline"
           accessibilityRole="header"
         >
           {title}
@@ -86,10 +86,10 @@ export function ConsolePanel({
   return (
     <Surface depth="raised" radius="lg" className={cn("gap-3 p-4", className)}>
       {(title || action) && (
-        <View className="min-h-5 flex-row items-center justify-between">
+        <View className="min-h-[14px] flex-row items-center justify-between">
           {title ? (
             <Text
-              className="text-muted-foreground text-xs font-medium uppercase tracking-wider"
+              className="text-muted-foreground text-xs font-medium uppercase tracking-overline"
               accessibilityRole="header"
             >
               {title}

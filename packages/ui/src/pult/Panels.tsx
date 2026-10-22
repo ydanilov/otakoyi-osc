@@ -5,11 +5,12 @@ import { ConsolePanel, ListCard } from "../containers/Cards";
 import { iconByName } from "../ds/iconByName";
 import { ListRow } from "../forms/ListRow";
 import { ConnectedControl } from "./ConnectedControl";
-import { useControlMode, useControlValue, usePultStore } from "./context";
+import { useControlEnabled, useControlMode, useControlValue, usePultStore } from "./context";
 import { panelMaxWidth } from "./layout";
 
-/** Figma Channel Strip: the ON button under each fader. */
+/** Figma Channel Strip: the ON button (a 76 × 56 Group Button) under each fader. */
 const STRIP_BUTTON = 56;
+const STRIP_BUTTON_W = 76;
 /** Figma Camera Control: the zoom-nudge jog under the stick. */
 const NUDGE = 82;
 /** Figma Layer Toggles / Scene Bar bodies. */
@@ -22,8 +23,8 @@ const ACTIONS = 88;
  * width up to the pattern's maximum (`panelMaxWidth`, centred when capped) and the cell's height
  * (the pager keeps the cell at least `panelMinHeight` tall). Inside, the pattern arranges its
  * controls:
- * - Fader Bank: channel strips sharing the width — each vertical fader with the toggle after it as
- *   its ON button (an off strip mutes its fader);
+ * - Fader Bank: channel strips sharing the width edge to edge — each vertical fader with the
+ *   toggle after it as its 76 pt ON button (an off strip mutes its fader);
  * - Knob Group / Knob Row: knobs evenly spaced in rows of two / one row;
  * - Layer Toggles, Scene Bar, Show Actions: the content centred vertically;
  * - Camera Control: the thumbstick over the zoom-nudge jog;
@@ -70,7 +71,7 @@ function body(panel: Panel, items: AnyControl[], studio: boolean) {
   switch (panel.pattern) {
     case "faderBank":
       return (
-        <View className="flex-1 flex-row justify-between gap-3.5">
+        <View className="flex-1 flex-row">
           {strips(items).map((s) => (
             <Strip key={s.fader.id} fader={s.fader} button={s.button} studio={studio} />
           ))}
@@ -166,7 +167,14 @@ function Strip({
         <ConnectedControl control={fader} studio={studio} extra={{ muted }} />
       </View>
       {button && (
-        <View style={{ height: STRIP_BUTTON }}>
+        <View
+          style={{
+            height: STRIP_BUTTON,
+            width: "100%",
+            maxWidth: STRIP_BUTTON_W,
+            alignSelf: "center",
+          }}
+        >
           <ConnectedControl control={button} studio={studio} />
         </View>
       )}
@@ -179,6 +187,7 @@ function ListToggleRow({ control: c }: { control: AnyControl }) {
   const store = usePultStore();
   const value = useControlValue(c.id);
   const mode = useControlMode();
+  const enabled = useControlEnabled(c);
   if (c.type !== "toggle") return null;
   return (
     <ListRow
@@ -187,7 +196,7 @@ function ListToggleRow({ control: c }: { control: AnyControl }) {
       trailing="switch"
       checked={value === true}
       onCheckedChange={(v) => store.interact(c, v)}
-      disabled={mode !== "control"}
+      disabled={mode !== "control" || !enabled}
     />
   );
 }

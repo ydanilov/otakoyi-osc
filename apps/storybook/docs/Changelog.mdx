@@ -7,6 +7,38 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-23 — Figma parity tails: layout, relative offsets, client themes, Depends on
+
+**Changed**
+
+- **Pult layout** (ADR-006, `layoutPage`): controls and panels keep their Figma heights and are
+  packed from the top — phone 16 / 12 pt in with 18 pt gaps and free space below; tablet Console
+  20 / 10 pt in with 16 pt gaps and each column's last item stretched to the bottom. Tokens
+  `control.pult*`. Replaces the stretch-rows-to-fill rule.
+- **Relative controls** (jog wheel, encoder knob) show the change accumulated since the session
+  started (`+12`, `+0.02`, `0.00`; `formatOffset`, store `offset()`), kept while the pult is open.
+- **Fader**: thumb 40 × 48 (horizontal) / 60 × 44 (vertical), the lit line from the end of the
+  rail, vertical ticks 12 pt in from the ends; **Jog** detents and − / + outside the body, the
+  wheel shaded by its Figma inner shadows. **Knob** fills its 160 pt body.
+- Control header 18 pt with a value, 14 pt with the label alone; Section and Console Panel
+  captions 14 pt; letter spacing token `tracking-overline` (8 %).
+- **Brand Mark** is the Figma knob (well, lit arc, disc, cap, LED) at every size; **Wordmark**
+  type per Figma; **Client Logo** white over the backdrop, `xl` for the iPad loading screen.
+- **Button** `lg` labels 13 pt; **Select** pop-up button 40 pt, `caret="down"` for pull-downs;
+  **Stat Tile** 56 pt, `outlined` (Prompt Mix weights); Fader Bank strips edge to edge with
+  76 pt ON buttons.
+- Sheets (web): iOS sheet colour, grabber, glass Close button (tokens `color.sheet`,
+  `sheetGrabber`, `sheetButton`).
+
+**Added**
+
+- `enabledWhen` (Figma “Depends on”) is evaluated: the control is Disabled until every condition
+  holds (`isEnabled`, `useControlEnabled`; story _Pult Pager › Depends on_).
+- Client themes from Figma: the Brand variable collection's modes (`brand/*`) are the config
+  `theme` (exporter `--brand`); `createTheme` takes primary pressed / subtle, on-accent and
+  primary-signal-light. The Storybook **Brand** toolbar lists every Figma Brand mode; story
+  _Pult Pager › Phase One · Aurora_.
+
 ## 2026-10-22 — Figma port: Color Picker, Mix, Menu Switch, Meter, Settings drawer, Touch light from within, panels, demo
 
 **Added**

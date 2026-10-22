@@ -1,4 +1,5 @@
-import type { ControlValue, PromptAck } from "@osc/controls";
+import { isEnabled, type ControlValue, type PromptAck } from "@osc/controls";
+import type { AnyControl } from "@osc/schema";
 import * as React from "react";
 import type { ControlMode, PultStore } from "./store";
 
@@ -46,5 +47,49 @@ export function useControlMode(): ControlMode {
   return React.useSyncExternalStore(
     (fn) => store.subscribeMode(fn),
     () => store.mode,
+  );
+}
+
+/**
+ * A relative control's accumulated change since the session started (Figma `+12`, `+0.02`). In a
+ * pult it comes from the store (it survives page swipes while the pult is open); outside one
+ * (Storybook, the gallery) the control keeps it itself through `add`.
+ */
+export function useRelativeOffset(id: string): { value: number; add: (d: number) => void } {
+  const store = React.useContext(StoreContext);
+  const [local, setLocal] = React.useState(0);
+  const fromStore = React.useSyncExternalStore(
+    (fn) => store?.subscribeMeta(id, fn) ?? (() => {}),
+    () => store?.offset(id) ?? 0,
+  );
+  const add = React.useCallback(
+    (d: number) => {
+      if (!store) setLocal((v) => v + d);
+    },
+    [store],
+  );
+  return { value: store ? fromStore : local, add };
+}
+
+/**
+ * `enabledWhen` (Figma "Depends on", ADR-014): false while any condition does not hold — the
+ * control is then drawn in its Disabled state. Re-evaluated whenever a referenced control changes.
+ * Outside a pult (no store) a control is always enabled.
+ */
+export function useControlEnabled(control: AnyControl): boolean {
+  const store = React.useContext(StoreContext);
+  const conditions = control.type === "unsupported" ? undefined : control.enabledWhen;
+  const subscribe = React.useCallback(
+    (fn: () => void) => {
+      if (!store || !conditions?.length) return () => {};
+      const offs = conditions.map((c) => store.subscribe(c.control, fn));
+      return () => offs.forEach((off) => off());
+    },
+    [store, conditions],
+  );
+  return React.useSyncExternalStore(subscribe, () =>
+    !store
+      ? true
+      : isEnabled(conditions, (id) => ({ control: store.control(id), value: store.get(id) })),
   );
 }

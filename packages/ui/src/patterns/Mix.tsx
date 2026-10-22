@@ -114,11 +114,12 @@ export function PromptMix({
             ] as const
           ).map(([side, value, on]) => (
             <View key={side} className="flex-1 gap-1.5">
-              <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+              <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
                 {side}
               </Text>
               <Select
                 variant="button"
+                caret="down"
                 label={`Prompt ${side}`}
                 value={value}
                 options={options}
@@ -138,10 +139,10 @@ export function PromptMix({
         </View>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <StatTile size="lg" label={name(a)} value={`${share.a}%`} />
+            <StatTile size="lg" outlined block label={name(a)} value={`${share.a}%`} />
           </View>
           <View className="flex-1">
-            <StatTile size="lg" label={name(b)} value={`${share.b}%`} />
+            <StatTile size="lg" outlined block label={name(b)} value={`${share.b}%`} />
           </View>
         </View>
       </View>

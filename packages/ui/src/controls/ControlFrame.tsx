@@ -39,14 +39,16 @@ export function ControlFrame({
       {(label || value) && (
         <View
           className={cn(
-            "min-h-5 flex-row items-center",
+            // Figma: 18 pt with a value (mono 13 / 18), 14 pt with the label alone.
+            value !== undefined || badge ? "min-h-[18px]" : "min-h-[14px]",
+            "flex-row items-center",
             align === "center" ? "justify-center gap-1.5" : "justify-between gap-2",
           )}
           testID={align === "center" ? "control-header-center" : undefined}
         >
           {label ? (
             <Text
-              className="text-muted-foreground shrink text-xs font-medium uppercase tracking-wider"
+              className="text-muted-foreground shrink text-xs font-medium uppercase tracking-overline"
               numberOfLines={1}
             >
               {label}

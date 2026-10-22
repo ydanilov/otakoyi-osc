@@ -1,9 +1,9 @@
-import { Canvas, LinearGradient, Path, RoundedRect, Skia, vec } from "@shopify/react-native-skia";
+import { Canvas, Group, Path, RoundedRect, Shadow, Skia } from "@shopify/react-native-skia";
 import {
   FINE_POINTERS,
   createDeltaAccumulator,
   fineBadge,
-  formatDelta,
+  formatOffset,
   jogDelta,
 } from "@osc/controls";
 import * as React from "react";
@@ -12,12 +12,19 @@ import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
-import { InsetRRect, LitRRect } from "./skia";
+import { InsetRRect, LitRRect, sigma } from "./skia";
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
 import { InnerLight, useInnerLight, useTouchLight } from "./TouchLight";
 import { useLayout } from "./useLayout";
+import { useRelativeOffset } from "../pult/context";
+
+/**
+ * The detent LEDs and the − / + marks sit outside the body (Figma: above and below the housing of
+ * a horizontal wheel), so the canvas overhangs the body by this much on those two sides.
+ */
+const OVERHANG = 16;
 
 /** Angle between two ribs of the wheel (a cylinder seen from the front), degrees. */
 const RIB_DEG = 7;
@@ -39,7 +46,7 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   const offset = useSharedValue(0);
   const last = useSharedValue(0);
   const [fine, setFine] = React.useState(false);
-  const [moved, setMoved] = React.useState(0);
+  const total = useRelativeOffset(c.id);
   const glow = useGlow();
   const spread = useFineSpread(fine);
   const light = useTouchLight({ disabled: !!disabled });
@@ -59,10 +66,10 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
       const isFine = pointers >= FINE_POINTERS;
       setFine(isFine);
       const d = jogDelta(px, length, span, isFine ? fineFactor : 1);
-      setMoved((m) => m + d);
+      total.add(d);
       acc.push(d);
     },
-    [acc, length, span, fineFactor],
+    [acc, length, span, fineFactor, total.add],
   );
   const end = React.useCallback(() => {
     setFine(false);
@@ -80,8 +87,6 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
     onActivate: () => {
       "worklet";
       last.value = 0;
-      // The header shows the change of the current (or last) drag.
-      scheduleOnRN(setMoved, 0);
     },
     onUpdate: (e) => {
       "worklet";
@@ -108,6 +113,9 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
   const mid = across / 2;
   const housing = vertical ? 64 : t.size.jogHousing;
   const inset = 6;
+  // Figma: the wheel's inner shadows are offset ±18 along it.
+  const sx = vertical ? 0 : 18;
+  const sy = vertical ? 18 : 0;
   const wheelAcross = housing - inset * 2;
   const wheelLen = Math.max(0, length - inset * 2);
   const R = wheelLen / 2;
@@ -157,16 +165,17 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
       : { x: w / 2 - 9, y: mid + side * (housing / 2 + 8) - 2, width: 18, height: 4 };
   const signs = Skia.PathBuilder.Make();
   {
-    // − at the low end, + at the high end, outside the housing.
+    // − at the low end, + at the high end, outside the housing (Figma: 14 pt icons, 10.5 pt glyphs).
     const o = housing / 2 + 7;
-    const lo = vertical ? { x: mid + o, y: h - 5 } : { x: 5, y: mid + o };
-    const hi = vertical ? { x: mid + o, y: 5 } : { x: w - 5, y: mid + o };
-    signs.moveTo(lo.x - 5, lo.y).lineTo(lo.x + 5, lo.y);
+    const lo = vertical ? { x: mid + o, y: h - 7 } : { x: 7, y: mid + o };
+    const hi = vertical ? { x: mid + o, y: 7 } : { x: w - 7, y: mid + o };
+    const g = 5.25;
+    signs.moveTo(lo.x - g, lo.y).lineTo(lo.x + g, lo.y);
     signs
-      .moveTo(hi.x - 5, hi.y)
-      .lineTo(hi.x + 5, hi.y)
-      .moveTo(hi.x, hi.y - 5)
-      .lineTo(hi.x, hi.y + 5);
+      .moveTo(hi.x - g, hi.y)
+      .lineTo(hi.x + g, hi.y)
+      .moveTo(hi.x, hi.y - g)
+      .lineTo(hi.x, hi.y + g);
   }
   const signPath = signs.build();
   // Touch light: the wheel itself lights up from where the finger is on it.
@@ -175,7 +184,7 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
     <ControlFrame
       label={c.label}
       align={vertical ? "center" : "split"}
-      value={c.showValue ? formatDelta(moved, { unit: c.unit }) : undefined}
+      value={c.showValue ? formatOffset(total.value, { int: c.int, unit: c.unit }) : undefined}
       badge={fine ? fineBadge(fineFactor) : undefined}
       relative
       disabled={disabled}
@@ -186,6 +195,8 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
           onLayout={onLayout}
           accessible
           accessibilityRole="adjustable"
+          accessibilityState={{ disabled: !!disabled }}
+          aria-disabled={!!disabled}
           accessibilityLabel={c.label ?? c.id}
           accessibilityHint="Endless. Drag to nudge."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
@@ -195,66 +206,69 @@ export function JogFader({ control: c, onChange, disabled }: ControlProps<"fader
           }}
         >
           {w > 0 && (
-            <Canvas style={{ width: w, height: h }}>
-              <InsetRRect
-                t={t}
-                color={t.control.track}
-                x={hx}
-                y={hy}
-                width={hw}
-                height={hh}
-                r={12}
-              />
-              <InsetRRect
-                t={t}
-                pressed
-                color={t.control.track}
-                x={wx}
-                y={wy}
-                width={ww}
-                height={wh}
-                r={6}
-              />
-              {ribs.map((path, i) => (
-                <Path key={i} path={path} color={t.color.textMuted} opacity={RIB_LEVELS[i]} />
-              ))}
-              {/* Cylinder shading towards both ends of the wheel. */}
-              <RoundedRect x={wx} y={wy} width={ww} height={wh} r={6}>
-                <LinearGradient
-                  start={vec(wx, wy)}
-                  end={vertical ? vec(wx, wy + wh) : vec(wx + ww, wy)}
-                  positions={[0, 0.18, 0.82, 1]}
-                  colors={[
-                    t.elevation.insetShadow,
-                    "transparent",
-                    "transparent",
-                    t.elevation.insetShadow,
-                  ]}
-                />
-              </RoundedRect>
-              {/* Touch light: the wheel lit from within under the finger, below the detent LEDs. */}
-              <InnerLight {...lightProps} />
-              {fine && (
-                <RoundedRect
-                  x={hx + 0.75}
-                  y={hy + 0.75}
-                  width={hw - 1.5}
-                  height={hh - 1.5}
+            <Canvas
+              style={{
+                position: "absolute",
+                left: vertical ? -OVERHANG : 0,
+                top: vertical ? 0 : -OVERHANG,
+                width: vertical ? w + OVERHANG * 2 : w,
+                height: vertical ? h : h + OVERHANG * 2,
+              }}
+              pointerEvents="none"
+            >
+              <Group
+                transform={[
+                  { translateX: vertical ? OVERHANG : 0 },
+                  { translateY: vertical ? 0 : OVERHANG },
+                ]}
+              >
+                <InsetRRect
+                  t={t}
+                  color={t.control.track}
+                  x={hx}
+                  y={hy}
+                  width={hw}
+                  height={hh}
                   r={12}
-                  color={t.color.focus}
-                  style="stroke"
-                  strokeWidth={t.stroke.default}
                 />
-              )}
-              <LitRRect {...detent(-1)} r={2} color={lit} glow={glow} />
-              <LitRRect {...detent(1)} r={2} color={lit} glow={glow} />
-              <Path
-                path={signPath}
-                color={t.color.textMuted}
-                style="stroke"
-                strokeWidth={t.stroke.hairline}
-                strokeCap="round"
-              />
+                {/* The wheel: dark at both ends (Figma: inner shadows ±18, blur 22). */}
+                <RoundedRect x={wx} y={wy} width={ww} height={wh} r={6} color={t.control.track}>
+                  <Shadow dx={sx} dy={sy} blur={sigma(22)} color={t.elevation.insetShadow} inner />
+                  <Shadow
+                    dx={-sx}
+                    dy={-sy}
+                    blur={sigma(22)}
+                    color={t.elevation.insetShadow}
+                    inner
+                  />
+                </RoundedRect>
+                {ribs.map((path, i) => (
+                  <Path key={i} path={path} color={t.color.textMuted} opacity={RIB_LEVELS[i]} />
+                ))}
+                {/* Touch light: the wheel lit from within under the finger, below the detent LEDs. */}
+                <InnerLight {...lightProps} />
+                {fine && (
+                  <RoundedRect
+                    x={hx + 0.75}
+                    y={hy + 0.75}
+                    width={hw - 1.5}
+                    height={hh - 1.5}
+                    r={12}
+                    color={t.color.focus}
+                    style="stroke"
+                    strokeWidth={t.stroke.default}
+                  />
+                )}
+                <LitRRect {...detent(-1)} r={2} color={lit} glow={glow} />
+                <LitRRect {...detent(1)} r={2} color={lit} glow={glow} />
+                <Path
+                  path={signPath}
+                  color={t.color.textMuted}
+                  style="stroke"
+                  strokeWidth={t.stroke.hairline}
+                  strokeCap="round"
+                />
+              </Group>
             </Canvas>
           )}
         </View>

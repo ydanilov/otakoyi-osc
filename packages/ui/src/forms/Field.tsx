@@ -56,7 +56,7 @@ export function TextField({
       className="gap-1.5 self-stretch"
       style={disabled ? { opacity: t.control.disabledOpacity } : undefined}
     >
-      <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+      <Text className="text-muted-foreground text-xs font-medium uppercase tracking-overline">
         {label}
       </Text>
       <Surface

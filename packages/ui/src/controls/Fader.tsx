@@ -8,6 +8,7 @@ import {
   fineBadge,
   type LitShape,
   formatValue,
+  stepDecimals,
   positionToValue,
   relativeDrag,
   resetValue,
@@ -41,6 +42,9 @@ const asNumber = (v: unknown, fallback: number) => (typeof v === "number" ? v : 
 /** Crossfade (Figma): the rail starts 28 pt in from each end; the A / B LEDs sit 11 pt in. */
 const CROSSFADE_INSET = 28;
 const CROSSFADE_LED = 11;
+
+/** Vertical fader ticks: first and last 12 pt in from the ends of the rail (Figma). */
+const TICK_INSET = 12;
 
 /** Px the finger must travel before a relative drag starts, so a tap never moves the value. */
 const RELATIVE_SLOP = 4;
@@ -217,12 +221,12 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
   const center = c.centered || crossfade ? 0.5 : 0;
   const along = vertical ? h : w;
   const across = vertical ? w : h;
-  const capLong = Math.min(t.size.faderCapLong, Math.max(24, across - 4));
   const capShort = t.size.faderCapShort;
   const rail = t.size.faderRail;
   const line = t.size.faderLine;
-  const thumbW = vertical ? capLong : capShort - 4;
-  const thumbH = vertical ? capShort : capLong - 12;
+  // Figma Fader: vertical thumb 60 × 44; horizontal 40 × 48 (never taller than the body).
+  const thumbW = vertical ? Math.min(t.size.faderCapLong, Math.max(24, across - 4)) : capShort - 4;
+  const thumbH = vertical ? capShort : Math.min(capShort + 4, Math.max(24, across - 4));
   // Crossfade (Figma Mode=Crossfade): the rail is inset 28 pt at both ends, with the A / B LEDs in
   // the gap; the thumb's centre travels the rail. Otherwise it travels between half a thumb from
   // each end of the full-length rail.
@@ -236,8 +240,10 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
     return vertical ? pad + (1 - p) * travel : pad + p * travel;
   };
   const thumbC = useDerivedValue(() => at(pos.value));
-  const fillA = useDerivedValue(() => Math.min(at(center), thumbC.value));
-  const fillLen = useDerivedValue(() => Math.abs(thumbC.value - at(center)));
+  // The lit line starts at the very end of the rail (Figma Fill), or at the centre detent.
+  const from = center === 0 ? (vertical ? along : 0) : at(center);
+  const fillA = useDerivedValue(() => Math.min(from, thumbC.value));
+  const fillLen = useDerivedValue(() => Math.abs(thumbC.value - from));
   const lineX = vertical ? mid - line / 2 : fillA;
   const lineY = vertical ? fillA : mid - line / 2;
   const lineW = vertical ? line : fillLen;
@@ -253,15 +259,16 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
     height: thumbH,
   }));
   const lightProps = useInnerLight(light, thumbShape, t.radius.sm);
-  // Vertical: LED across the thumb 12 pt before its centre, three grip lines after it.
-  // Horizontal (all modes): the LED in the centre with two grip lines on each side (Figma).
-  const ledLen = vertical ? Math.round(thumbW * 0.6) : Math.round(thumbH * 0.54);
-  const gripLen = vertical ? Math.round(thumbW * 0.48) : Math.round(thumbH / 3);
+  // Vertical: LED (38 of 60) across the thumb 12 pt before its centre, three 30 pt grip lines
+  // after it. Horizontal (all modes): a 26 pt LED in the centre with two 16 pt grip lines on each
+  // side (Figma).
+  const ledLen = vertical ? Math.round(thumbW * 0.63) : Math.round(thumbH * 0.55);
+  const gripLen = vertical ? Math.round(thumbW / 2) : Math.round(thumbH / 3);
   const ledX = useDerivedValue(() => (vertical ? mid - ledLen / 2 : thumbC.value - line / 2));
   const ledY = useDerivedValue(() => (vertical ? thumbC.value - 12 : mid - ledLen / 2));
   const grips = useDerivedValue(() => {
     const b = Skia.PathBuilder.Make();
-    for (const o of vertical ? [2, 7, 12] : [-12.5, -7.5, 7.5, 12.5]) {
+    for (const o of vertical ? [2.75, 7.75, 12.75] : [-12.25, -7.25, 7.75, 12.75]) {
       const p = thumbC.value + o;
       if (vertical) b.moveTo(mid - gripLen / 2, p).lineTo(mid + gripLen / 2, p);
       else b.moveTo(p, mid - gripLen / 2).lineTo(p, mid + gripLen / 2);
@@ -269,7 +276,8 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
     return b.build();
   });
   // Ticks every 10 % beside the rail (left of a vertical fader, under a crossfade); every 5th is
-  // long on a vertical fader. Fine mode spreads them ×1.8 around the thumb.
+  // long on a vertical fader. Fine mode spreads them ×1.8 around the thumb. On a vertical fader the
+  // ticks run from 12 pt below the top to 12 pt above the bottom (Figma), not with the thumb.
   const showTicks = vertical || crossfade;
   const ticks = useDerivedValue(() => {
     const b = Skia.PathBuilder.Make();
@@ -278,7 +286,7 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
     for (const p of ps) {
       const k = Math.round(p * 10);
       const major = Math.abs(p * 10 - k) < 0.02 && k % 5 === 0;
-      const q = at(p);
+      const q = vertical ? TICK_INSET + (1 - p) * (h - TICK_INSET * 2) : at(p);
       if (vertical) {
         const x1 = mid - 12;
         b.moveTo(x1 - (major ? 14 : 8), q).lineTo(x1, q);
@@ -304,7 +312,7 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
           ? undefined
           : crossfade
             ? crossfadeLabel(c.labels, valueToPosition(display, range))
-            : formatValue(display, { unit: c.unit })
+            : formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) })
       }
       badge={fine ? fineBadge(fineFactor) : undefined}
       disabled={disabled}
@@ -316,8 +324,11 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
           accessible
           accessibilityRole="adjustable"
           accessibilityLabel={c.label ?? c.id}
-          accessibilityValue={{ text: formatValue(display, { unit: c.unit }) }}
+          accessibilityValue={{
+            text: formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) }),
+          }}
           accessibilityState={{ disabled: !!disabled }}
+          aria-disabled={!!disabled}
           accessibilityHint="Drag to adjust. Two fingers for fine control. Double-tap to reset."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
           onAccessibilityAction={(e) => {
