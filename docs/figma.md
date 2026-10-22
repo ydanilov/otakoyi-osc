@@ -2,7 +2,8 @@
 
 File: **OSC** — https://www.figma.com/design/D2HHS8lt7PxZqxibv9PlOQ/OSC
 
-Figma is the builder (ADR-014): there is no separate pult-builder app.
+Figma is the builder (ADR-014): there is no separate pult-builder app. The exporter and the
+Otakoyi Inspector plugin are described in [figma-export.md](figma-export.md).
 
 | Page                 | What                                                                                                  | Code                   |
 | -------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
@@ -18,18 +19,23 @@ Figma is the builder (ADR-014): there is no separate pult-builder app.
 
 ## Client pages are the pult builder
 
-Component documentation lives in Storybook; Figma only carries build-specific annotations: category
-**OSC** (address, args, range, mode, rate, feedback) and **Depends on** on each control instance.
+Component documentation lives in Storybook; Figma keeps only a one-line description. Client pages
+carry the build-specific Dev Mode annotations on control instances (or on the panel around them):
+category **OSC** (address, type, range, values, rate, feedback, `key=value` extras) and **Depends on**
+(`when <control> = <value>` conditions; other lines are notes). The **Otakoyi Inspector** plugin
+edits both and shows what the exporter makes of the selection.
 
-One page per client (`Client / <installation-id>`), built only from library instances. The exporter
-(`tools/figma-export`, planned) reads the page and writes the installation config:
+One page per client (`Client · <name>` or `Client / <installation-id>`), built only from library
+instances. The exporter (`tools/figma-export`, see [figma-export.md](figma-export.md)) reads the page
+and writes the installation config:
 
-- frame per pult page and form factor: `<pult-id> / <phone|tablet> / <page-id>`, left to right in swipe order;
+- one frame per pult page and form factor: `<pult-id> / <phone|tablet> / <page-id>`, left to right
+  in swipe order — or a prototype screen `Phone / …` / `Tablet / …` with a Pult Header
+  (`Mode=Control`) whose active Screen Tab names the page;
 - layer name of a control instance = control `id`; component + variants = control type and mode;
 - instance text properties = copy (labels, options, scene names);
-- OSC address, range, curve, target, preset, lock = shared plugin data (`otakoyi`), edited with the
-  Otakoyi Inspector plugin; every address must exist in the installation's OSC contract
-  (`docs/integration.md`).
+- the OSC annotation gives the address and behaviour; every address must exist in the
+  installation's OSC contract (`docs/integration.md`).
 
 ## Style
 

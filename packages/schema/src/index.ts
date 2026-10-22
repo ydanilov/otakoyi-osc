@@ -146,6 +146,12 @@ const base = {
     .string()
     .regex(/^[a-z][a-z0-9-]*$/, "icon: a Phosphor icon name like device-mobile")
     .optional(),
+  /**
+   * Enable conditions from the Figma "Depends on" annotation (`when <control> = <value>`, ADR-014):
+   * the control is meant to be usable only while every listed control holds that value. Carried in
+   * the config by the exporter; the pult renderer does not evaluate it yet.
+   */
+  enabledWhen: z.array(z.object({ control: id, equals: oscValue })).optional(),
 };
 
 const ranged = {

@@ -1,0 +1,21 @@
+{
+  "name": "@osc/figma-export",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Figma client page → installation config (ADR-014). CLI + the mapping shared with the Otakoyi Inspector plugin.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "bin": {
+    "figma-export": "src/cli.ts"
+  },
+  "scripts": {
+    "export": "tsx src/cli.ts",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@osc/core": "workspace:*",
+    "@osc/schema": "workspace:*"
+  }
+}
