@@ -14,7 +14,7 @@ export type ButtonSize = "sm" | "md" | "lg";
 const SIZE: Record<ButtonSize, { box: string; text: string; icon: number; radius: "sm" | "md" }> = {
   sm: { box: "h-8 px-3 gap-1.5 rounded-sm", text: "text-xs", icon: 14, radius: "sm" },
   md: { box: "h-10 px-4 gap-2 rounded-md", text: "text-sm", icon: 16, radius: "md" },
-  lg: { box: "h-[52px] px-5 gap-2 rounded-md", text: "text-md", icon: 18, radius: "md" },
+  lg: { box: "h-[52px] px-5 gap-2 rounded-md", text: "text-sm", icon: 18, radius: "md" },
 };
 
 const FILL: Record<ButtonVariant, string> = {

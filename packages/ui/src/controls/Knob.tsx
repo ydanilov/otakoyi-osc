@@ -1,6 +1,5 @@
 import {
   BlurMask,
-  Canvas,
   Circle,
   Group,
   Path,
@@ -48,7 +47,7 @@ import {
 import { useDerivedValue, useSharedValue, type SharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { useTheme } from "../theme/ThemeProvider";
-import { InsetCircle, LitCircle, RaisedCircle } from "./skia";
+import { InsetCircle, LitCircle, OverhangCanvas, RaisedCircle } from "./skia";
 import { InnerLight, useInnerLight, useTouchLight, type TouchLight } from "./TouchLight";
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
@@ -103,8 +102,8 @@ export function Knob(props: KnobProps) {
 function useDial(size: { width: number; height: number }, compact: boolean) {
   const t = useTheme();
   const { width: w, height: h } = size;
-  // Leave room for the disc's drop shadow under the dial.
-  const fit = Math.max(0, Math.min(w, h - 8));
+  // Figma Knob: the 160 pt body under the header; the disc's shadow may spill out (OverhangCanvas).
+  const fit = Math.max(0, Math.min(w, h));
   const d = compact ? fit * t.size.knobCompactScale : fit;
   const k = d / 160;
   return {
@@ -113,7 +112,7 @@ function useDial(size: { width: number; height: number }, compact: boolean) {
     d,
     k,
     cx: w / 2,
-    cy: Math.min(h / 2, d / 2 + Math.max(0, (h - 8 - d) / 2)),
+    cy: h / 2,
     arcR: 62.7 * k,
     arcW: 6.6 * k,
     well: 57 * k,
@@ -359,6 +358,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
           accessible
           accessibilityRole="adjustable"
           accessibilityState={{ disabled: !!disabled }}
+          aria-disabled={!!disabled}
           accessibilityLabel={c.label ?? c.id}
           accessibilityValue={{
             text: formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) }),
@@ -375,7 +375,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
           }}
         >
           {d > 0 && (
-            <Canvas style={{ width: w, height: h }}>
+            <OverhangCanvas width={w} height={h}>
               <Path path={track} color={t.control.track} style="stroke" strokeWidth={arcW}>
                 <Shadow dx={0} dy={3} blur={4} color={t.elevation.insetShadow} inner />
                 <Shadow dx={0} dy={-1} blur={2} color={t.elevation.insetHighlight} inner />
@@ -424,7 +424,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
               ) : (
                 <LitCircle cx={dotX} cy={dotY} r={3.5 * k} color={lit} glow={glow} />
               )}
-            </Canvas>
+            </OverhangCanvas>
           )}
         </View>
       </GestureDetector>
@@ -553,6 +553,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
           accessible
           accessibilityRole="adjustable"
           accessibilityState={{ disabled: !!disabled }}
+          aria-disabled={!!disabled}
           accessibilityLabel={c.label ?? c.id}
           accessibilityHint="Endless. Turn to nudge."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
@@ -563,7 +564,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
           }
         >
           {d > 0 && (
-            <Canvas style={{ width: w, height: h }}>
+            <OverhangCanvas width={w} height={h}>
               <Path path={unlitDots} color={t.control.tick} />
               <Path path={litDots} color={lit} opacity={glow}>
                 <BlurMask blur={4} style="outer" />
@@ -589,7 +590,7 @@ function EncoderKnob({ control: c, onChange, disabled }: ControlProps<"knob">) {
               />
               <InsetCircle t={t} pressed cx={cx} cy={cy} r={35 * k} color={t.color.surface} />
               <Circle cx={indX} cy={indY} r={3 * k} color={t.control.thumb} />
-            </Canvas>
+            </OverhangCanvas>
           )}
         </View>
       </GestureDetector>
@@ -731,6 +732,7 @@ function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
           accessible
           accessibilityRole="adjustable"
           accessibilityState={{ disabled: !!disabled }}
+          aria-disabled={!!disabled}
           accessibilityLabel={c.label ?? c.id}
           accessibilityValue={{ text: `${Math.round(display)}°` }}
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
@@ -742,7 +744,7 @@ function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
           }}
         >
           {d > 0 && (
-            <Canvas style={{ width: w, height: h }}>
+            <OverhangCanvas width={w} height={h}>
               {ring ? (
                 ring.map((seg, i) => (
                   <Path
@@ -797,7 +799,7 @@ function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
                 style="stroke"
                 strokeWidth={2 * k}
               />
-            </Canvas>
+            </OverhangCanvas>
           )}
         </View>
       </GestureDetector>

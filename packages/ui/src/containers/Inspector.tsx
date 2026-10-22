@@ -76,7 +76,7 @@ export function Inspector({
     >
       {/* Figma Tablet / 05 Installation: the content brings its own header; the round close
           button floats top-right. */}
-      <ScrollView contentContainerClassName="gap-6 px-4 pb-6 pt-4">{children}</ScrollView>
+      <ScrollView contentContainerClassName="gap-6 px-4 pb-6 pt-6">{children}</ScrollView>
       <View className="absolute right-4" style={{ top: insets.top + 14 }}>
         <IconButton icon={XIcon} label={`Close ${title}`} onPress={onClose} />
       </View>

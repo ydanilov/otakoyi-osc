@@ -328,6 +328,7 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
             text: formatValue(display, { unit: c.unit, decimals: stepDecimals(c.step) }),
           }}
           accessibilityState={{ disabled: !!disabled }}
+          aria-disabled={!!disabled}
           accessibilityHint="Drag to adjust. Two fingers for fine control. Double-tap to reset."
           accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
           onAccessibilityAction={(e) => {

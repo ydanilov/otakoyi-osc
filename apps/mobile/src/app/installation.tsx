@@ -6,7 +6,7 @@ import {
   InstallationContent,
   type InstallationView,
 } from "@/components/InstallationContent";
-import { SheetTop } from "@/components/SheetTop";
+import { SheetSurface, SheetTop } from "@/components/SheetTop";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { currentPult, formFactorOf } from "@/lib/nav";
 import { useBrand } from "@/lib/brand";
@@ -21,22 +21,24 @@ export default function Installation() {
   const ff = formFactorOf(useWindowDimensions().width);
   return (
     <ThemeProvider brand={brand.theme}>
-      <SheetTop
-        title={INSTALLATION_TITLE[view]}
-        onBack={view !== "main" ? () => setView("main") : undefined}
-        onClose={closeSheet}
-      />
-      <ScrollView contentContainerClassName="px-4 pb-10 pt-2">
-        <InstallationContent
-          view={view}
-          onView={setView}
-          pultId={currentPult(s.config?.pults ?? [], app.pultId, ff)?.id ?? null}
-          onPult={(id) => {
-            app.setPultId(id);
-            closeSheet();
-          }}
+      <SheetSurface>
+        <SheetTop
+          title={INSTALLATION_TITLE[view]}
+          onBack={view !== "main" ? () => setView("main") : undefined}
+          onClose={closeSheet}
         />
-      </ScrollView>
+        <ScrollView contentContainerClassName="px-4 pb-10 pt-4">
+          <InstallationContent
+            view={view}
+            onView={setView}
+            pultId={currentPult(s.config?.pults ?? [], app.pultId, ff)?.id ?? null}
+            onPult={(id) => {
+              app.setPultId(id);
+              closeSheet();
+            }}
+          />
+        </ScrollView>
+      </SheetSurface>
     </ThemeProvider>
   );
 }

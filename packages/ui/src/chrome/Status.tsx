@@ -104,7 +104,7 @@ export function StatTile({
       radius="md"
       className={cn(
         block ? "self-stretch" : "self-start",
-        size === "lg" || block ? "gap-0.5 px-3 py-2.5" : "gap-0.5 px-2 py-1.5",
+        size === "lg" || block ? "gap-0.5 px-[13px] py-[11px]" : "gap-0.5 px-2 py-1.5",
       )}
       accessible
       accessibilityLabel={`${label}: ${value}`}

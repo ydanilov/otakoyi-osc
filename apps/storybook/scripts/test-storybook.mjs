@@ -139,9 +139,12 @@ async function worker() {
     const { s, theme } = job;
     errors = [];
     const t0 = Date.now();
-    await page.goto(
-      `${base}/iframe.html?id=${s.id}&viewMode=story&globals=theme:${theme};a11y.manual:!true`,
-    );
+    await page
+      .goto(
+        `${base}/iframe.html?id=${s.id}&viewMode=story&globals=theme:${theme};a11y.manual:!true`,
+        { waitUntil: "domcontentloaded" },
+      )
+      .catch((e) => errors.push(`navigation: ${String(e.message ?? e).split("\n")[0]}`));
     await page
       .waitForFunction(() => window.__sbEvents.some((e) => e.n === "storyFinished"), null, {
         timeout: TIMEOUT,

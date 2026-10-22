@@ -37,6 +37,11 @@ export interface Theme {
     text: string;
     textMuted: string;
     overlay: string;
+    /** iOS system sheet background (Figma iOS 27 · System › Sheet) and its grabber. */
+    sheet: string;
+    sheetGrabber: string;
+    /** The sheet toolbar's round Close / Back button (iOS glass button). */
+    sheetButton: string;
     primary: string;
     onPrimary: string;
     primaryPressed: string;
@@ -219,6 +224,9 @@ export function createTheme(brand: BrandInput = {}): Theme {
       text: n.text,
       textMuted: n.textMuted,
       overlay: n.overlay,
+      sheet: n.sheet,
+      sheetGrabber: n.sheetGrabber,
+      sheetButton: n.sheetButton,
       primary,
       onPrimary,
       primaryPressed,

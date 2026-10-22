@@ -74,7 +74,7 @@ export function ConnectOptions({
           block
         />
         <Button label="Try the demo" variant="ghost" onPress={onDemo} block />
-        <Text className="text-muted-foreground text-center text-xs">{CONNECT_COPY.note}</Text>
+        <Text className="text-muted-foreground text-center text-sm">{CONNECT_COPY.note}</Text>
       </View>
     </View>
   );
@@ -114,15 +114,14 @@ function ConnectTablet({
   onDemo: () => void;
 }) {
   return (
-    <View className="flex-1 flex-row items-center gap-16 px-[72px]">
-      <View className="flex-1 gap-8">
+    // Figma Tablet / 01 Connect: two equal halves, each 72 pt in, content centred vertically.
+    <View className="flex-1 flex-row">
+      <View className="flex-1 justify-center gap-7 px-[72px]">
         <BrandMark size="md" />
-        <Text className="text-foreground text-[44px] font-semibold leading-[52px]">
-          {CONNECT_COPY.hero}
-        </Text>
+        <Text className="text-foreground text-display font-bold">{CONNECT_COPY.hero}</Text>
         <Text className="text-muted-foreground text-md max-w-[420px]">{CONNECT_COPY.heroBody}</Text>
       </View>
-      <View className="flex-1 gap-6">
+      <View className="flex-1 justify-center gap-6 px-[72px]">
         <Text className="text-foreground text-xl font-semibold" accessibilityRole="header">
           {CONNECT_COPY.title}
         </Text>
@@ -142,7 +141,7 @@ function ConnectTablet({
           </View>
         </View>
         <Button label="Try the demo" variant="ghost" onPress={onDemo} block />
-        <Text className="text-muted-foreground text-center text-xs">{CONNECT_COPY.note}</Text>
+        <Text className="text-muted-foreground text-center text-sm">{CONNECT_COPY.note}</Text>
       </View>
     </View>
   );
