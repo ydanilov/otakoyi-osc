@@ -431,6 +431,15 @@ importers:
         specifier: 10.6.3
         version: 10.6.3(@types/react@19.3.0)(prettier@3.9.10)(react@19.3.0)
 
+  tools/figma-export:
+    dependencies:
+      '@osc/core':
+        specifier: workspace:*
+        version: link:../../packages/osc-core
+      '@osc/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+
 packages:
 
   2g@1.0.1:

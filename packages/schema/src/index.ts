@@ -138,6 +138,12 @@ const base = {
   studioOnly: z.boolean().default(false),
   /** Address the installation sends state back on; defaults to the control's own address. */
   feedback: address.optional(),
+  /**
+   * Enable conditions from the Figma "Depends on" annotation (`when <control> = <value>`, ADR-014):
+   * the control is meant to be usable only while every listed control holds that value. Carried in
+   * the config by the exporter; the pult renderer does not evaluate it yet.
+   */
+  enabledWhen: z.array(z.object({ control: id, equals: oscValue })).optional(),
 };
 
 const ranged = {
