@@ -15,12 +15,15 @@ export function usePultStore(): PultStore {
   return s;
 }
 
+/**
+ * A control's value. `subscribe` / `getSnapshot` are stable per store and id: an inline subscribe
+ * makes React unsubscribe and resubscribe after every render, i.e. after every feedback message.
+ */
 export function useControlValue(id: string): ControlValue {
   const store = usePultStore();
-  return React.useSyncExternalStore(
-    (fn) => store.subscribe(id, fn),
-    () => store.get(id),
-  );
+  const subscribe = React.useCallback((fn: () => void) => store.subscribe(id, fn), [store, id]);
+  const get = React.useCallback(() => store.get(id), [store, id]);
+  return React.useSyncExternalStore(subscribe, get);
 }
 
 const noMeta = { ack: null, rev: 0 } as const;
@@ -31,23 +34,19 @@ const noMeta = { ack: null, rev: 0 } as const;
  */
 export function useControlMeta(id: string): { ack: PromptAck | null; rev: number } {
   const store = React.useContext(StoreContext);
-  const ack = React.useSyncExternalStore(
-    (fn) => store?.subscribeMeta(id, fn) ?? (() => {}),
-    () => store?.ack(id) ?? noMeta.ack,
+  const subscribe = React.useCallback(
+    (fn: () => void) => store?.subscribeMeta(id, fn) ?? (() => {}),
+    [store, id],
   );
-  const rev = React.useSyncExternalStore(
-    (fn) => store?.subscribeMeta(id, fn) ?? (() => {}),
-    () => store?.rev(id) ?? noMeta.rev,
-  );
+  const ack = React.useSyncExternalStore(subscribe, () => store?.ack(id) ?? noMeta.ack);
+  const rev = React.useSyncExternalStore(subscribe, () => store?.rev(id) ?? noMeta.rev);
   return { ack, rev };
 }
 
 export function useControlMode(): ControlMode {
   const store = usePultStore();
-  return React.useSyncExternalStore(
-    (fn) => store.subscribeMode(fn),
-    () => store.mode,
-  );
+  const subscribe = React.useCallback((fn: () => void) => store.subscribeMode(fn), [store]);
+  return React.useSyncExternalStore(subscribe, () => store.mode);
 }
 
 /**
@@ -58,10 +57,11 @@ export function useControlMode(): ControlMode {
 export function useRelativeOffset(id: string): { value: number; add: (d: number) => void } {
   const store = React.useContext(StoreContext);
   const [local, setLocal] = React.useState(0);
-  const fromStore = React.useSyncExternalStore(
-    (fn) => store?.subscribeMeta(id, fn) ?? (() => {}),
-    () => store?.offset(id) ?? 0,
+  const subscribe = React.useCallback(
+    (fn: () => void) => store?.subscribeMeta(id, fn) ?? (() => {}),
+    [store, id],
   );
+  const fromStore = React.useSyncExternalStore(subscribe, () => store?.offset(id) ?? 0);
   const add = React.useCallback(
     (d: number) => {
       if (!store) setLocal((v) => v + d);

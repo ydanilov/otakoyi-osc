@@ -19,6 +19,7 @@ import { InsetRRect, LitCircle } from "./skia";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
 import { TouchLightSkia, useTouchLight, useTouchLightSkia } from "./TouchLight";
+import { useHeldValue } from "./useHeldValue";
 import { useLayout } from "./useLayout";
 
 type Point = { x: number; y: number };
@@ -34,13 +35,14 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
   const py = useSharedValue(start.y);
   const active = useSharedValue(0);
   const dragging = useSharedValue(false);
-  const [display, setDisplay] = React.useState<Point>(start);
+  const [display, hold, release] = useHeldValue<Point>(start);
 
+  // Feedback (another device, the installation) moves the dot unless the finger is on it. No state
+  // is set here: the readout derives from `value` (useHeldValue).
   React.useEffect(() => {
     if (dragging.value || !isPoint(value)) return;
     px.value = value.x;
     py.value = value.y;
-    setDisplay(value);
   }, [value, px, py, dragging]);
 
   const onChangeRef = React.useRef(onChange);
@@ -54,11 +56,13 @@ export function XYPad({ control: c, value, onChange, disabled }: ControlProps<"x
   const report = React.useCallback(
     (x: number, y: number, final: boolean) => {
       const p = { x, y };
-      setDisplay(p);
       throttle.push(p);
-      if (final) throttle.flush();
+      if (final) {
+        throttle.flush();
+        release();
+      } else hold(p);
     },
-    [throttle],
+    [throttle, hold, release],
   );
 
   const { width: w, height: h } = size;

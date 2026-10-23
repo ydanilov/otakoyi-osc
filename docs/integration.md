@@ -76,7 +76,10 @@ Send OSC to the bridge on **UDP 9000** (config `targets[].feedbackPort`) at `127
 bridge runs on the same machine.
 
 - **Echo state**: when a parameter changes (from the pult, a schedule or your own logic), send the
-  current value on **the same address**. Every phone then shows the real state.
+  current value on **the same address**. Every phone then shows the real state. Echoing every
+  incoming message straight back is fine, also at full drag rate: the bridge recognises the echo
+  of its own recent commands (float32 rounding allowed, `ECHO_WINDOW_MS` = 2 s) and keeps the
+  exact value the pult sent; a value you report that is not such an echo is applied at once.
 - **Stay alive**: the bridge marks the target **offline** if it hears nothing for **5 s**
   (`FEEDBACK_TIMEOUT_MS`). Send something at least once a second; `/sys/fps <float>` at 1 Hz is
   the convention.

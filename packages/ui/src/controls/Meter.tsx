@@ -167,22 +167,25 @@ export function Meter({ control: c, value }: ControlProps<"meter">) {
   );
 }
 
-/** Peak-hold level (0–1): rises with the level, holds ~1.5 s, then falls (`stepPeak`). */
+/**
+ * Peak-hold level (0–1): rises with the level, holds ~1.5 s, then falls (`stepPeak`).
+ *
+ * Stepped during render, not in an effect keyed on the level: a meter gets a new level with every
+ * feedback message (10–30 Hz), and an effect that sets state on each one leaves an update pending
+ * after every commit — React then aborts with "Maximum update depth exceeded" (fix/feedback-echo-loop).
+ * Only the fall needs a timer, and its effect runs when falling starts or stops.
+ */
 function usePeak(level: number): number {
   const state = React.useRef<PeakState>(NO_PEAK);
-  const [peak, setPeak] = React.useState(0);
+  const [, redraw] = React.useReducer((n: number) => n + 1, 0);
+  state.current = stepPeak(state.current, level, Date.now());
+  const falling = state.current.peak > level;
   React.useEffect(() => {
-    state.current = stepPeak(state.current, level, Date.now());
-    setPeak(state.current.peak);
-    if (state.current.peak <= level) return;
-    const id = setInterval(() => {
-      state.current = stepPeak(state.current, level, Date.now());
-      setPeak(state.current.peak);
-      if (state.current.peak <= level) clearInterval(id);
-    }, 50);
+    if (!falling) return;
+    const id = setInterval(redraw, 50);
     return () => clearInterval(id);
-  }, [level]);
-  return peak;
+  }, [falling]);
+  return state.current.peak;
 }
 
 /** Scale label: `0`, `-6`, … (Figma uses a hyphen-minus in mono). */

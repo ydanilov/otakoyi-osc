@@ -35,6 +35,7 @@ import { ControlFrame } from "./ControlFrame";
 import { JogFader } from "./Jog";
 import { InnerLight, useInnerLight, useTouchLight } from "./TouchLight";
 import type { ControlProps } from "./types";
+import { useHeldValue } from "./useHeldValue";
 import { useLayout } from "./useLayout";
 
 const asNumber = (v: unknown, fallback: number) => (typeof v === "number" ? v : fallback);
@@ -105,17 +106,17 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
   const pos = useSharedValue(toPos(asNumber(value, c.min)));
   const dragging = useSharedValue(false);
   const drag = useSharedValue<DragState>(startDrag(0, 1));
-  const [display, setDisplay] = React.useState(asNumber(value, c.min));
+  const [display, hold, release] = useHeldValue(asNumber(value, c.min));
   const [fine, setFine] = React.useState(false);
   const glow = useGlow();
   const spread = useFineSpread(fine);
   const light = useTouchLight({ disabled: !!disabled });
 
   // Feedback from the installation or another device moves the fader, unless the finger is on it.
+  // No state is set here: the readout derives from `value` (useHeldValue).
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
     pos.value = toPos(value);
-    setDisplay(value);
   }, [value, toPos, pos, dragging]);
 
   const onChangeRef = React.useRef(onChange);
@@ -129,24 +130,24 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
   const report = React.useCallback(
     (p: number, final: boolean) => {
       const v = toValue(p);
-      setDisplay(v);
       if (c.sendOn === "change") throttle.push(v);
       if (final) {
         setFine(false);
         if (c.sendOn === "release") onChangeRef.current(v);
         else throttle.flush();
-      }
+        release();
+      } else hold(v);
     },
-    [toValue, c.sendOn, throttle],
+    [toValue, c.sendOn, throttle, hold, release],
   );
 
   const reset = React.useCallback(() => {
     const v = crossfade ? (c.default ?? (c.min + c.max) / 2) : resetValue(c);
     pos.value = toPos(v);
-    setDisplay(v);
     throttle.cancel();
+    release();
     onChangeRef.current(v);
-  }, [c, crossfade, toPos, pos, throttle]);
+  }, [c, crossfade, toPos, pos, throttle, release]);
 
   const { width: w, height: h } = size;
   const length = vertical ? h : w;
@@ -337,7 +338,7 @@ function PositionFader({ control: c, value, onChange, disabled, muted }: FaderPr
               Math.max(c.min, display + (e.nativeEvent.actionName === "increment" ? step : -step)),
             );
             pos.value = toPos(next);
-            setDisplay(next);
+            release();
             onChange(next);
           }}
         >

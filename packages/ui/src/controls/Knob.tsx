@@ -52,6 +52,7 @@ import { InnerLight, useInnerLight, useTouchLight, type TouchLight } from "./Tou
 import { animateGlow, useFineSpread, useGlow } from "./states";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
+import { useHeldValue } from "./useHeldValue";
 import { useLayout } from "./useLayout";
 import { useRelativeOffset } from "../pult/context";
 
@@ -222,16 +223,16 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
   const pos = useSharedValue(valueToPosition(initial, range));
   const drag = useSharedValue<DragState>(startDrag(0, 1));
   const dragging = useSharedValue(false);
-  const [display, setDisplay] = React.useState(initial);
+  const [display, hold, release] = useHeldValue(initial);
   const [fine, setFine] = React.useState(false);
   const glow = useGlow();
   const light = useTouchLight({ disabled: !!disabled });
   const spread = useFineSpread(fine);
 
+  // Feedback moves the knob unless the finger is on it; the readout derives from `value`.
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
     pos.value = valueToPosition(value, range);
-    setDisplay(value);
   }, [value, range, pos, dragging]);
 
   const onChangeRef = React.useRef(onChange);
@@ -245,24 +246,24 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
   const report = React.useCallback(
     (p: number, final: boolean) => {
       const v = positionToValue(p, range);
-      setDisplay(v);
       if (c.sendOn === "change") throttle.push(v);
       if (final) {
         setFine(false);
         if (c.sendOn === "release") onChangeRef.current(v);
         else throttle.flush();
-      }
+        release();
+      } else hold(v);
     },
-    [range, c.sendOn, throttle],
+    [range, c.sendOn, throttle, hold, release],
   );
 
   const reset = React.useCallback(() => {
     const v = resetValue(c);
     pos.value = valueToPosition(v, range);
-    setDisplay(v);
     throttle.cancel();
+    release();
     onChangeRef.current(v);
-  }, [c, range, pos, throttle]);
+  }, [c, range, pos, throttle, release]);
 
   const fineFactor = c.fineFactor;
   const pan = usePanGesture({
@@ -370,7 +371,7 @@ function AbsoluteKnob({ control: c, value, onChange, disabled, paint }: KnobProp
               Math.max(c.min, display + (e.nativeEvent.actionName === "increment" ? step : -step)),
             );
             pos.value = valueToPosition(next, range);
-            setDisplay(next);
+            release();
             onChange(next);
           }}
         >
@@ -606,15 +607,15 @@ function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
   const hue = useSharedValue(initial);
   const startHue = useSharedValue(initial);
   const dragging = useSharedValue(false);
-  const [display, setDisplay] = React.useState(initial);
+  const [display, hold, release] = useHeldValue(initial);
   const [fine, setFine] = React.useState(false);
   const glow = useGlow();
   const light = useTouchLight({ disabled: !!disabled });
 
+  // Feedback turns the wheel unless the finger is on it; the readout derives from `value`.
   React.useEffect(() => {
     if (dragging.value || typeof value !== "number") return;
     hue.value = wrapHue(value);
-    setDisplay(wrapHue(value));
   }, [value, hue, dragging]);
 
   const onChangeRef = React.useRef(onChange);
@@ -627,20 +628,22 @@ function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
   const report = React.useCallback(
     (h: number, final: boolean, isFine: boolean) => {
       const v = c.int ? Math.round(h) % 360 : h;
-      setDisplay(v);
       setFine(isFine && !final);
       throttle.push(v);
-      if (final) throttle.flush();
+      if (final) {
+        throttle.flush();
+        release();
+      } else hold(v);
     },
-    [throttle, c.int],
+    [throttle, c.int, hold, release],
   );
   const reset = React.useCallback(() => {
     const v = wrapHue(c.default ?? 0);
     hue.value = v;
-    setDisplay(v);
     throttle.cancel();
+    release();
     onChangeRef.current(v);
-  }, [c.default, hue, throttle]);
+  }, [c.default, hue, throttle, release]);
 
   const fineFactor = c.fineFactor;
   const pan = usePanGesture({
@@ -739,7 +742,7 @@ function HueKnob({ control: c, value, onChange, disabled, paint }: KnobProps) {
           onAccessibilityAction={(e) => {
             const next = wrapHue(display + (e.nativeEvent.actionName === "increment" ? 10 : -10));
             hue.value = next;
-            setDisplay(next);
+            release();
             onChange(next);
           }}
         >
