@@ -6,6 +6,8 @@
     <style>
       :root {
         --bg: var(--figma-color-bg, #ffffff);
+        --bg2: var(--figma-color-bg-secondary, #f5f5f5);
+        --hover: var(--figma-color-bg-hover, #f0f0f0);
         --fg: var(--figma-color-text, #1e1e1e);
         --muted: var(--figma-color-text-secondary, #6b6b6b);
         --line: var(--figma-color-border, #e6e6e6);
@@ -13,72 +15,38 @@
         --on-accent: var(--figma-color-text-onbrand, #ffffff);
         --error: var(--figma-color-text-danger, #dc3412);
         --warning: var(--figma-color-text-warning, #b86200);
-        --code: var(--figma-color-bg-secondary, #f5f5f5);
+        --ok: var(--figma-color-text-success, #14ae5c);
       }
       * {
         box-sizing: border-box;
       }
+      html,
+      body {
+        height: 100%;
+      }
       body {
         margin: 0;
-        padding: 12px;
+        display: flex;
+        flex-direction: column;
         font:
-          12px/1.45 Inter,
+          12px/1.4 Inter,
           system-ui,
           sans-serif;
         background: var(--bg);
         color: var(--fg);
       }
-      h2 {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--muted);
-        margin: 14px 0 6px;
-      }
-      .sel {
-        font-weight: 600;
-      }
-      .muted {
-        color: var(--muted);
-      }
-      .card {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 8px;
-        margin-bottom: 6px;
-      }
-      .row {
-        display: flex;
-        gap: 6px;
-        align-items: baseline;
-        flex-wrap: wrap;
-      }
-      .type {
-        font-weight: 600;
-      }
       code,
-      pre {
+      pre,
+      textarea,
+      .mono {
         font:
           11px/1.4 ui-monospace,
           SFMono-Regular,
           Menlo,
           monospace;
-        background: var(--code);
-        border-radius: 4px;
       }
-      code {
-        padding: 1px 4px;
-      }
-      pre {
-        padding: 6px;
-        margin: 6px 0 0;
-        white-space: pre-wrap;
-        word-break: break-all;
-        max-height: 160px;
-        overflow: auto;
-      }
-      .issue {
-        margin: 2px 0;
+      .muted {
+        color: var(--muted);
       }
       .error {
         color: var(--error);
@@ -86,20 +54,164 @@
       .warning {
         color: var(--warning);
       }
+      .ok {
+        color: var(--ok);
+      }
+
+      /* Header: what is selected + readiness at a glance. */
+      header {
+        padding: 10px 12px 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 20px;
+      }
+      .crumbs .name {
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .back {
+        border: 0;
+        background: none;
+        color: var(--accent);
+        padding: 0 4px 0 0;
+        cursor: pointer;
+        font: inherit;
+      }
+      .verdict {
+        margin-top: 6px;
+        font-weight: 600;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .stat {
+        background: var(--bg2);
+        border-radius: 6px;
+        padding: 6px 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+      .stat.on {
+        border-color: var(--accent);
+      }
+      .stat b {
+        display: block;
+        font-size: 16px;
+        line-height: 1.2;
+      }
+      .stat span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      /* Body: one list at a time, rows are one line and clickable. */
+      main {
+        flex: 1;
+        overflow: auto;
+        padding: 4px 0;
+      }
+      .item {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        padding: 5px 12px;
+        cursor: pointer;
+      }
+      .item:hover {
+        background: var(--hover);
+      }
+      .item .lead {
+        flex: none;
+        width: 52px;
+        font-weight: 600;
+      }
+      .item .main {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .item .side {
+        flex: none;
+        color: var(--muted);
+      }
+      .group {
+        padding: 8px 12px 2px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      .empty {
+        padding: 16px 12px;
+        color: var(--muted);
+      }
+      details {
+        padding: 0 12px;
+      }
+      summary {
+        cursor: pointer;
+        color: var(--muted);
+        padding: 4px 0;
+      }
+      pre {
+        background: var(--bg2);
+        border-radius: 6px;
+        padding: 8px;
+        margin: 4px 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      /* Edit form for one control. */
+      .form {
+        padding: 6px 12px;
+      }
+      label {
+        display: block;
+        margin: 8px 0 4px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
       textarea {
         width: 100%;
-        min-height: 64px;
-        font:
-          11px/1.4 ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          monospace;
+        min-height: 52px;
         color: var(--fg);
         background: var(--bg);
         border: 1px solid var(--line);
         border-radius: 6px;
         padding: 6px;
         resize: vertical;
+      }
+      .check {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-top: 8px;
+        text-transform: none;
+        letter-spacing: 0;
+        font-size: 12px;
+        color: var(--fg);
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 8px 12px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
       }
       button {
         font: inherit;
@@ -119,124 +231,360 @@
         opacity: 0.5;
         cursor: default;
       }
-      .actions {
-        display: flex;
-        gap: 6px;
-        margin-top: 6px;
-        flex-wrap: wrap;
-      }
       #status {
-        margin-top: 8px;
-        min-height: 16px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--muted);
       }
     </style>
   </head>
   <body>
-    <div id="head" class="muted">Select a control instance (or a panel) on a client page.</div>
-
-    <h2>Exporter output</h2>
-    <div id="controls" class="muted">—</div>
-    <div id="issues"></div>
-
-    <h2>OSC</h2>
-    <textarea
-      id="osc"
-      spellcheck="false"
-      placeholder="**/wall/brightness** `float 0–1` · 60 Hz · feedback ✓"
-    ></textarea>
-    <h2>Depends on</h2>
-    <textarea
-      id="dependsOn"
-      spellcheck="false"
-      placeholder="when blackout is off&#10;Notes for people go on their own lines."
-    ></textarea>
-    <div class="actions">
-      <button id="check">Check</button>
-      <button id="save" class="primary">Save annotations</button>
-      <span style="flex: 1"></span>
+    <header>
+      <div class="crumbs">
+        <button id="back" class="back" hidden>‹ Back</button>
+        <span id="name" class="name muted">Select a client pult, a screen or a control</span>
+      </div>
+      <div id="verdict" class="verdict"></div>
+      <div id="stats" class="stats" hidden>
+        <div class="stat" data-tab="fix"><b id="nFix">0</b><span>to fix</span></div>
+        <div class="stat" data-tab="confirm"><b id="nDraft">0</b><span>to confirm</span></div>
+        <div class="stat" data-tab="controls"><b id="nCtl">0</b><span>controls</span></div>
+      </div>
+    </header>
+    <main id="body"></main>
+    <footer>
+      <span id="status"></span>
+      <button id="copy" title="Copy the whole report as text, to paste into a chat">
+        Copy report
+      </button>
+      <button id="save" class="primary" hidden>Save</button>
       <button id="snapshot" title="Download this page as an exporter snapshot">
         Export snapshot
       </button>
-    </div>
-    <div id="status" class="muted"></div>
+    </footer>
 
     <script>
       const $ = (id) => document.getElementById(id);
       const send = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
       const esc = (s) =>
-        String(s).replace(
+        String(s ?? "").replace(
           /[&<>"]/g,
           (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
         );
+      const DRAFT_LINE = "*draft — confirm against the installation’s `otakoyi/osc-contract.json`*";
+
+      let data = null;
+      let tab = "fix";
+      /** Selections we drilled down from, so Back returns to the overview. */
+      const trail = [];
+      let drilling = false;
       let dirty = false;
 
-      $("osc").addEventListener("input", () => (dirty = true));
-      $("dependsOn").addEventListener("input", () => (dirty = true));
-      $("check").onclick = () =>
-        send({ type: "check", osc: $("osc").value, dependsOn: $("dependsOn").value });
-      $("save").onclick = () =>
-        send({ type: "save", osc: $("osc").value, dependsOn: $("dependsOn").value });
+      const status = (html) => ($("status").innerHTML = html || "");
+      const go = (nodeId) => {
+        if (data) trail.push({ id: data.selection.id, tab });
+        drilling = true;
+        send({ type: "select", nodeId });
+      };
+      $("back").onclick = () => {
+        const prev = trail.pop();
+        if (!prev) return;
+        tab = prev.tab;
+        drilling = true;
+        send({ type: "select", nodeId: prev.id });
+      };
+      document.querySelectorAll(".stat").forEach(
+        (el) =>
+          (el.onclick = () => {
+            tab = el.dataset.tab;
+            draw();
+          }),
+      );
       $("snapshot").onclick = () => {
-        $("status").textContent = "Serializing the page…";
+        status("Serializing the page…");
         send({ type: "snapshot" });
       };
+      $("save").onclick = () =>
+        send({ type: "save", osc: $("osc").value, dependsOn: $("dependsOn").value });
 
-      function render(d) {
-        if (!d) {
-          $("head").textContent = "Select a control instance (or a panel) on a client page.";
-          $("controls").innerHTML = "—";
-          $("issues").innerHTML = "";
+      /** Same message on many screens → one row with a count. */
+      function grouped(issues) {
+        const m = new Map();
+        for (const i of issues) {
+          const k = i.level + "|" + i.code + "|" + i.message;
+          const g = m.get(k) || { ...i, count: 0, ids: [] };
+          g.count++;
+          if (i.nodeId) g.ids.push(i.nodeId);
+          m.set(k, g);
+        }
+        const rank = { error: 0, warning: 1, info: 2 };
+        return [...m.values()].sort((a, b) => rank[a.level] - rank[b.level]);
+      }
+
+      function row(lead, leadClass, main, side, nodeId, title) {
+        return (
+          `<div class="item" ${nodeId ? `data-node="${esc(nodeId)}"` : ""} title="${esc(title || "")}">` +
+          `<span class="lead ${leadClass}">${lead}</span>` +
+          `<span class="main">${main}</span>` +
+          (side ? `<span class="side">${side}</span>` : "") +
+          `</div>`
+        );
+      }
+
+      function drawFix(groups) {
+        const fix = groups.filter((g) => g.level !== "info");
+        const hints = groups.filter((g) => g.level === "info");
+        let h = fix.length
+          ? fix
+              .map((g) =>
+                row(
+                  g.level === "error" ? "Fix" : "Check",
+                  g.level,
+                  esc(g.message),
+                  g.count > 1 ? `×${g.count}` : "",
+                  g.ids[0],
+                  g.code,
+                ),
+              )
+              .join("")
+          : `<div class="empty ok">Nothing to fix here.</div>`;
+        if (hints.length)
+          h +=
+            `<details><summary>${hints.length} hint${hints.length > 1 ? "s" : ""}</summary></details>` +
+            `<div id="hints" hidden>` +
+            hints
+              .map((g) =>
+                row(
+                  "Hint",
+                  "muted",
+                  esc(g.message),
+                  g.count > 1 ? `×${g.count}` : "",
+                  g.ids[0],
+                  g.code,
+                ),
+              )
+              .join("") +
+            `</div>`;
+        return h;
+      }
+
+      function drawConfirm() {
+        if (!data.drafts.length)
+          return `<div class="empty ok">Every OSC address is confirmed.</div>`;
+        return (
+          `<div class="group">Compare with the installation, then tick “Confirmed”</div>` +
+          data.drafts.map((d) => row("Draft", "warning", esc(d.name), "›", d.nodeId)).join("")
+        );
+      }
+
+      function drawControls() {
+        if (!data.controls.length) return `<div class="empty">No controls in this selection.</div>`;
+        return data.controls
+          .map((c) => {
+            const addr = c.control.address || c.control.feedback || "";
+            return row(
+              esc(c.control.type),
+              c.schema.length ? "error" : "",
+              `<code>${esc(addr || "no address")}</code>`,
+              esc(c.control.label || c.control.id),
+              c.nodeId,
+            );
+          })
+          .join("");
+      }
+
+      function drawOne(groups) {
+        const c = data.controls[0];
+        const confirmed = !/\bdraft\b/i.test(data.osc || "");
+        let h = "";
+        if (c) {
+          const addr = c.control.address || c.control.feedback || "";
+          h += row(
+            esc(c.control.type),
+            "",
+            `<code>${esc(addr || "no address")}</code>`,
+            esc(c.control.id),
+          );
+        }
+        const fix = groups.filter((g) => g.level !== "info");
+        h += fix
+          .map((g) => row(g.level === "error" ? "Fix" : "Check", g.level, esc(g.message), ""))
+          .join("");
+        h +=
+          `<div class="form">` +
+          `<label for="osc">OSC address</label>` +
+          `<textarea id="osc" spellcheck="false" placeholder="**/wall/brightness** \`float 0–1\` · feedback ✓">${esc(stripDraft(data.osc))}</textarea>` +
+          `<label class="check"><input id="confirmed" type="checkbox" ${confirmed && data.osc ? "checked" : ""}/> Confirmed with the installation</label>` +
+          `<label for="dependsOn">Depends on</label>` +
+          `<textarea id="dependsOn" spellcheck="false" placeholder="when blackout is off">${esc(data.dependsOn)}</textarea>` +
+          `</div>`;
+        if (c)
+          h += `<details><summary>Config JSON</summary><pre>${esc(JSON.stringify(c.control, null, 2))}</pre></details>`;
+        return h;
+      }
+
+      const stripDraft = (t) =>
+        String(t || "")
+          .split("\n")
+          .filter((l) => !/^\s*[*_]?\s*draft\b/i.test(l))
+          .join("\n")
+          .trim();
+
+      function draw() {
+        const body = $("body");
+        if (!data) {
+          $("name").textContent = "Select a client pult, a screen or a control";
+          $("name").className = "name muted";
+          $("verdict").textContent = "";
+          $("stats").hidden = true;
+          $("save").hidden = true;
+          body.innerHTML = `<div class="empty">Tip: select a whole section to review a client pult, then click a row to jump to it.</div>`;
           return;
         }
-        const s = d.selection;
-        $("head").innerHTML =
-          `<span class="sel">${esc(s.name)}</span> <span class="muted">${esc(s.component || s.type)}` +
-          (d.frame ? ` · ${esc(d.frame)}` : "") +
-          (d.preview ? " · preview" : "") +
-          "</span>";
-        $("controls").innerHTML = d.controls.length
-          ? d.controls
-              .map((c) => {
-                const addr = c.control.address || c.control.feedback || "";
-                const schema = c.schema.length
-                  ? c.schema.map((m) => `<div class="issue error">schema: ${esc(m)}</div>`).join("")
-                  : "";
-                return (
-                  `<div class="card"><div class="row"><span class="type">${esc(c.control.type)}</span>` +
-                  `<code>${esc(c.control.id)}</code>${addr ? `<code>${esc(addr)}</code>` : ""}` +
-                  `<span class="muted">${esc(c.component)} · id from ${esc(c.idFrom)}</span></div>` +
-                  schema +
-                  `<pre>${esc(JSON.stringify(c.control, null, 2))}</pre></div>`
-                );
-              })
-              .join("")
-          : '<span class="muted">No control from this selection.</span>';
-        $("issues").innerHTML = d.issues
-          .map(
-            (i) =>
-              `<div class="issue ${i.level}">${esc(i.level)} · <code>${esc(i.code)}</code> ${esc(i.message)}</div>`,
-          )
-          .join("");
-        if (!d.preview) {
-          $("osc").value = d.osc;
-          $("dependsOn").value = d.dependsOn;
-          dirty = false;
+        const groups = grouped(data.issues);
+        const errors = groups.filter((g) => g.level === "error").reduce((n, g) => n + g.count, 0);
+        const warnings = groups
+          .filter((g) => g.level === "warning")
+          .reduce((n, g) => n + g.count, 0);
+        const nFix = errors + warnings;
+
+        $("back").hidden = !trail.length;
+        $("name").textContent = data.selection.name;
+        $("name").className = "name";
+        $("verdict").innerHTML = errors
+          ? `<span class="error">${errors} control${errors > 1 ? "s" : ""} won’t export</span>`
+          : data.drafts.length
+            ? `<span class="warning">Exports · ${data.drafts.length} address${data.drafts.length > 1 ? "es" : ""} to confirm</span>`
+            : `<span class="ok">Ready to export</span>`;
+
+        if (data.single) {
+          $("stats").hidden = true;
+          $("save").hidden = false;
+          $("save").disabled = !data.canEdit;
+          $("save").title = data.canEdit ? "" : "Annotations are edited in Design mode";
+          body.innerHTML = drawOne(groups);
+          $("osc").oninput = $("dependsOn").oninput = () => (dirty = true);
+          $("confirmed").onchange = () => (dirty = true);
+          return;
         }
-        $("save").disabled = !d.canEdit;
-        $("save").title = d.canEdit ? "" : "Annotations are edited in Design mode";
+
+        $("stats").hidden = false;
+        $("save").hidden = true;
+        $("nFix").textContent = nFix;
+        $("nFix").className = errors ? "error" : warnings ? "warning" : "ok";
+        $("nDraft").textContent = data.drafts.length;
+        $("nDraft").className = data.drafts.length ? "warning" : "ok";
+        $("nCtl").textContent = data.controls.length;
+        document
+          .querySelectorAll(".stat")
+          .forEach((el) => el.classList.toggle("on", el.dataset.tab === tab));
+        body.innerHTML =
+          tab === "fix" ? drawFix(groups) : tab === "confirm" ? drawConfirm() : drawControls();
+        const d = body.querySelector("details");
+        if (d && $("hints")) d.ontoggle = () => ($("hints").hidden = !d.open);
       }
+
+      $("body").addEventListener("click", (e) => {
+        const el = e.target.closest(".item[data-node]");
+        if (el && !data?.single) go(el.dataset.node);
+      });
+
+      // Save sends the address with or without the draft line, following the checkbox.
+      $("save").onclick = () => {
+        const base = stripDraft($("osc").value);
+        const osc = base && !$("confirmed").checked ? base + "\n" + DRAFT_LINE : base;
+        send({ type: "save", osc, dependsOn: $("dependsOn").value });
+      };
+
+      /** Plain-text report of the current selection, for pasting into a chat with Claude. */
+      function report() {
+        if (!data) return "Otakoyi Inspector: nothing selected.";
+        const g = grouped(data.issues);
+        const L = [];
+        L.push(
+          `Otakoyi Inspector report — ${data.selection.name} (${data.selection.type}${data.frame ? ", " + data.frame : ""})`,
+        );
+        L.push(`Verdict: ${$("verdict").textContent}`);
+        L.push(`Controls: ${data.controls.length} · Drafts to confirm: ${data.drafts.length}`);
+        L.push("");
+        L.push("Issues:");
+        if (!g.length) L.push("- none");
+        for (const i of g)
+          L.push(
+            `- [${i.level}] ${i.code}: ${i.message}${i.count > 1 ? ` (×${i.count})` : ""}${i.ids[0] ? ` [node ${i.ids[0]}]` : ""}`,
+          );
+        L.push("");
+        L.push("Drafts:");
+        if (!data.drafts.length) L.push("- none");
+        for (const d of data.drafts) L.push(`- ${d.name} [node ${d.nodeId}]`);
+        L.push("");
+        L.push("Controls (type · id · address · label):");
+        for (const c of data.controls)
+          L.push(
+            `- ${c.control.type} · ${c.control.id} · ${c.control.address || c.control.feedback || "NO ADDRESS"} · ${c.control.label || ""}${c.schema.length ? " · SCHEMA: " + c.schema.join("; ") : ""}`,
+          );
+        if (data.single) {
+          L.push("");
+          L.push("OSC annotation:");
+          L.push(data.osc || "(empty)");
+          L.push("Depends on:");
+          L.push(data.dependsOn || "(empty)");
+        }
+        L.push("");
+        L.push("Config JSON:");
+        L.push(
+          JSON.stringify(
+            data.controls.map((c) => c.control),
+            null,
+            2,
+          ),
+        );
+        return L.join("\n");
+      }
+
+      function copyText(text) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try {
+          ok = document.execCommand("copy");
+        } catch (e) {}
+        ta.remove();
+        return ok;
+      }
+      $("copy").onclick = () =>
+        status(
+          copyText(report())
+            ? '<span class="ok">Report copied — paste it into the chat</span>'
+            : '<span class="error">Copy failed</span>',
+        );
 
       onmessage = (e) => {
         const m = e.data.pluginMessage;
         if (!m) return;
         if (m.type === "analysis") {
-          if (dirty && !m.data?.preview && m.data)
-            $("status").textContent = "Selection changed; unsaved edits were replaced.";
-          render(m.data);
-        } else if (m.type === "saved")
-          $("status").textContent = "Saved (annotations + plugin data).";
-        else if (m.type === "error")
-          $("status").innerHTML = `<span class="error">${esc(m.message)}</span>`;
+          if (dirty && m.data && !m.data.preview)
+            status("Selection changed; unsaved edits dropped.");
+          dirty = false;
+          if (!drilling) {
+            trail.length = 0;
+            if (m.data && !m.data.single) {
+              const errs = m.data.issues.some((i) => i.level !== "info");
+              tab = errs ? "fix" : m.data.drafts.length ? "confirm" : "controls";
+            }
+          }
+          drilling = false;
+          data = m.data;
+          draw();
+        } else if (m.type === "saved") status('<span class="ok">Saved</span>');
+        else if (m.type === "error") status(`<span class="error">${esc(m.message)}</span>`);
         else if (m.type === "snapshot") {
           const url = URL.createObjectURL(new Blob([m.json], { type: "application/json" }));
           const a = document.createElement("a");
@@ -244,9 +592,10 @@
           a.download = m.name;
           a.click();
           URL.revokeObjectURL(url);
-          $("status").textContent = `Snapshot downloaded: ${m.name}`;
+          status(`Downloaded ${esc(m.name)}`);
         }
       };
+      draw();
     </script>
   </body>
 </html>

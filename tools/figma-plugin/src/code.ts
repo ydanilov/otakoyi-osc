@@ -30,14 +30,15 @@ type FromUi =
   | { type: "refresh" }
   | { type: "check"; osc: string; dependsOn: string }
   | { type: "save"; osc: string; dependsOn: string }
-  | { type: "snapshot" };
+  | { type: "snapshot" }
+  | { type: "select"; nodeId: string };
 
 const CATEGORIES = {
   osc: { label: "OSC", color: "green" },
   dependsOn: { label: "Depends on", color: "orange" },
 } as const;
 
-figma.showUI(__html__, { width: 380, height: 620, themeColors: true });
+figma.showUI(__html__, { width: 400, height: 600, themeColors: true });
 
 function post(msg: unknown) {
   figma.ui.postMessage(msg);
@@ -92,6 +93,12 @@ async function analyze(overrides?: { osc: string; dependsOn: string }) {
       };
     });
   const issues = result.issues.filter((i) => !i.nodeId || around.has(i.nodeId));
+  // OSC annotations still marked "draft" (to confirm against the installation's OSC contract).
+  const drafts: { nodeId: string; name: string }[] = [];
+  walk(hit.node, (n) => {
+    const t = annotationTexts(n).osc;
+    if (t && /\bdraft\b/i.test(t)) drafts.push({ nodeId: n.id, name: n.name });
+  });
   post({
     type: "analysis",
     data: {
@@ -99,6 +106,8 @@ async function analyze(overrides?: { osc: string; dependsOn: string }) {
       frame: frame?.name,
       controls,
       issues,
+      drafts,
+      single: controls.length <= 1 && sel.type !== "SECTION",
       osc: current.osc ?? "",
       dependsOn: current.dependsOn ?? "",
       canEdit: figma.editorType === "figma" && "annotations" in sel,
@@ -160,6 +169,12 @@ figma.ui.onmessage = async (msg: FromUi) => {
       await save(msg.osc, msg.dependsOn);
       post({ type: "saved" });
       await analyze();
+    } else if (msg.type === "select") {
+      const node = await figma.getNodeByIdAsync(msg.nodeId);
+      if (node && "visible" in node) {
+        figma.currentPage.selection = [node as SceneNode];
+        figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
+      }
     } else if (msg.type === "snapshot") {
       const s = await snapshot();
       post({
