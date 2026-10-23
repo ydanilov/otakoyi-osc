@@ -1,5 +1,6 @@
 import { BlurMask, Canvas, Circle, Path, Skia, type SkPath } from "@shopify/react-native-skia";
 import {
+  CENTRE,
   createThumbstick,
   thumbstickDeflection,
   type Deflection,
@@ -25,6 +26,7 @@ import { InsetCircle, RaisedCircle } from "./skia";
 import { ControlFrame } from "./ControlFrame";
 import type { ControlProps } from "./types";
 import { InnerLight, useInnerLight, useTouchLight } from "./TouchLight";
+import { useHeldValue } from "./useHeldValue";
 import { useLayout } from "./useLayout";
 
 /**
@@ -38,17 +40,19 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
   const { width: w, height: h } = size;
   const dx = useSharedValue(0);
   const dy = useSharedValue(0);
-  const [display, setDisplay] = React.useState<Deflection>({ x: 0, y: 0 });
+  const remote = asDeflection(value);
+  const [display, setDisplay, releaseDisplay] = useHeldValue<Deflection>(remote ?? CENTRE);
   const held = React.useRef(false);
 
   // Another device moving the stick (synced through the bridge): follow it while not held here.
+  // No state is set here: the readout derives from `value` (useHeldValue).
+  const rx = remote?.x;
+  const ry = remote?.y;
   React.useEffect(() => {
-    if (held.current || typeof value !== "object" || value === null) return;
-    if (!("x" in value) || typeof value.x !== "number" || typeof value.y !== "number") return;
-    dx.value = value.x;
-    dy.value = value.y;
-    setDisplay({ x: value.x, y: value.y });
-  }, [value, dx, dy]);
+    if (held.current || rx === undefined || ry === undefined) return;
+    dx.value = rx;
+    dy.value = ry;
+  }, [rx, ry, dx, dy]);
 
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
@@ -64,20 +68,20 @@ export function Thumbstick({ control: c, value, onChange, disabled }: ControlPro
       setDisplay(d);
       stick.start(d);
     },
-    [stick],
+    [stick, setDisplay],
   );
   const move = React.useCallback(
     (d: Deflection) => {
       setDisplay(d);
       stick.move(d);
     },
-    [stick],
+    [stick, setDisplay],
   );
   const release = React.useCallback(() => {
     held.current = false;
-    setDisplay({ x: 0, y: 0 });
+    releaseDisplay();
     stick.release();
-  }, [stick]);
+  }, [stick, releaseDisplay]);
   const click = React.useCallback(() => {
     onChangeRef.current({ pressed: true });
     onChangeRef.current({ pressed: false });
@@ -243,4 +247,11 @@ function LitArc({
       <Path path={path} color={color} style="stroke" strokeWidth={width} strokeCap="round" />
     </>
   );
+}
+
+/** A deflection value (another device's stick), or undefined for anything else (a click). */
+function asDeflection(v: unknown): Deflection | undefined {
+  if (typeof v !== "object" || v === null || !("x" in v) || !("y" in v)) return undefined;
+  const { x, y } = v as { x: unknown; y: unknown };
+  return typeof x === "number" && typeof y === "number" ? { x, y } : undefined;
 }

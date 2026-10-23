@@ -77,7 +77,13 @@ function HsbPicker({ control: c, value, onChange, disabled }: ControlProps<"colo
   const t = useTheme();
   const services = useControlServices();
   const initialHex = typeof value === "string" ? value : (c.default ?? "#FFFFFF");
-  const [hsb, setHsb] = React.useState<Hsb>(() => hexToHsb(initialHex));
+  const [hsb, setHsbState] = React.useState<Hsb>(() => hexToHsb(initialHex));
+  // The newest HSB, also between renders (several edits can land before React renders).
+  const latest = React.useRef(hsb);
+  const setHsb = React.useCallback((next: Hsb) => {
+    latest.current = next;
+    setHsbState(next);
+  }, []);
   const [style, setStyle] = React.useState<PickerStyle>(c.pickerStyle ?? "knobs");
   const key = viewPrefKey(services.pult, c.id, "pickerStyle");
 
@@ -100,12 +106,16 @@ function HsbPicker({ control: c, value, onChange, disabled }: ControlProps<"colo
     void services.viewPrefs.set(key, s).catch(() => {});
   };
 
-  // Feedback (another device, the installation) moves the picker unless it is the same colour.
+  // Feedback (another device, the installation) moves the picker unless it is the same colour or
+  // the finger is on it. Adjusted during render, not copied in an effect: at feedback rates an
+  // effect that sets state on every value change makes React abort with "Maximum update depth
+  // exceeded" (see useHeldValue).
   const dragging = React.useRef(false);
-  React.useEffect(() => {
-    if (dragging.current || typeof value !== "string") return;
-    setHsb((cur) => syncHsb(cur, value));
-  }, [value]);
+  const [seen, setSeen] = React.useState(value);
+  if (seen !== value) {
+    setSeen(value);
+    if (!dragging.current && typeof value === "string") setHsb(syncHsb(latest.current, value));
+  }
 
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
@@ -116,15 +126,13 @@ function HsbPicker({ control: c, value, onChange, disabled }: ControlProps<"colo
   React.useEffect(() => () => throttle.cancel(), [throttle]);
   const edit = React.useCallback(
     (patch: Partial<Hsb>, final = false) => {
-      setHsb((cur) => {
-        const next = { ...cur, ...patch };
-        throttle.push(hsbToHex(next));
-        return next;
-      });
+      const next = { ...latest.current, ...patch };
+      setHsb(next);
+      throttle.push(hsbToHex(next));
       dragging.current = !final;
       if (final) throttle.flush();
     },
-    [throttle],
+    [throttle, setHsb],
   );
 
   const hex = hsbToHex(hsb);
