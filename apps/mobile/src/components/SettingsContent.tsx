@@ -1,5 +1,4 @@
 import {
-  BellIcon,
   ClockCounterClockwiseIcon,
   DeviceMobileIcon,
   DrawerHeader,
@@ -11,13 +10,17 @@ import {
   QrCodeIcon,
   ScanIcon,
   Section,
+  StatusNotificationsRow,
   VibrateIcon,
+  type StatusNotificationsState,
 } from "@osc/ui";
 import { Text } from "@osc/ui/components/ui/text";
 import Constants from "expo-constants";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 import { useApp } from "@/lib/app-context";
+import { rowStateFor, toggleNotifications } from "@/lib/notifications";
+import { notifier } from "@/lib/platform/notifier";
 import { DebugContent } from "./DebugContent";
 import { SheetTop } from "./SheetTop";
 
@@ -44,6 +47,32 @@ export function SettingsContent({
   const { session, prefs, setPrefs } = useApp();
   const demo = session?.kind === "demo";
   const [page, setPage] = React.useState<"whatsNew" | "help" | "debug" | null>(null);
+  const [notify, setNotify] = React.useState<StatusNotificationsState>(
+    notifier.supported ? (prefs.notifications ? "on" : "off") : "unavailable",
+  );
+  // A switch left on whose permission was revoked in the system settings reads as denied.
+  React.useEffect(() => {
+    let live = true;
+    void notifier
+      .permission()
+      .catch(() => "undetermined" as const)
+      .then((p) => {
+        if (!live) return;
+        const row = rowStateFor(prefs.notifications, notifier.supported, p);
+        setNotify(row);
+        if (row === "denied") setPrefs({ notifications: false });
+      });
+    return () => {
+      live = false;
+    };
+  }, []); // only when Settings opens
+  const onNotify = (on: boolean) => {
+    if (on) setNotify("asking");
+    void toggleNotifications(on, notifier).then(({ enabled, row }) => {
+      setPrefs({ notifications: enabled });
+      setNotify(row);
+    });
+  };
   const version = Constants.expoConfig?.version ?? "";
   const build = Constants.expoConfig?.ios?.buildNumber ?? "1";
   const Top = ({ title, onBack }: { title: string; onBack?: () => void }) =>
@@ -112,13 +141,7 @@ export function SettingsContent({
               checked={prefs.keepAwake}
               onCheckedChange={(v) => setPrefs({ keepAwake: v })}
             />
-            <ListRow
-              icon={BellIcon}
-              title="Status notifications"
-              trailing="switch"
-              checked={prefs.notifications}
-              onCheckedChange={(v) => setPrefs({ notifications: v })}
-            />
+            <StatusNotificationsRow state={notify} onChange={onNotify} />
           </ListCard>
         </Section>
 

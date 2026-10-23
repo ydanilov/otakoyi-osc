@@ -1,9 +1,12 @@
 import type { Pairing } from "@osc/protocol";
 import type { Simulator } from "@osc/sim";
 import * as React from "react";
+import { AppState } from "react-native";
 import { createBridgeSession, deviceId } from "./bridge";
 import { createDemoSession } from "./demo";
 import { createPairingStore, type SavedPairing } from "./pairing";
+import { deliveryFor, notificationText, statusEvents, type AppPhase } from "./notifications";
+import { notifier } from "./platform/notifier";
 import { DEFAULT_PREFS, loadPrefs, savePrefs, type Prefs } from "./prefs";
 import { prefsStorage, secureStorage } from "./platform/storage";
 import type { Session, SessionState } from "./session";
@@ -84,6 +87,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, [session]);
 
+  // Status notifications: session changes worth telling a user whose app is in the background.
+  const prefsRef = React.useRef(prefs);
+  prefsRef.current = prefs;
+  React.useEffect(() => {
+    if (!session) return;
+    let prev = session.state;
+    return session.subscribe(() => {
+      const next = session.state;
+      const events = statusEvents(prev, next, session.device);
+      prev = next;
+      if (!events.length || !prefsRef.current.notifications || !notifier.supported) return;
+      const phase = (AppState.currentState ?? "active") as AppPhase;
+      if (phase === "active") return; // the header banners and dialogs show it
+      void notifier
+        .permission()
+        .then((permission) => {
+          if (deliveryFor({ enabled: true, supported: true, permission, phase }) !== "notify")
+            return;
+          for (const e of events) {
+            const { title, body } = notificationText(e, session.displayName);
+            void notifier.show(title, body).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    });
+  }, [session]);
+
   // Unmount: close the connection.
   React.useEffect(() => () => replace(null, null), [replace]);
 
@@ -148,6 +178,7 @@ const EMPTY: SessionState = {
   lost: false,
   welcomedAt: null,
   protocol: null,
+  actionError: null,
 };
 
 /** The current session's state (re-renders on every change). */

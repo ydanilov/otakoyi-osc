@@ -214,7 +214,7 @@ describe("pairing storage and preferences", () => {
     await kv.set(PAIRING_KEY, "{not json");
     expect(await store.load()).toBeNull();
   });
-  it("preferences default to on and survive a reload", async () => {
+  it("preferences default to on (status notifications off) and survive a reload", async () => {
     const kv = memoryKeyValue();
     expect(await loadPrefs(kv)).toEqual(DEFAULT_PREFS);
     await savePrefs(kv, { haptics: false, keepAwake: true, notifications: false });
@@ -224,7 +224,7 @@ describe("pairing storage and preferences", () => {
       "otakoyi.prefs",
       JSON.stringify({ haptics: true, keepAwake: false, debugOverlay: true }),
     );
-    expect(await loadPrefs(kv)).toEqual({ haptics: true, keepAwake: false, notifications: true });
+    expect(await loadPrefs(kv)).toEqual({ haptics: true, keepAwake: false, notifications: false });
   });
 });
 
