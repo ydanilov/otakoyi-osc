@@ -219,7 +219,9 @@ export function formatOsc(e: {
  * (any order), or one of `<base>/h`, `<base>/s`, `<base>/b`. Returns the base and which channel
  * was written, or undefined for a plain address.
  */
-export function colorChannels(address: string): { base: string; channel?: "h" | "s" | "b" } | undefined {
+export function colorChannels(
+  address: string,
+): { base: string; channel?: "h" | "s" | "b" } | undefined {
   const a = plain(address);
   const group = /^(\/.+)\/\{\s*([hsb])\s*,\s*([hsb])\s*,\s*([hsb])\s*\}$/.exec(a);
   if (group && new Set(group.slice(2, 5)).size === 3) return { base: group[1]! };

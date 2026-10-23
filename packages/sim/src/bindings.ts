@@ -183,7 +183,15 @@ function applyColorChannel(
 }
 
 /** HSB (hue in degrees) → RGB 0..1. */
-export function hsbToRgb({ h, s, b }: { h: number; s: number; b: number }): [number, number, number] {
+export function hsbToRgb({
+  h,
+  s,
+  b,
+}: {
+  h: number;
+  s: number;
+  b: number;
+}): [number, number, number] {
   const hh = (((h % 360) + 360) % 360) / 60;
   const f = (n: number) => {
     const k = (n + hh) % 6;

@@ -134,7 +134,7 @@ boot.text = (
 boot.par.start = True
 tel.module.start()
 
-# Live preview: colour from hue + tint, brightness from intensity, logo text, mode label.
+# Live preview: colour from hue + tint (/wall/tint/h|s|b), brightness from intensity, logo text, mode label.
 prev = base.create(scriptTOP, 'preview')
 prev.par.outputresolution = 'custom'
 prev.par.resolutionw, prev.par.resolutionh = 640, 360
@@ -164,6 +164,12 @@ def onCook(scriptOp):
             b *= 0.25  # idle: not reacting to people, dimmed
         h = (_num(v, '/wall/hue', 0) % 360) / 360.0
         r, g, bl = colorsys.hsv_to_rgb(0.22 + h, 0.75, 1.0)
+        # Tint: the colour picker sends three addresses (hsb format), each only when it changes:
+        # /wall/tint/h (degrees), /wall/tint/s and /wall/tint/b (0..1). Missing rows keep defaults.
+        if v.row('/wall/tint/h') is not None or v.row('/wall/tint/s') is not None:
+            th = (_num(v, '/wall/tint/h', 0) % 360) / 360.0
+            tr, tg, tb = colorsys.hsv_to_rgb(th, _num(v, '/wall/tint/s', 0), _num(v, '/wall/tint/b', 1))
+            r, g, bl = (r + 2 * tr) / 3, (g + 2 * tg) / 3, (bl + 2 * tb) / 3
         img[:, :, 0] = r * b
         img[:, :, 1] = g * b
         img[:, :, 2] = bl * b

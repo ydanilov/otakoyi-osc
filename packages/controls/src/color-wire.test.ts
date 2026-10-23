@@ -81,7 +81,11 @@ describe("colour over OSC: hsb (default) — three addresses", () => {
 describe("colour feedback", () => {
   it("applies one channel at a time", () => {
     expect(applyHsbFeedback(undefined, "#FF0000", "h", 120)).toEqual({ h: 120, s: 1, b: 1 });
-    expect(applyHsbFeedback(undefined, "#FF0000", "h", 0.5, "unit")).toEqual({ h: 180, s: 1, b: 1 });
+    expect(applyHsbFeedback(undefined, "#FF0000", "h", 0.5, "unit")).toEqual({
+      h: 180,
+      s: 1,
+      b: 1,
+    });
     expect(applyHsbFeedback(undefined, "#FF0000", "s", 2)).toEqual({ h: 0, s: 1, b: 1 });
     expect(applyHsbFeedback(undefined, "#FF0000", "b", "x")).toBeUndefined();
   });

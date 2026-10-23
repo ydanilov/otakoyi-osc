@@ -354,7 +354,11 @@ describe("mapFrame — reporting", () => {
 
 describe("mapFrame — Color Picker → three addresses", () => {
   const picker = (text: string, name = "Color Picker") =>
-    inst("Color Picker", { name, props: { Title: "Colour", Style: "Wheel" }, annotations: osc(text) });
+    inst("Color Picker", {
+      name,
+      props: { Title: "Colour", Style: "Wheel" },
+      annotations: osc(text),
+    });
 
   it("reads <base>/{h,s,b} as the base address with the default hsb format", () => {
     const r = mapFrame(frame(picker("/light/color/{h,s,b} · feedback ✓")));
