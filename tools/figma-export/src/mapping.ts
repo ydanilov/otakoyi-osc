@@ -4,6 +4,7 @@
  */
 import {
   ID_PLACEHOLDER,
+  colorChannels,
   expandRange,
   parseDependsOn,
   parseOsc,
@@ -684,6 +685,37 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
           "maxPresets",
           "confirmMs",
         ]);
+        return push(annot?.nodeId);
+      }
+      case "colorPicker": {
+        const got = need();
+        if (!got) return;
+        // Default wire format `hsb`: <base>/h, /s, /b. The annotation may write `<base>/{h,s,b}`,
+        // the three channel addresses, or just the base.
+        const ch = colorChannels(got.address);
+        const base = ch?.base ?? got.address;
+        c.address = base;
+        let hue: AddressSpec | undefined = ch?.channel === "h" ? got.entry : undefined;
+        if (ch?.channel && annot?.osc) {
+          // The other two channel addresses belong to this picker too.
+          annot.osc.entries.forEach((e, i) => {
+            const other = colorChannels(e.address);
+            if (other?.channel && other.base === base) {
+              annot.used.add(i);
+              if (other.channel === "h") hue = e;
+            }
+          });
+        }
+        // `/h float 0–1`: hue normalised instead of degrees.
+        if (hue?.range?.[1] === 1) c.hueRange = "unit";
+        applyKeys(c, keys, ["target", "lock", "studioOnly", "format", "hueRange"]);
+        if (ch && c.format !== undefined && c.format !== "hsb")
+          issue(
+            "warning",
+            "color-format",
+            `${id}: the OSC annotation lists ${base}/h, /s, /b but says format=${String(c.format)} (one message on ${base}); exported format=${String(c.format)}`,
+            annot?.nodeId,
+          );
         return push(annot?.nodeId);
       }
       case "meter":

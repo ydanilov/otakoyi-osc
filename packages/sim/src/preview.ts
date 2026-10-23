@@ -16,6 +16,11 @@ export interface PreviewParams {
   focus: { x: number; y: number };
   /** Tint mixed into the palette (0..1 RGB), or null. */
   tint: [number, number, number] | null;
+  /**
+   * The tint as the installation holds it per channel (`hsb` colour format: `<address>/h|s|b`
+   * arrive one at a time; hue in degrees). Null until the first channel arrives.
+   */
+  tintHsb: { h: number; s: number; b: number } | null;
   /** Latched installation modes (system OSC). */
   blackout: boolean;
   idle: boolean;
@@ -37,6 +42,7 @@ export const DEFAULT_PREVIEW: PreviewParams = {
   speed: 0.4,
   focus: { x: 0.5, y: 0.5 },
   tint: null,
+  tintHsb: null,
   blackout: false,
   idle: false,
   pause: false,

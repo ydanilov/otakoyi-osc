@@ -57,7 +57,8 @@ export interface DependsOn {
   notes: string[];
 }
 
-const ADDRESS_CHARS = String.raw`[^\s*\x60,;()<>"'·]+`;
+/** Address characters; a `{…}` group may hold commas (`/light/color/{h,s,b}`). */
+const ADDRESS_CHARS = String.raw`(?:\{[^}\s]*\}|[^\s*\x60,;()<>"'·])+`;
 const RANGE = /(-?\d+(?:\.\d+)?)\s*(?:–|—|…|\.\.\.?|to|-)\s*(-?\d+(?:\.\d+)?)/;
 
 /** Markdown and entities Figma puts in `labelMarkdown`, normalised for parsing. */
@@ -211,4 +212,18 @@ export function formatOsc(e: {
   return [`**${e.address}**${code.length ? ` \`${code[0]}\`` : ""}`, ...(e.keywords ?? [])].join(
     " · ",
   );
+}
+
+/**
+ * A Color Picker's annotation names its three channel addresses (`hsb` format): `<base>/{h,s,b}`
+ * (any order), or one of `<base>/h`, `<base>/s`, `<base>/b`. Returns the base and which channel
+ * was written, or undefined for a plain address.
+ */
+export function colorChannels(address: string): { base: string; channel?: "h" | "s" | "b" } | undefined {
+  const a = plain(address);
+  const group = /^(\/.+)\/\{\s*([hsb])\s*,\s*([hsb])\s*,\s*([hsb])\s*\}$/.exec(a);
+  if (group && new Set(group.slice(2, 5)).size === 3) return { base: group[1]! };
+  const one = /^(\/.+)\/([hsb])$/.exec(a);
+  if (one) return { base: one[1]!, channel: one[2] as "h" | "s" | "b" };
+  return undefined;
 }

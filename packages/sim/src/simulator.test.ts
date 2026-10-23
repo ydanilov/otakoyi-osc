@@ -68,6 +68,26 @@ describe("simulated installation (demo mode)", () => {
     expect(sim.preview().speed).toBe(0);
   });
 
+  it("accepts colour as three addresses and echoes each channel back", async () => {
+    const { t, inbox } = await connect();
+    const feedback = vi.spyOn(sim.bridge, "feedback");
+    t.send({ t: "set", pult: "lobby", id: "tint", value: "#00FF00" });
+    expect(sim.preview().tint).toEqual([0, 1, 0]);
+    await vi.advanceTimersByTimeAsync(ECHO_MS + 1);
+    const echoed = feedback.mock.calls.map(([, m]) => m.address);
+    // The tint starts at #C6FF3D (full brightness): hue and saturation changed, brightness did not.
+    expect(echoed).toEqual(["/wall/tint/h", "/wall/tint/s"]);
+    // Only the brightness changes: only /b goes out (and comes back).
+    feedback.mockClear();
+    t.send({ t: "set", pult: "lobby", id: "tint", value: "#008000" });
+    await vi.advanceTimersByTimeAsync(ECHO_MS + 1);
+    expect(feedback.mock.calls.map(([, m]) => m.address)).toEqual(["/wall/tint/b"]);
+    expect(sim.preview().tint![1]).toBeCloseTo(0.5, 2);
+    // The echo agrees with what the bridge holds, so nothing is re-broadcast.
+    expect(sim.bridge.stores.get("lobby")!.get("tint")).toBe("#008000");
+    expect(inbox.filter((m) => m.t === "value" && m.id === "tint" && m.by === null)).toEqual([]);
+  });
+
   it("reports FPS (~60 with jitter) at 1 Hz and an audio level at 10 Hz", async () => {
     const { inbox } = await connect();
     inbox.length = 0;

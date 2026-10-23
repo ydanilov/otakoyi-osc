@@ -194,7 +194,13 @@ export function hexToRgb(hex: string): [number, number, number] {
   return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
 }
 
-export function rgbToHsv([r, g, b]: [number, number, number]): [number, number, number] {
+export function rgbToHsv(rgb: [number, number, number]): [number, number, number] {
+  const [h, s, v] = rawHsv(rgb);
+  return [roundFloat(h), roundFloat(s), roundFloat(v)];
+}
+
+/** RGB 0–255 → HSV 0–1 each, unrounded. */
+function rawHsv([r, g, b]: [number, number, number]): [number, number, number] {
   const [rn, gn, bn] = [r / 255, g / 255, b / 255];
   const max = Math.max(rn, gn, bn);
   const d = max - Math.min(rn, gn, bn);
@@ -205,7 +211,7 @@ export function rgbToHsv([r, g, b]: [number, number, number]): [number, number, 
     else h = (rn - gn) / d + 4;
     h = (h * 60 + 360) % 360;
   }
-  return [roundFloat(h / 360), roundFloat(max ? d / max : 0), roundFloat(max)];
+  return [h / 360, max ? d / max : 0, max];
 }
 
 export function hsvToHex(h: number, s: number, v: number): string {
@@ -360,11 +366,64 @@ const hasDelta = (v: unknown): v is { delta: number } =>
 const num = (v: number, int?: boolean) =>
   int ? { type: "i" as const, value: Math.round(v) } : { type: "f" as const, value: v };
 
+/** Colour channels of the default `hsb` colour format, each on its own address. */
+export const HSB_CHANNELS = ["h", "s", "b"] as const;
+export type HsbChannel = (typeof HSB_CHANNELS)[number];
+
+/** `<base>/h`, `<base>/s`, `<base>/b`. */
+export function hsbAddress(base: string, ch: HsbChannel): string {
+  return `${base}/${ch}`;
+}
+
+/**
+ * The wire values of a colour in the `hsb` format: hue in degrees (or 0–1 with `hueRange: "unit"`),
+ * saturation and brightness 0–1. A channel that is undefined for this colour is left out — hue at
+ * saturation 0 or brightness 0, saturation at brightness 0 — so a grey never resets the
+ * installation's hue.
+ */
+export function hsbWire(
+  hex: string,
+  hueRange: "degrees" | "unit" = "degrees",
+): Partial<Record<HsbChannel, number>> {
+  const [h, s, b] = rawHsv(hexToRgb(hex));
+  const out: Partial<Record<HsbChannel, number>> = { b: roundFloat(b) };
+  if (b > 0) out.s = roundFloat(s);
+  if (b > 0 && s > 0) out.h = roundFloat(hueRange === "unit" ? h : h * 360);
+  return out;
+}
+
+/**
+ * `hsb` colour format: one message per channel that changed since `previous`. Without `previous`
+ * (a full sync) every defined channel is sent. A channel that was undefined before (the colour was
+ * grey or black) and is defined now is always sent, because the installation may hold another value.
+ */
+export function hsbMessages(
+  c: Pick<ControlOf<"colorPicker">, "address" | "hueRange">,
+  value: string,
+  previous?: ControlValue,
+): OscMessage[] {
+  const next = hsbWire(value, c.hueRange);
+  const prev = typeof previous === "string" ? hsbWire(previous, c.hueRange) : {};
+  const full = typeof previous !== "string";
+  return HSB_CHANNELS.flatMap((ch) => {
+    const v = next[ch];
+    if (v === undefined) return [];
+    if (!full && prev[ch] !== undefined && prev[ch] === v) return [];
+    return [{ address: hsbAddress(c.address, ch), args: [num(v)] }];
+  });
+}
+
 /**
  * Build the OSC messages a control sends for a given interaction.
- * Returns [] for display-only controls.
+ * Returns [] for display-only controls. `previous` is the value the control held before this
+ * interaction; controls that send only what changed (the `hsb` colour format) use it, and without
+ * it they send everything (a full sync).
  */
-export function messagesFor(c: Control, value: ControlValue): OscMessage[] {
+export function messagesFor(
+  c: Control,
+  value: ControlValue,
+  previous?: ControlValue,
+): OscMessage[] {
   switch (c.type) {
     case "button": {
       const pressed =
@@ -461,6 +520,7 @@ export function messagesFor(c: Control, value: ControlValue): OscMessage[] {
       return value === true ? [message(c.address, ...c.args)] : [];
     case "colorPicker": {
       if (typeof value !== "string") return [];
+      if (c.format === "hsb") return hsbMessages(c, value, previous);
       const rgb = hexToRgb(value);
       if (c.format === "hex") return [message(c.address, value.toUpperCase())];
       if (c.format === "rgbInt")

@@ -1,5 +1,14 @@
 import { argValue, type OscMessage } from "@osc/core";
-import { initialValue, isGroupValue, messagesFor, type ControlValue } from "./logic";
+import { applyHsbFeedback, colorFromArgs, hsbToHex, type Hsb } from "./color";
+import {
+  HSB_CHANNELS,
+  hsbAddress,
+  initialValue,
+  isGroupValue,
+  messagesFor,
+  type ControlValue,
+  type HsbChannel,
+} from "./logic";
 import { knobMode, wrapHue } from "./modes";
 import type { PromptAck } from "./prompt";
 import {
@@ -21,9 +30,10 @@ export interface Transport {
   send(target: Target, messages: OscMessage[]): void;
   /**
    * Optional: take the raw interaction instead of OSC. A pult connected to a bridge uses it to send
-   * `{pult, id, value}`; the bridge validates it and is the one that sends OSC.
+   * `{pult, id, value}`; the bridge validates it and is the one that sends OSC. `previous` is the
+   * value before this interaction (what `messagesFor` diffs against).
    */
-  interact?(pult: string, control: Control, value: ControlValue): void;
+  interact?(pult: string, control: Control, value: ControlValue, previous?: ControlValue): void;
 }
 
 type Listener = () => void;
@@ -44,6 +54,8 @@ export class PultStore {
   /** Relative (endless) controls: the change sent since this store was created (session start). */
   private offsets = new Map<string, number>();
   private metaListeners = new Map<string, Set<Listener>>();
+  /** `hsb` colour pickers: the last full HSB known per control (a grey keeps its hue here). */
+  private hsb = new Map<string, Hsb>();
   private localSeq = 0;
   mode: ControlMode = "control";
 
@@ -55,9 +67,14 @@ export class PultStore {
     for (const c of this.controls()) {
       this.values.set(c.id, initialValue(c));
       const fb = c.feedback ?? ("address" in c && !c.address.includes("{") ? c.address : undefined);
-      // A button group listens on every button's own address.
+      // A button group listens on every button's own address; an `hsb` colour picker on its three
+      // channel addresses (`<feedback or address>/h`, `/s`, `/b`).
       const addrs =
-        c.type === "buttonGroup" && !c.feedback ? c.buttons.map((b) => b.address) : [fb];
+        c.type === "buttonGroup" && !c.feedback
+          ? c.buttons.map((b) => b.address)
+          : c.type === "colorPicker" && c.format === "hsb" && fb
+            ? HSB_CHANNELS.map((ch) => hsbAddress(fb, ch))
+            : [fb];
       for (const a of addrs) if (a) this.byFeedback.set(a, [...(this.byFeedback.get(a) ?? []), c]);
     }
   }
@@ -154,12 +171,13 @@ export class PultStore {
       this.offsets.set(control.id, this.offset(control.id) + value.delta);
       this.metaListeners.get(control.id)?.forEach((f) => f());
     }
+    const previous = this.get(control.id);
     this.set(control.id, value);
     if (this.transport.interact) {
-      this.transport.interact(this.pult.id, control, value);
+      this.transport.interact(this.pult.id, control, value, previous);
       return true;
     }
-    const msgs = messagesFor(control, value);
+    const msgs = messagesFor(control, value, previous);
     const target = targetOf(this.config, this.pult, control);
     if (msgs.length && target) this.transport.send(target, msgs);
     // Direct OSC (no bridge) has nobody to confirm a prompt: treat it as applied.
@@ -179,9 +197,25 @@ export class PultStore {
   /** Apply an incoming OSC message to every control listening on its address. */
   receive(msg: OscMessage) {
     for (const c of this.byFeedback.get(msg.address) ?? []) {
+      if (c.type === "colorPicker" && c.format === "hsb") {
+        this.receiveHsb(c, msg);
+        continue;
+      }
       const v = feedbackValue(c, msg, this.get(c.id));
       if (v !== undefined) this.set(c.id, v);
     }
+  }
+
+  /** One channel of an `hsb` colour picker came back from the installation. */
+  private receiveHsb(c: Extract<Control, { type: "colorPicker" }>, msg: OscMessage) {
+    const ch = msg.address.slice(msg.address.lastIndexOf("/") + 1) as HsbChannel;
+    const cur = this.get(c.id);
+    const hex = typeof cur === "string" ? cur : (c.default ?? "#FFFFFF");
+    const first = msg.args[0] ? argValue(msg.args[0]) : undefined;
+    const next = applyHsbFeedback(this.hsb.get(c.id), hex, ch, first, c.hueRange);
+    if (!next) return;
+    this.hsb.set(c.id, next);
+    this.set(c.id, hsbToHex(next));
   }
 }
 
@@ -231,7 +265,7 @@ function feedbackValue(
     case "sceneList":
       return c.scenes.find((s) => s.value === first)?.id;
     case "colorPicker":
-      return typeof first === "string" && first.startsWith("#") ? first : undefined;
+      return c.format === "hsb" ? undefined : colorFromArgs(c.format, vals);
     default:
       return undefined;
   }

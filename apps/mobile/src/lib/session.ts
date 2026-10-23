@@ -241,10 +241,10 @@ export class Session {
               p.id,
               new PultStore(cfg, p, {
                 send() {},
-                interact: (pult, control, value) => {
+                interact: (pult, control, value, previous) => {
                   this.t?.send({ t: "set", pult, id: control.id, value });
                   // What the bridge will send for it (the bridge is the one that sends OSC).
-                  this.debug.sent(control.id, safeMessages(control, value));
+                  this.debug.sent(control.id, safeMessages(control, value, previous));
                 },
               }),
             ]),

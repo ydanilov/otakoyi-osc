@@ -65,7 +65,8 @@ const STYLE_LABEL: Record<PickerStyle, string> = {
  * title, live swatch and hex. A capsule segmented control switches the picker style — a local view
  * preference kept per control on the device (`viewPrefs`); `pickerStyle` in the config is the
  * default. Every style edits the same hue / saturation / brightness and sends the same value
- * (`format`: rgb floats, rgb ints, hsv floats or hex). With `swatches` it is a palette instead.
+ * (`format`: by default three addresses `/h` `/s` `/b`, or one rgb, hsv or hex message — @osc/controls
+ * `messagesFor`). With `swatches` it is a palette instead.
  * Maths: `@osc/controls` color.ts.
  */
 export function ColorPicker(props: ControlProps<"colorPicker">) {

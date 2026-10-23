@@ -352,6 +352,49 @@ describe("mapFrame — reporting", () => {
   });
 });
 
+describe("mapFrame — Color Picker → three addresses", () => {
+  const picker = (text: string, name = "Color Picker") =>
+    inst("Color Picker", { name, props: { Title: "Colour", Style: "Wheel" }, annotations: osc(text) });
+
+  it("reads <base>/{h,s,b} as the base address with the default hsb format", () => {
+    const r = mapFrame(frame(picker("/light/color/{h,s,b} · feedback ✓")));
+    expect(r.issues).toEqual([]);
+    expect(r.controls[0]!.control).toMatchObject({ type: "colorPicker", address: "/light/color" });
+    expect(r.controls[0]!.control.format).toBeUndefined(); // schema default: hsb
+  });
+
+  it("takes the three channel addresses as one picker; /h 0–1 means hueRange unit", () => {
+    const r = mapFrame(
+      frame(
+        picker(
+          "**/light/color/h** `float 0–1` **/light/color/s** `float 0–1` **/light/color/b** `float 0–1`",
+        ),
+      ),
+    );
+    expect(r.issues.filter((i) => i.code === "unused-address")).toEqual([]);
+    expect(r.controls[0]!.control).toMatchObject({
+      address: "/light/color",
+      hueRange: "unit",
+    });
+  });
+
+  it("keeps degrees for /h 0–360 and a plain base address", () => {
+    const deg = mapFrame(frame(picker("**/a/h** `float 0–360` **/a/s** **/a/b**")));
+    expect(deg.controls[0]!.control.address).toBe("/a");
+    expect(deg.controls[0]!.control.hueRange).toBeUndefined();
+    const plainBase = mapFrame(frame(picker("**/wall/tint**")));
+    expect(plainBase.controls[0]!.control.address).toBe("/wall/tint");
+  });
+
+  it("format=hsvFloat opts into one message; contradicting channel addresses are reported", () => {
+    const one = mapFrame(frame(picker("**/vj/colour** · format=hsvFloat")));
+    expect(one.controls[0]!.control).toMatchObject({ address: "/vj/colour", format: "hsvFloat" });
+    expect(one.issues).toEqual([]);
+    const clash = mapFrame(frame(picker("/vj/colour/{h,s,b} · format=hex")));
+    expect(clash.issues.map((i) => i.code)).toContain("color-format");
+  });
+});
+
 describe("slug", () => {
   it("makes schema ids", () => {
     expect(slug("Pan / tilt")).toBe("pan-tilt");

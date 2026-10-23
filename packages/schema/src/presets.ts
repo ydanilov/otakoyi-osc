@@ -316,6 +316,20 @@ export const BUILTIN_PRESETS: readonly ControlPreset[] = [
     props: { crossfade: 2 },
   },
   {
+    id: "colorPicker/hsb-unit",
+    type: "colorPicker",
+    label: "H S B 0–1",
+    description: "Three addresses, hue 0–1.",
+    props: { format: "hsb", hueRange: "unit" },
+  },
+  {
+    id: "colorPicker/hsv",
+    type: "colorPicker",
+    label: "HSV, one message",
+    description: "h s v floats 0–1.",
+    props: { format: "hsvFloat" },
+  },
+  {
     id: "colorPicker/rgb",
     type: "colorPicker",
     label: "RGB 0–1",
