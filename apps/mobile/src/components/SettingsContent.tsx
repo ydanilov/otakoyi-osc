@@ -21,6 +21,7 @@ import { ScrollView, View } from "react-native";
 import { useApp } from "@/lib/app-context";
 import { rowStateFor, toggleNotifications } from "@/lib/notifications";
 import { notifier } from "@/lib/platform/notifier";
+import { inExpoGo } from "@/lib/runtime";
 import { DebugContent } from "./DebugContent";
 import { SheetTop } from "./SheetTop";
 
@@ -169,7 +170,7 @@ export function SettingsContent({
               icon={InfoIcon}
               title="App version"
               trailing="value"
-              value={`${version} (${build})`}
+              value={`${version} (${build})${inExpoGo ? " · Expo Go" : ""}`}
             />
           </ListCard>
         </Section>
