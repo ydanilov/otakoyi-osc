@@ -8,7 +8,7 @@ import { fetchSnapshot, restNodeToSnapshot } from "./rest";
 import { SNAPSHOT_FORMAT, isSnapshot, type FNode, type Snapshot } from "./snapshot";
 
 const fixture = JSON.parse(
-  readFileSync(new URL("../fixtures/phase-one.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../fixtures/template.json", import.meta.url), "utf8"),
 ) as Snapshot;
 
 const pad = (
@@ -40,7 +40,7 @@ const snap = (...nodes: FNode[]): Snapshot => ({
   nodes,
 });
 
-describe("exportSnapshot — the Phase One fixture", () => {
+describe("exportSnapshot — the Template fixture", () => {
   const r = exportSnapshot(fixture);
 
   it("produces a config that validates against the schema", () => {
@@ -58,15 +58,13 @@ describe("exportSnapshot — the Phase One fixture", () => {
     expect(r.issues.find((i) => i.code === "frame-skipped")?.message).toContain("Mode=View");
   });
 
-  it("reports the real gaps of the page", () => {
+  it("reports the real gaps of the page (the template's addresses are the standard set, not drafts)", () => {
     const codes = (l: string) => [
       ...new Set(r.issues.filter((i) => i.level === l).map((i) => i.code)),
     ];
     expect(codes("error")).toEqual([]);
     expect(codes("warning")).toEqual([
       "tab-without-frame",
-      "tabs-disagree",
-      "draft-annotation",
       "missing-form-factor",
       "not-on-form-factor",
     ]);
@@ -135,9 +133,9 @@ describe("exportSnapshot — the Phase One fixture", () => {
   it("is deterministic (config and report snapshots)", async () => {
     expect(JSON.stringify(exportSnapshot(fixture).config)).toBe(JSON.stringify(r.config));
     await expect(JSON.stringify(r.config, null, 2) + "\n").toMatchFileSnapshot(
-      "../fixtures/phase-one.config.json",
+      "../fixtures/template.config.json",
     );
-    await expect(formatReport(r)).toMatchFileSnapshot("../fixtures/phase-one.report.md");
+    await expect(formatReport(r)).toMatchFileSnapshot("../fixtures/template.report.md");
   });
 });
 
@@ -297,7 +295,7 @@ describe("gridFor", () => {
 describe("REST", () => {
   const doc = {
     id: "36:2",
-    name: "Client · Phase One",
+    name: "Client · Template",
     type: "CANVAS",
     children: [
       {
@@ -348,10 +346,10 @@ describe("REST", () => {
       calls.push(url);
       const body = url.includes("/nodes")
         ? { nodes: { "36:2": { document: doc, ...meta } } }
-        : { document: { children: [{ id: "36:2", name: "Client · Phase One" }] } };
+        : { document: { children: [{ id: "36:2", name: "Client · Template" }] } };
       return { ok: true, status: 200, json: async () => body, text: async () => "" };
     };
-    const s = await fetchSnapshot({ fileKey: "KEY", page: "Phase One", token: "t", fetch: fake });
+    const s = await fetchSnapshot({ fileKey: "KEY", page: "Template", token: "t", fetch: fake });
     expect(calls).toEqual([
       "https://api.figma.com/v1/files/KEY?depth=1",
       "https://api.figma.com/v1/files/KEY/nodes?ids=36%3A2&plugin_data=shared",

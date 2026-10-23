@@ -51,7 +51,7 @@ const meta = {
           ],
           content: ["Error: what happened + what to check, ≤ 100 characters."],
           figma: {
-            component: "Client loading (Screens: Client · Phase One)",
+            component: "Client loading (Screens: Client · Template)",
             variants: [
               ["Connecting", 'status="connecting"'],
               ["Can\'t connect", 'status="error"'],

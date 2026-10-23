@@ -47,7 +47,7 @@ pnpm --filter @osc/bridge bundle      # bridge as one file → apps/bridge/dist/
 pnpm storybook                        # component docs on :6006 (React Native Web + Vite)
 pnpm build-storybook                  # static Storybook → apps/storybook/storybook-static
 pnpm test-storybook                   # headless: every story × dark/light renders, play tests pass
-pnpm figma-export --snapshot tools/figma-export/fixtures/phase-one.json   # Figma page → config + report (docs/figma-export.md)
+pnpm figma-export --snapshot tools/figma-export/fixtures/template.json   # Figma page → config + report (docs/figma-export.md)
 pnpm --filter @osc/figma-plugin build # Otakoyi Inspector → tools/figma-plugin/dist (import manifest.json in Figma desktop)
 # Control gallery (every control × state × brand): open /gallery in the web pult or the app
 # Demo without hardware: open the web pult (or the app) → Connect → "Try the demo"

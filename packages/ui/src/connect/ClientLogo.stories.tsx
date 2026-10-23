@@ -41,7 +41,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Large: Story = {};
 export const Small: Story = { args: { size: "sm" } };
-export const NameOnly: Story = { args: { subtitle: undefined, name: "Phase One" } };
+export const NameOnly: Story = { args: { subtitle: undefined, name: "Aurora Hall" } };
 export const Both: Story = {
   render: () => (
     <View style={{ gap: 24, alignItems: "center" }}>

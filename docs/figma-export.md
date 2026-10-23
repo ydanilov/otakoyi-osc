@@ -17,13 +17,13 @@ disagree.
 # From Figma (REST API)
 export FIGMA_ACCESS_TOKEN=figd_…            # personal access token, scope file_content:read
 pnpm figma-export \
-  --file D2HHS8lt7PxZqxibv9PlOQ --page "Client · Phase One" \
+  --file D2HHS8lt7PxZqxibv9PlOQ --page "Client · Template" \
   --base path/to/base.json --contract path/to/otakoyi/osc-contract.json \
   --previous path/to/published-config.json \
-  --out phase-one.config.json --report phase-one.report.md --save-snapshot phase-one.snapshot.json
+  --out template.config.json --report template.report.md --save-snapshot template.snapshot.json
 
 # Offline, from a saved snapshot (tests, CI, or a snapshot exported by the Inspector)
-pnpm figma-export --snapshot tools/figma-export/fixtures/phase-one.json \
+pnpm figma-export --snapshot tools/figma-export/fixtures/template.json \
   --out /tmp/config.json --report /tmp/report.md
 ```
 
@@ -47,7 +47,7 @@ not in the contract) and `--allow-gaps` is not set; `2` usage, network or input 
 
 Output is deterministic — controls in frame order, keys in a fixed order, no timestamps — so a
 re-export diffs cleanly in a PR. Without `--base` the exporter derives the installation id and name
-from the page name (`Client · Phase One` → `phase-one`), uses one default target (UDP 7000,
+from the page name (`Client · Template` → `template`), uses one default target (UDP 7000,
 feedback 9000) and leaves the theme to the app default.
 
 ### In CI
@@ -69,7 +69,7 @@ schedule), commit the config and the report, and open a PR for review. A minimal
     FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_ACCESS_TOKEN }}
 ```
 
-The repo's own CI runs the exporter's unit tests and the snapshot test of the Phase One fixture
+The repo's own CI runs the exporter's unit tests and the snapshot test of the Template fixture
 (`pnpm verify`); it needs no token.
 
 ## What the exporter reads
@@ -77,7 +77,7 @@ The repo's own CI runs the exporter's unit tests and the snapshot test of the Ph
 ### Frames → pages
 
 - **Convention:** one top-level frame per page and form factor, `<pult-id> / <phone|tablet> / <page-id>`.
-- **Prototype screens** (what Client · Phase One has today): frames named `Phone / …` or
+- **Prototype screens** (what Client · Template has today): frames named `Phone / …` or
   `Tablet / …` that contain a **Pult Header** with `Mode=Control`. Screens without a Pult Header
   (connect, settings sheets, …) are ignored; `Mode=View` / `Studio` screens are skipped.
 - The active **Screen Tab** in the frame's **Tab Bar** names the page (`Live 1` → id `live-1`).
@@ -167,7 +167,7 @@ Inspector writes them and mirrors them into shared plugin data (namespace `otako
 **/mix/layer/{1–4}/opacity** `float 0–1` · **/mix/layer/{1–4}/on** `1 | 0`
 **/fx/shape/{knob-id}** `float 0–1` · 240°
 **/camera/aim** `x y float −1…1` · springs back · 30 Hz
-**/scene** `int 1–4` · crossfade=1.5
+**/scene** `int 1–4` · crossfade=1.5s
 **/mic/level** `float 0–1`, **/mic/bands** `float×4`, **/mic/beat** `1` · 30 Hz
 **/light/color/{h,s,b}** · feedback ✓
 ```
@@ -180,7 +180,7 @@ Inspector writes them and mirrors them into shared plugin data (namespace `otako
   compatible entry (a float spec to faders and knobs, `1 | 0` to toggles, options to segmented, …).
 - Shared keywords: `N Hz` (rate), `absolute` / `relative`, `feedback ✓`, `springs back`, `N°`,
   `multi-select`, and `key=value` (`min`, `max`, `step`, `curve`, `default`, `unit`, `target`,
-  `lock`, `studioOnly`, `feedback=/addr`, `crossfade`, `holdMs`, `tone`, `deadzone`, `gain`, …).
+  `lock`, `studioOnly`, `feedback=/addr`, `crossfade` (seconds, `1.5` or `1.5s`), `holdMs`, `tone`, `deadzone`, `gain`, …).
 - **Color Picker**: the config's default format sends three addresses, `<base>/h`, `/s`, `/b`.
   Annotate `<base>/{h,s,b}` (or the three channel addresses, or just `<base>`); the exporter writes
   `address: <base>`. `/h` `float 0–1` → `hueRange: "unit"` (default degrees). `format=hsvFloat`
@@ -222,8 +222,8 @@ Each client's colours are a **mode** of the Figma `Brand` variable collection (`
 `packages/tokens/tokens.json` (`pnpm tokens:check` fails when they drift, against
 `packages/tokens/figma/brand-modes.json`).
 
-1. In Figma, Variables › Brand: add a mode named after the client (`Aurora · Phase One`) and set
-   its colours. `primary-signal-light` must reach 3:1 on the light background (else the exporter
+1. In Figma, Variables › Brand: add a mode named after the client (`<Brand> · <Client>`, like the
+   template's `Aurora · Template`) and set its colours. `primary-signal-light` must reach 3:1 on the light background (else the exporter
    drops it with a warning and the app derives it).
 2. Select the client page's sections (or frames) and set their Brand mode to the new mode.
 3. Run the Otakoyi Inspector › **Export snapshot** and `pnpm figma-export --snapshot <file>` (or
@@ -250,9 +250,30 @@ Figma reloads `dist/code.js` the next time the plugin starts.
   the file lacks them) and the shared plugin data. Editing works in Design mode.
 - **Export snapshot** — downloads the current page as a snapshot for `--snapshot`.
 
-## Client · Phase One today
+## Starting a new client
 
-`tools/figma-export/fixtures/phase-one.json` is a snapshot of the page (pult screens in full, other
-screens as frame shells, the Brand modes; the sections use `Aurora · Phase One`);
-`phase-one.config.json` and `phase-one.report.md` next to it are the exporter's output, kept as
-snapshot tests. Re-dump the fixture when the page changes.
+**Client · Template** is the starting point for every client pult: the phone and tablet screens,
+the pult frames annotated with the **standard OSC address set** (`/wall/*`, `/mix/layer/{1–4}/*`,
+`/fx/shape/*`, `/layers/*`, `/camera/*`, `/scene`, `/prompt/text*`, `/mic/*`), and the sample Brand
+mode `Aurora · Template`. Those addresses are what a new TouchDesigner project should listen to
+(see [integration.md](integration.md): the installation's `otakoyi/osc-contract.json` lists them),
+so a client that keeps the standard controls needs no address changes.
+
+1. In Figma, duplicate the **Client · Template** page and rename the copy `Client · <Name>` (the
+   page name gives the default installation and pult id: `Client · Aurora Hall` → `aurora-hall`).
+2. Variables › Brand: add a mode for the client (see [Adding a client theme](#adding-a-client-theme))
+   and set the page's sections to it.
+3. Adjust the controls and their **OSC** / **Depends on** annotations (Otakoyi Inspector): remove
+   what the installation does not have, add its own controls, rename layers to choose control ids.
+   Keep the standard addresses wherever the control is the same.
+4. Export: Otakoyi Inspector › **Export snapshot** and
+   `pnpm figma-export --snapshot <file> --contract <installation>/otakoyi/osc-contract.json`, or
+   from the REST API `pnpm figma-export --file D2HHS8lt7PxZqxibv9PlOQ --page "Client · <Name>"`
+   (REST may miss annotations and Brand modes — prefer the snapshot). Fix the report's errors.
+
+## Client · Template today
+
+`tools/figma-export/fixtures/template.json` is a snapshot of the page (pult screens in full, other
+screens as frame shells, the Brand modes; the sections use `Aurora · Template`);
+`template.config.json` and `template.report.md` next to it are the exporter's output, kept as
+snapshot tests (0 errors, no draft annotations). Re-dump the fixture when the page changes.

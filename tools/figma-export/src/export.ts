@@ -51,7 +51,7 @@ export interface ExportOptions {
   /** The published config: `revision` is bumped when the pults differ. */
   previous?: { installation?: { revision?: number }; pults?: unknown };
   /**
-   * Figma Brand mode for the config's `theme` colours (e.g. "Aurora · Phase One"). Default: the
+   * Figma Brand mode for the config's `theme` colours (e.g. "Aurora · Template"). Default: the
    * mode set on the pult frames' section (or frame, or page).
    */
   brand?: string;

@@ -5,7 +5,7 @@
   "fileKey": "D2HHS8lt7PxZqxibv9PlOQ",
   "page": {
     "id": "36:2",
-    "name": "Client · Phase One"
+    "name": "Client · Template"
   },
   "brand": {
     "collection": "Brand",
@@ -20,7 +20,7 @@
         "brand/on-accent": "#0D1418",
         "brand/primary-signal-light": "#4F9116"
       },
-      "Aurora · Phase One": {
+      "Aurora · Template": {
         "brand/primary": "#5CE6C8",
         "brand/on-primary": "#06140F",
         "brand/primary-pressed": "#3BBFA3",
@@ -37,7 +37,7 @@
       "name": "Phone — lobby controller (primary for permanent installations)",
       "type": "SECTION",
       "box": [0, 0, 10684, 1154],
-      "brandMode": "Aurora · Phase One",
+      "brandMode": "Aurora · Template",
       "children": [
         {
           "id": "48:1988",
@@ -196,7 +196,7 @@
                   "annotations": [
                     {
                       "category": "OSC",
-                      "text": "**/wall/mode** `\"react\" | \"day\" | \"night\" | \"contrast\"` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                      "text": "**/wall/mode** `\"react\" | \"day\" | \"night\" | \"contrast\"` · feedback ✓"
                     },
                     {
                       "category": "Depends on",
@@ -241,8 +241,7 @@
                               "name": "Icon",
                               "type": "INSTANCE",
                               "box": [2544, 401, 22, 22],
-                              "component": "Icon/lightning",
-                              "props": {}
+                              "component": "Icon/lightning"
                             }
                           ]
                         },
@@ -257,8 +256,7 @@
                               "name": "Icon",
                               "type": "INSTANCE",
                               "box": [2635, 401, 22, 22],
-                              "component": "Icon/sun",
-                              "props": {}
+                              "component": "Icon/sun"
                             }
                           ]
                         },
@@ -273,8 +271,7 @@
                               "name": "Icon",
                               "type": "INSTANCE",
                               "box": [2725, 401, 22, 22],
-                              "component": "Icon/moon",
-                              "props": {}
+                              "component": "Icon/moon"
                             }
                           ]
                         },
@@ -289,8 +286,7 @@
                               "name": "Icon",
                               "type": "INSTANCE",
                               "box": [2816, 401, 22, 22],
-                              "component": "Icon/circle-half",
-                              "props": {}
+                              "component": "Icon/circle-half"
                             }
                           ]
                         }
@@ -308,7 +304,7 @@
                   "annotations": [
                     {
                       "category": "OSC",
-                      "text": "**/wall/logo**, **/wall/live-data**, **/wall/audio-react** → `1 | 0` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                      "text": "**/wall/logo**, **/wall/live-data**, **/wall/audio-react** → `1 | 0` · feedback ✓"
                     },
                     {
                       "category": "Depends on",
@@ -338,8 +334,7 @@
                               "name": "Icon",
                               "type": "INSTANCE",
                               "box": [2522, 476, 20, 20],
-                              "component": "Icon/device-mobile",
-                              "props": {}
+                              "component": "Icon/device-mobile"
                             },
                             {
                               "id": "I52:1252;47:102;52:1347;32:107",
@@ -386,8 +381,7 @@
                               "name": "Icon",
                               "type": "INSTANCE",
                               "box": [2522, 533, 20, 20],
-                              "component": "Icon/sliders-horizontal",
-                              "props": {}
+                              "component": "Icon/sliders-horizontal"
                             },
                             {
                               "id": "I52:1252;47:102;52:1350;32:107",
@@ -434,8 +428,7 @@
                               "name": "Icon",
                               "type": "INSTANCE",
                               "box": [2522, 590, 20, 20],
-                              "component": "Icon/waveform",
-                              "props": {}
+                              "component": "Icon/waveform"
                             },
                             {
                               "id": "I52:1252;47:102;52:1353;32:107",
@@ -475,45 +468,11 @@
                   "annotations": [
                     {
                       "category": "OSC",
-                      "text": "**/wall/brightness** `float 0–1` · absolute · 60 Hz · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                      "text": "**/wall/brightness** `float 0–1` · absolute · 60 Hz · feedback ✓"
                     },
                     {
                       "category": "Depends on",
                       "text": "Double-tap resets to default 0.6. Hidden while Blackout is on."
-                    }
-                  ],
-                  "children": [
-                    {
-                      "id": "I52:1355;11:48",
-                      "name": "Header",
-                      "type": "FRAME",
-                      "box": [2506, 646, 370, 18],
-                      "children": [
-                        {
-                          "id": "I52:1355;11:49",
-                          "name": "Label",
-                          "type": "TEXT",
-                          "text": "Brightness"
-                        },
-                        {
-                          "id": "I52:1355;11:50",
-                          "name": "Frame",
-                          "type": "FRAME",
-                          "box": [2592, 655, 244, 1]
-                        },
-                        {
-                          "id": "I52:1355;11:51",
-                          "name": "Value",
-                          "type": "TEXT",
-                          "text": "0.60"
-                        }
-                      ]
-                    },
-                    {
-                      "id": "I52:1355;11:52",
-                      "name": "Body",
-                      "type": "FRAME",
-                      "box": [2506, 672, 370, 56]
                     }
                   ]
                 },
@@ -533,77 +492,11 @@
                   "annotations": [
                     {
                       "category": "OSC",
-                      "text": "**/wall/hue-drift** `float 0–1` · relative (drag moves by distance) · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                      "text": "**/wall/hue-drift** `float 0–1` · relative (drag moves by distance) · feedback ✓"
                     },
                     {
                       "category": "Depends on",
                       "text": "Value comes back from the installation; the pult never jumps to the finger."
-                    }
-                  ],
-                  "children": [
-                    {
-                      "id": "I52:1368;25:128",
-                      "name": "Header",
-                      "type": "FRAME",
-                      "box": [2506, 746, 370, 18],
-                      "children": [
-                        {
-                          "id": "I52:1368;25:129",
-                          "name": "Label",
-                          "type": "TEXT",
-                          "text": "Hue drift"
-                        },
-                        {
-                          "id": "I52:1368;25:130",
-                          "name": "Frame",
-                          "type": "FRAME",
-                          "box": [2579, 755, 228, 1]
-                        },
-                        {
-                          "id": "I52:1368;25:160",
-                          "name": "Icon",
-                          "type": "INSTANCE",
-                          "box": [2815, 748, 14, 14],
-                          "component": "Icon/arrows-clockwise",
-                          "props": {}
-                        },
-                        {
-                          "id": "I52:1368;25:131",
-                          "name": "Value",
-                          "type": "TEXT",
-                          "text": "+0.02"
-                        }
-                      ]
-                    },
-                    {
-                      "id": "I52:1368;25:132",
-                      "name": "Body",
-                      "type": "FRAME",
-                      "box": [2506, 772, 370, 56],
-                      "children": [
-                        {
-                          "id": "I52:1368;30:212",
-                          "name": "Wheel",
-                          "type": "FRAME",
-                          "box": [2512, 782, 358, 36]
-                        },
-                        {
-                          "id": "I52:1368;30:241",
-                          "name": "Icon",
-                          "type": "INSTANCE",
-                          "box": [2506, 824, 14, 14],
-                          "component": "Icon/minus",
-                          "props": {}
-                        },
-                        {
-                          "id": "I52:1368;30:243",
-                          "name": "Icon",
-                          "type": "INSTANCE",
-                          "box": [2862, 824, 14, 14],
-                          "component": "Icon/plus",
-                          "props": {}
-                        }
-                      ]
                     }
                   ]
                 }
@@ -821,7 +714,7 @@
                   "annotations": [
                     {
                       "category": "OSC",
-                      "text": "**/prompt/text** `string` (live prompt) · applied ✓ when the installation echoes it or sends **/prompt/text/applied**\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                      "text": "**/prompt/text** `string` (live prompt) · applied ✓ when the installation echoes it or sends **/prompt/text/applied**"
                     },
                     {
                       "category": "Depends on",
@@ -835,11 +728,10 @@
                   "type": "INSTANCE",
                   "box": [6362, 608, 370, 308],
                   "component": "Prompt Mix",
-                  "props": {},
                   "annotations": [
                     {
                       "category": "OSC",
-                      "text": "**/prompt/text/a** `string`, **/prompt/text/b** `string`, **/prompt/text/mix** `float 0–1` (crossfade between two presets)\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                      "text": "**/prompt/text/a** `string`, **/prompt/text/b** `string`, **/prompt/text/mix** `float 0–1` (crossfade between two presets)"
                     },
                     {
                       "category": "Depends on",
@@ -926,7 +818,7 @@
       "name": "Tablet — live-event VJ console (primary for live events)",
       "type": "SECTION",
       "box": [0, 1354, 28460, 1114],
-      "brandMode": "Aurora · Phase One",
+      "brandMode": "Aurora · Template",
       "children": [
         {
           "id": "54:845",
@@ -1048,7 +940,7 @@
                           "box": [6782, 1620, 110, 40],
                           "component": "Screen Tab",
                           "props": {
-                            "Label": "Cues",
+                            "Label": "Prompts",
                             "State": "Inactive"
                           },
                           "children": [
@@ -1056,7 +948,7 @@
                               "id": "I54:1029;47:269;54:1050;10:38",
                               "name": "Label",
                               "type": "TEXT",
-                              "text": "Cues"
+                              "text": "Prompts"
                             }
                           ]
                         },
@@ -1097,11 +989,10 @@
                   "type": "INSTANCE",
                   "box": [6550, 1680, 379, 631],
                   "component": "Fader Bank",
-                  "props": {},
                   "annotations": [
                     {
                       "category": "OSC",
-                      "text": "**/mix/layer/{1–4}/opacity** `float 0–1` · **/mix/layer/{1–4}/on** `1 | 0` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                      "text": "**/mix/layer/{1–4}/opacity** `float 0–1` · **/mix/layer/{1–4}/on** `1 | 0` · feedback ✓"
                     },
                     {
                       "category": "Depends on",
@@ -1374,13 +1265,12 @@
                       "id": "54:1356",
                       "name": "Knob Group",
                       "type": "INSTANCE",
-                      "box": [6945, 1680, 379, 442],
+                      "box": [6945, 1680, 379, 431],
                       "component": "Knob Group",
-                      "props": {},
                       "annotations": [
                         {
                           "category": "OSC",
-                          "text": "**/fx/shape/{knob-id}** `float 0–1` · 240° knobs · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                          "text": "**/fx/shape/{knob-id}** `float 0–1` · 240° knobs · feedback ✓"
                         },
                         {
                           "category": "Depends on",
@@ -1392,7 +1282,7 @@
                           "id": "I54:1356;51:224",
                           "name": "Console Panel",
                           "type": "INSTANCE",
-                          "box": [6945, 1680, 379, 442],
+                          "box": [6945, 1680, 379, 431],
                           "component": "Console Panel",
                           "props": {
                             "Title": "SHAPE"
@@ -1413,7 +1303,7 @@
                                   "id": "I54:1356;51:224;51:436",
                                   "name": "Grid",
                                   "type": "FRAME",
-                                  "box": [6961, 1722, 347, 384],
+                                  "box": [6961, 1722, 347, 373],
                                   "children": [
                                     {
                                       "id": "I54:1356;51:224;51:437",
@@ -1457,13 +1347,13 @@
                                       "id": "I54:1356;51:224;51:440",
                                       "name": "Row",
                                       "type": "FRAME",
-                                      "box": [6961, 1920, 347, 186],
+                                      "box": [6961, 1909, 347, 186],
                                       "children": [
                                         {
                                           "id": "I54:1356;51:224;51:441",
                                           "name": "Knob",
                                           "type": "INSTANCE",
-                                          "box": [6961, 1920, 166, 186],
+                                          "box": [6961, 1909, 166, 186],
                                           "component": "Knob",
                                           "props": {
                                             "Value": "+12",
@@ -1478,7 +1368,7 @@
                                           "id": "I54:1356;51:224;51:442",
                                           "name": "Knob",
                                           "type": "INSTANCE",
-                                          "box": [7143, 1920, 166, 186],
+                                          "box": [7143, 1909, 166, 186],
                                           "component": "Knob",
                                           "props": {
                                             "Value": "+12",
@@ -1503,13 +1393,12 @@
                       "id": "54:1749",
                       "name": "Layer Toggles",
                       "type": "INSTANCE",
-                      "box": [6945, 2138, 379, 173],
+                      "box": [6945, 2127, 379, 184],
                       "component": "Layer Toggles",
-                      "props": {},
                       "annotations": [
                         {
                           "category": "OSC",
-                          "text": "**/layers/{name}** `1 | 0` · multi-select · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                          "text": "**/layers/{name}** `1 | 0` · multi-select · feedback ✓"
                         },
                         {
                           "category": "Depends on",
@@ -1521,7 +1410,7 @@
                           "id": "I54:1749;51:559",
                           "name": "Console Panel",
                           "type": "INSTANCE",
-                          "box": [6945, 2138, 379, 173],
+                          "box": [6945, 2127, 379, 184],
                           "component": "Console Panel",
                           "props": {
                             "Title": "LAYERS"
@@ -1542,21 +1431,20 @@
                                   "id": "I54:1749;51:559;51:617",
                                   "name": "Button Group",
                                   "type": "INSTANCE",
-                                  "box": [6961, 2199, 347, 78],
+                                  "box": [6961, 2193, 347, 78],
                                   "component": "Button Group",
-                                  "props": {},
                                   "children": [
                                     {
                                       "id": "I54:1749;51:559;51:617;31:73",
                                       "name": "Buttons",
                                       "type": "FRAME",
-                                      "box": [6961, 2199, 347, 78],
+                                      "box": [6961, 2193, 347, 78],
                                       "children": [
                                         {
                                           "id": "I54:1749;51:559;51:617;31:74",
                                           "name": "Group Button",
                                           "type": "INSTANCE",
-                                          "box": [6961, 2199, 78, 78],
+                                          "box": [6961, 2193, 78, 78],
                                           "component": "Group Button",
                                           "props": {
                                             "showCaption": true,
@@ -1569,7 +1457,7 @@
                                               "id": "I54:1749;51:559;51:617;31:74;31:55",
                                               "name": "Body",
                                               "type": "FRAME",
-                                              "box": [6961, 2199, 78, 56],
+                                              "box": [6961, 2193, 78, 56],
                                               "children": [
                                                 {
                                                   "id": "I54:1749;51:559;51:617;31:74;31:56",
@@ -1591,7 +1479,7 @@
                                           "id": "I54:1749;51:559;51:617;31:79",
                                           "name": "Group Button",
                                           "type": "INSTANCE",
-                                          "box": [7051, 2199, 78, 78],
+                                          "box": [7051, 2193, 78, 78],
                                           "component": "Group Button",
                                           "props": {
                                             "showCaption": true,
@@ -1604,7 +1492,7 @@
                                               "id": "I54:1749;51:559;51:617;31:79;31:60",
                                               "name": "Body",
                                               "type": "FRAME",
-                                              "box": [7051, 2199, 78, 56],
+                                              "box": [7051, 2193, 78, 56],
                                               "children": [
                                                 {
                                                   "id": "I54:1749;51:559;51:617;31:79;31:61",
@@ -1626,7 +1514,7 @@
                                           "id": "I54:1749;51:559;51:617;31:84",
                                           "name": "Group Button",
                                           "type": "INSTANCE",
-                                          "box": [7141, 2199, 78, 78],
+                                          "box": [7141, 2193, 78, 78],
                                           "component": "Group Button",
                                           "props": {
                                             "showCaption": true,
@@ -1639,7 +1527,7 @@
                                               "id": "I54:1749;51:559;51:617;31:84;31:60",
                                               "name": "Body",
                                               "type": "FRAME",
-                                              "box": [7141, 2199, 78, 56],
+                                              "box": [7141, 2193, 78, 56],
                                               "children": [
                                                 {
                                                   "id": "I54:1749;51:559;51:617;31:84;31:61",
@@ -1661,7 +1549,7 @@
                                           "id": "I54:1749;51:559;51:617;31:89",
                                           "name": "Group Button",
                                           "type": "INSTANCE",
-                                          "box": [7231, 2199, 78, 78],
+                                          "box": [7231, 2193, 78, 78],
                                           "component": "Group Button",
                                           "props": {
                                             "showCaption": true,
@@ -1674,7 +1562,7 @@
                                               "id": "I54:1749;51:559;51:617;31:89;31:55",
                                               "name": "Body",
                                               "type": "FRAME",
-                                              "box": [7231, 2199, 78, 56],
+                                              "box": [7231, 2193, 78, 56],
                                               "children": [
                                                 {
                                                   "id": "I54:1749;51:559;51:617;31:89;31:56",
@@ -1716,11 +1604,10 @@
                       "type": "INSTANCE",
                       "box": [7341, 1680, 379, 366],
                       "component": "Camera Control",
-                      "props": {},
                       "annotations": [
                         {
                           "category": "OSC",
-                          "text": "**/camera/aim** `x y float −1…1` · springs back · 30 Hz\n**/camera/zoom** `float` · relative (Zoom nudge, drag moves by distance) · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                          "text": "**/camera/aim** `x y float −1…1` · springs back · 30 Hz\n**/camera/zoom** `float` · relative (Zoom nudge, drag moves by distance) · feedback ✓"
                         },
                         {
                           "category": "Depends on",
@@ -1827,11 +1714,10 @@
                       "type": "INSTANCE",
                       "box": [7341, 2062, 379, 249],
                       "component": "Scene Bar",
-                      "props": {},
                       "annotations": [
                         {
                           "category": "OSC",
-                          "text": "**/scene** `int 1–4` + crossfade `float s` · feedback ✓\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                          "text": "**/scene** `int 1–4` · crossfade=1.5s · feedback ✓"
                         },
                         {
                           "category": "Depends on",
@@ -1888,8 +1774,7 @@
                                               "name": "Icon",
                                               "type": "INSTANCE",
                                               "box": [7392, 2189, 22, 22],
-                                              "component": "Icon/lightning",
-                                              "props": {}
+                                              "component": "Icon/lightning"
                                             }
                                           ]
                                         },
@@ -1904,8 +1789,7 @@
                                               "name": "Icon",
                                               "type": "INSTANCE",
                                               "box": [7477, 2189, 22, 22],
-                                              "component": "Icon/sun",
-                                              "props": {}
+                                              "component": "Icon/sun"
                                             }
                                           ]
                                         },
@@ -1920,8 +1804,7 @@
                                               "name": "Icon",
                                               "type": "INSTANCE",
                                               "box": [7562, 2189, 22, 22],
-                                              "component": "Icon/moon",
-                                              "props": {}
+                                              "component": "Icon/moon"
                                             }
                                           ]
                                         },
@@ -1936,8 +1819,7 @@
                                               "name": "Icon",
                                               "type": "INSTANCE",
                                               "box": [7647, 2189, 22, 22],
-                                              "component": "Icon/circle-half",
-                                              "props": {}
+                                              "component": "Icon/circle-half"
                                             }
                                           ]
                                         }
@@ -2109,15 +1991,15 @@
                           "box": [17102, 1620, 110, 40],
                           "component": "Screen Tab",
                           "props": {
-                            "Label": "Cues",
-                            "State": "Inactive"
+                            "Label": "Prompts",
+                            "State": "Active"
                           },
                           "children": [
                             {
-                              "id": "I109:13464;47:269;109:13478;10:38",
+                              "id": "I109:13464;47:269;109:13478;10:36",
                               "name": "Label",
                               "type": "TEXT",
-                              "text": "Cues"
+                              "text": "Prompts"
                             }
                           ]
                         },
@@ -2128,15 +2010,15 @@
                           "box": [17216, 1620, 110, 40],
                           "component": "Screen Tab",
                           "props": {
-                            "Label": "Prompts",
-                            "State": "Active"
+                            "Label": "Scenes",
+                            "State": "Inactive"
                           },
                           "children": [
                             {
-                              "id": "I109:13464;47:269;109:13479;10:36",
+                              "id": "I109:13464;47:269;109:13479;10:38",
                               "name": "Label",
                               "type": "TEXT",
-                              "text": "Prompts"
+                              "text": "Scenes"
                             }
                           ]
                         }
@@ -2170,7 +2052,7 @@
                       "annotations": [
                         {
                           "category": "OSC",
-                          "text": "**/prompt/text** `string` (live prompt) · applied ✓ when the installation echoes it or sends **/prompt/text/applied**\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                          "text": "**/prompt/text** `string` (live prompt) · applied ✓ when the installation echoes it or sends **/prompt/text/applied**"
                         },
                         {
                           "category": "Depends on",
@@ -2191,7 +2073,7 @@
                       "annotations": [
                         {
                           "category": "OSC",
-                          "text": "**/mic/level** `float 0–1`, **/mic/bands** `float×4` (bass…high), **/mic/beat** `1` · 30 Hz, analysed on the device\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                          "text": "**/mic/level** `float 0–1`, **/mic/bands** `float×4` (bass…high), **/mic/beat** `1` · 30 Hz, analysed on the device"
                         },
                         {
                           "category": "Depends on",
@@ -2213,11 +2095,10 @@
                       "type": "INSTANCE",
                       "box": [17472, 1680, 560, 631],
                       "component": "Prompt Mix",
-                      "props": {},
                       "annotations": [
                         {
                           "category": "OSC",
-                          "text": "**/prompt/text/a** `string`, **/prompt/text/b** `string`, **/prompt/text/mix** `float 0–1` (crossfade between two presets)\n*draft — confirm against the installation’s&#32;`otakoyi/osc-contract.json`*"
+                          "text": "**/prompt/text/a** `string`, **/prompt/text/b** `string`, **/prompt/text/mix** `float 0–1` (crossfade between two presets)"
                         },
                         {
                           "category": "Depends on",

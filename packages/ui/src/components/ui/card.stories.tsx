@@ -30,7 +30,7 @@ export const Default: Story = {
     <Card style={{ width: 320 }}>
       <CardHeader>
         <CardTitle>Lobby wall</CardTitle>
-        <CardDescription>Phase One · online</CardDescription>
+        <CardDescription>Aurora Hall · online</CardDescription>
       </CardHeader>
       <CardContent>
         <Text>Card content</Text>

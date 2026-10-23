@@ -1,6 +1,6 @@
-# Figma export — Client · Phase One (D2HHS8lt7PxZqxibv9PlOQ)
+# Figma export — Client · Template (D2HHS8lt7PxZqxibv9PlOQ)
 
-Schema: **valid** · pult `phase-one` · 3 pages · 24 controls · 0 errors · 7 warnings · 24 notes · 40 screens skipped
+Schema: **valid** · pult `template` · 3 pages · 24 controls · 0 errors · 5 warnings · 23 notes · 40 screens skipped
 
 | Page | Title | Phone frame | Tablet frame | Controls |
 | --- | --- | --- | --- | --- |
@@ -8,17 +8,15 @@ Schema: **valid** · pult `phase-one` · 3 pages · 24 controls · 0 errors · 7
 | `prompts` | Prompts | Phone / 12 Prompts — live (109:11394) | Tablet / 12 Prompts — live (109:13460) | 2 |
 | `mix` | Mix | — | Tablet / 04 VJ console — in control (54:1012) | 16 |
 
-## Warnings (7)
+## Warnings (5)
 
 - `tab-without-frame` — phone tabs without a pult frame (not exported): Scenes
-- `tabs-disagree` — tablet tab bars differ between frames: [Mix | FX | Cues | Scenes] vs [Mix | FX | Cues | Prompts]
-- `tab-without-frame` — tablet tabs without a pult frame (not exported): FX, Cues, Scenes
-- `draft-annotation` — 14 OSC annotations are marked draft — confirm them against the installation's otakoyi/osc-contract.json: Segmented, List Card, Fader, Prompt Presets, Prompt Mix, Fader Bank, Knob Group, Layer Toggles, Camera Control, Scene Bar, Mic
+- `tab-without-frame` — tablet tabs without a pult frame (not exported): FX, Scenes
 - `missing-form-factor` tablet/live — page "Live" has no tablet frame; tablet layout copied from the phone frame
 - `not-on-form-factor` phone/prompts — room-sound not in the phone frame of "Prompts"; appended full-width at the bottom of the phone layout [109:11394]
 - `missing-form-factor` phone/mix — page "Mix" has no phone frame; phone layout reflowed from the tablet frame
 
-## Notes (24)
+## Notes (23)
 
 - `frame-skipped` — "Phone / 05 Pult — view only" skipped (Pult Header Mode=View) [52:1479]
 - `icon-options` phone/live — scene: icon-only options; labels derived (React, Day, Night, Contrast) — the app needs text for accessibility [52:1235]
@@ -29,7 +27,6 @@ Schema: **valid** · pult `phase-one` · 3 pages · 24 controls · 0 errors · 7
 - `depends-on-note` phone/prompts — "Prompt Presets": Presets live in the bridge (not the config): create, edit, reorder, soft delete with Undo. Applying → Error after 4 s without confirmation. Lease holder or studio only. [109:11568]
 - `depends-on-note` phone/prompts — "Prompt Mix": Needs two presets; "Use in mix" from the context menu fills A/B. [109:11597]
 - `icon-options` tablet/mix — scene: icon-only options; labels derived (Lightning, Sun, Moon, Circle half) — the app needs text for accessibility [I63:3413;51:619;51:658]
-- `crossfade-seconds` tablet/mix — scene: crossfade mentioned without seconds (add crossfade=<s>); not exported [I63:3413;51:619;51:658]
 - `id-suffixed` tablet/mix — 4 controls named "power" → power-1, power-2, power-3, power-4; rename the layers to choose ids
 - `depends-on-note` tablet/mix — "Fader Bank": Strip off → fader dims and stops sending; the value is kept and resent when switched back on. [54:1053]
 - `depends-on-note` tablet/mix — "Knob Group": Knob ids = layer names in Figma (Inspector). Hue knob sends degrees 0–360. [54:1356]
@@ -42,5 +39,5 @@ Schema: **valid** · pult `phase-one` · 3 pages · 24 controls · 0 errors · 7
 - `default-layer-names` — 21 control layers keep the component name, so ids were derived from labels / panel titles: scene (Segmented), logo (List Row), live-data (List Row), audio-react (List Row), brightness (Fader), hue-drift (Fader), prompt-presets (Prompt Presets), layer-1 (Fader), layer-2 (Fader), layer-3 (Fader), master (Fader), hue-shift (Knob), speed (Knob), zoom (Knob), rotate (Knob), layers (Button Group), pan-tilt (Thumbstick), zoom-nudge (Fader), room-sound (Mic) — rename the layers to fix the ids
 - `id-renamed` tablet/mix — scene is already used on page "live"; renamed to mix-scene (control ids are unique per pult) [I63:3413;51:619;51:658]
 - `form-factor` — primary form factor: phone (drawn first on the page; set pult.formFactor in --base to choose)
-- `brand-mode` — theme colours from the Figma Brand mode "Aurora · Phase One" (set on the client page)
+- `brand-mode` — theme colours from the Figma Brand mode "Aurora · Template" (set on the client page)
 - `default-target` — no --base config: targets set to the default (udp 7000, feedback 9000)

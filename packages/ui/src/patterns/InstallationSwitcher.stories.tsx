@@ -9,8 +9,8 @@ const meta = {
   component: InstallationSwitcher,
   args: {
     installations: [
-      { id: "lobby", name: "Phase One — Lobby", status: "current" },
-      { id: "rooftop", name: "Phase One — Rooftop", status: "offline" },
+      { id: "lobby", name: "Aurora Hall — Lobby", status: "current" },
+      { id: "rooftop", name: "Aurora Hall — Rooftop", status: "offline" },
       { id: "demo", name: "Demo installation", status: "online" },
     ],
     onSelect: fn(),
@@ -41,7 +41,7 @@ const meta = {
           behaviour: [
             "`onSelect(id)`; `onAdd` opens the scanner. Without `onAdd` the add row is hidden.",
           ],
-          a11y: ["Rows read “Phase One — Lobby: current”."],
+          a11y: ["Rows read “Aurora Hall — Lobby: current”."],
           content: ["Names ≤ 28 characters, wrap to 2 lines."],
           figma: { component: "Installation Switcher (Patterns)", node: "85:2127" },
         }),

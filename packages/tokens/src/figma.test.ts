@@ -23,7 +23,7 @@ describe("Figma Brand modes", () => {
   });
 
   it("maps a mode to the config theme; the Aurora mode recolours the theme", () => {
-    const { theme, unknown, dropped } = brandFromFigma(figma.modes["Aurora · Phase One"]!);
+    const { theme, unknown, dropped } = brandFromFigma(figma.modes["Aurora · Template"]!);
     expect(unknown).toEqual([]);
     expect(dropped).toEqual([]);
     expect(theme).toMatchObject({ primary: "#5CE6C8", accent: "#B7A6FF", onAccent: "#0D0A1A" });

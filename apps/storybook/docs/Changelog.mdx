@@ -7,6 +7,17 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-23 — Client · Template (was Phase One)
+
+**Changed**
+
+- The Figma page **Client · Phase One** is now **Client · Template**, the starting point for every
+  client pult; its OSC annotations are the standard address set (no longer drafts) and the Brand
+  mode is `Aurora · Template`. Story _Pult Pager › Template · Aurora_ (was _Phase One · Aurora_),
+  exporter fixture `tools/figma-export/fixtures/template.*`, pult id `template`. Sample client
+  names in stories are now "Aurora Hall".
+- Exporter: `crossfade=1.5s` (seconds with a unit) is read like `crossfade=1.5`.
+
 ## 2026-10-23 — Colour as three addresses, Status notifications
 
 **Added**

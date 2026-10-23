@@ -66,6 +66,7 @@ describe("parseOsc", () => {
     expect(s.degrees).toBe(240);
     expect(s.keys).toEqual({ crossfade: "1.5", curve: "log", default: "0.3" });
     expect(parseOsc("**/scene** `int 1–4` + crossfade `float s`").crossfade).toBe(true);
+    expect(parseOsc("**/scene** `int 1–4` · crossfade=1.5s · feedback ✓").crossfade).toBe(1.5);
   });
 
   it("finds plain addresses when nothing is bold", () => {

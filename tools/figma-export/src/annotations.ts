@@ -151,8 +151,10 @@ export function parseOsc(raw: string): OscSpec {
   if (/multi-?select/i.test(rest)) spec.multiSelect = true;
   const deg = /(\d+)\s*°/.exec(rest);
   if (deg) spec.degrees = Number(deg[1]);
-  if (spec.keys.crossfade !== undefined && Number.isFinite(Number(spec.keys.crossfade)))
-    spec.crossfade = Number(spec.keys.crossfade);
+  // `crossfade=1.5` or `crossfade=1.5s` (seconds).
+  const fade = spec.keys.crossfade?.replace(/s$/i, "");
+  if (fade !== undefined && fade !== "" && Number.isFinite(Number(fade)))
+    spec.crossfade = Number(fade);
   else if (/\bcrossfade\b/i.test(rest)) spec.crossfade = true;
   return spec;
 }

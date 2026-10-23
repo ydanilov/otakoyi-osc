@@ -98,11 +98,15 @@ const meta = {
           ],
           content: ["Title one word (“Settings”)."],
           figma: {
-            component: "Settings drawer (Demo › Tablet / 04 Settings, Phase One › Tablet / 07)",
+            component:
+              "Settings drawer (Demo › Tablet / 04 Settings, Client · Template › Tablet / 07)",
             node: "106:209",
             variants: [
               ["Tablet / 04 Settings (left drawer) 106:209", "Drawer + DrawerHeader"],
-              ["Phase One › Tablet / 07 Settings (left drawer) 99:7941", "Drawer + DrawerHeader"],
+              [
+                "Client · Template › Tablet / 07 Settings (left drawer) 99:7941",
+                "Drawer + DrawerHeader",
+              ],
             ],
           },
         }),
