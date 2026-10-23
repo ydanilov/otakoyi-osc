@@ -198,6 +198,20 @@ export const BUILTIN_PRESETS: readonly ControlPreset[] = [
     props: { rateHz: 60, deadzone: 0.08 },
   },
   {
+    id: "gyroscope/steer",
+    type: "gyroscope",
+    label: "Steer",
+    description: "±20° reaches the edge: small wrist moves, 30 Hz.",
+    props: { range: 20, rateHz: 30 },
+  },
+  {
+    id: "gyroscope/sway",
+    type: "gyroscope",
+    label: "Sway",
+    description: "±45° for big, relaxed gestures, 30 Hz.",
+    props: { range: 45, rateHz: 30 },
+  },
+  {
     id: "image/screen",
     type: "image",
     label: "Screen image",

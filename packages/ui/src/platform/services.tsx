@@ -1,4 +1,4 @@
-import type { AudioBlock } from "@osc/controls";
+import type { AudioBlock, TiltSample } from "@osc/controls";
 import type { ImageAssetDto, PromptPresetDto } from "@osc/protocol";
 import * as React from "react";
 import type { ImageSourcePropType } from "react-native";
@@ -44,6 +44,26 @@ export interface AudioInput {
     opts: { rateHz: number; bands: number },
     onBlock: (b: AudioBlock) => void,
   ): Promise<() => void>;
+}
+
+/** Motion access as the platform reports it before asking. */
+export type MotionPermission = "granted" | "denied" | "undetermined";
+
+/**
+ * Device orientation for the gyroscope control (expo-sensors DeviceMotion in the app, the
+ * DeviceOrientation API in the web pult).
+ */
+export interface MotionInput {
+  /** False when the device has no motion sensor or the page may not read it (web over HTTP). */
+  readonly available: boolean;
+  /** Current permission without asking (Permission denied shows before the first tap). */
+  permission(): Promise<MotionPermission>;
+  /** Ask for motion access (iOS Motion & Fitness; the web asks on this user gesture). */
+  requestPermission(): Promise<boolean>;
+  /** Start reading the orientation about `rateHz` times a second. Returns stop(). */
+  start(opts: { rateHz: number }, onSample: (s: TiltSample) => void): Promise<() => void>;
+  /** Open the app's system settings (Permission denied → Open Settings). Missing: no button. */
+  openSettings?: (() => void) | undefined;
 }
 
 /** Image library on the bridge (or a demo stand-in). */
@@ -110,6 +130,7 @@ export interface ControlServices {
   pult: string;
   imagePicker: ImagePicker;
   audio: AudioInput;
+  motion: MotionInput;
   media: MediaLibrary;
   prompts: PromptPresets;
   /**
@@ -137,6 +158,12 @@ export const stubServices: ControlServices = {
   imagePicker: { available: false, pick: async () => null },
   audio: {
     available: false,
+    requestPermission: async () => false,
+    start: unavailable,
+  },
+  motion: {
+    available: false,
+    permission: async () => "undetermined",
     requestPermission: async () => false,
     start: unavailable,
   },

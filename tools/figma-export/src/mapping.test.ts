@@ -269,6 +269,29 @@ describe("mapFrame — controls", () => {
     expect(r.issues.filter((i) => i.level === "warning")).toEqual([]);
   });
 
+  it("maps a Gyroscope with its rate and range", () => {
+    const r = mapFrame(
+      frame(
+        inst("Gyroscope", {
+          name: "tilt",
+          props: { Label: "Device tilt", State: "Off" },
+          annotations: osc("**/lab/tilt** `x y float −1…1` · 20 Hz · range=20"),
+        }),
+      ),
+    );
+    expect(r.controls.map((c) => c.control)).toEqual([
+      {
+        id: "tilt",
+        type: "gyroscope",
+        label: "Device tilt",
+        address: "/lab/tilt",
+        rateHz: 20,
+        range: 20,
+      },
+    ]);
+    expect(r.issues.filter((i) => i.level !== "info")).toEqual([]);
+  });
+
   it("turns Depends on conditions into enabledWhen and prose into notes", () => {
     const r = mapFrame(
       frame(

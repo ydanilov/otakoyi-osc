@@ -182,6 +182,7 @@ describe("Figma heights", () => {
     expect(naturalHeightFor(c({ type: "segmented", label: "Scene" }), sizes)).toBe(78);
     expect(naturalHeightFor(c({ type: "segmented" }), sizes)).toBe(56);
     expect(naturalHeightFor(c({ type: "xy" }), sizes)).toBeUndefined();
+    expect(naturalHeightFor(c({ type: "gyroscope" }), sizes)).toBe(184);
   });
 });
 

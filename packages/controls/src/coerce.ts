@@ -63,6 +63,10 @@ export function coerceValue(c: Control, v: unknown): ControlValue | undefined {
       return isObj(v) && isNum(v.x) && isNum(v.y)
         ? { x: clamp(v.x, -1, 1), y: clamp(v.y, -1, 1) }
         : undefined;
+    case "gyroscope":
+      return isObj(v) && isNum(v.x) && isNum(v.y)
+        ? { x: clamp(v.x, -1, 1), y: clamp(v.y, -1, 1) }
+        : undefined;
     case "buttonGroup": {
       if (!isObj(v) || !Array.isArray(v.on)) return undefined;
       const known = new Set(c.buttons.map((b) => b.id));

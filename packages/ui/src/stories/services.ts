@@ -8,8 +8,9 @@ import { SAMPLE_PAD, SAMPLE_WALL } from "./images";
 
 /**
  * Control services for stories: in-memory media and prompt presets (like the demo installation),
- * an image picker that returns the sample wall image, and a synthetic microphone (a pulsing tone),
- * so image, prompt and mic controls are fully interactive in Storybook without a device.
+ * an image picker that returns the sample wall image, a synthetic microphone (a pulsing tone) and
+ * a synthetic tilt (a slow circle), so image, prompt, mic and gyroscope controls are fully
+ * interactive in Storybook without a device.
  */
 export function storyServices(): ControlServices {
   const { media, prompts } = createMemoryServices("stories");
@@ -25,6 +26,20 @@ export function storyServices(): ControlServices {
       pick: async () => {
         const res = await fetch(SAMPLE_WALL.uri);
         return { name: "sample-wall.png", body: await res.blob(), uri: SAMPLE_WALL.uri };
+      },
+    },
+    // A hand slowly circling the phone: ±18° roll and pitch around a 40° holding angle.
+    motion: {
+      available: true,
+      permission: async () => "granted",
+      requestPermission: async () => true,
+      start: async ({ rateHz }, onSample) => {
+        let t = 0;
+        const id = setInterval(() => {
+          t += 1;
+          onSample({ pitch: 40 - 18 * Math.sin(t / 20), roll: 18 * Math.sin(t / 14) });
+        }, 1000 / rateHz);
+        return () => clearInterval(id);
       },
     },
     audio: {

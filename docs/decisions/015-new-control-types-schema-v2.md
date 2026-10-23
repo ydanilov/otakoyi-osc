@@ -55,6 +55,7 @@ Relative controls hold no value, ignore feedback and have no double-tap reset.
 | `thumbstick`  | `address`, `rateHz` (30), `deadzone` (0.1, radial, travel rescaled), `press?`                      | while held: `<address> f x f y` (−1..1, y up) every 1/rateHz s, even when still; on release springs to centre and sends `0 0` once. Tap: `<press> 1`, `<press> 0`.                                                |
 | `image`       | `address`, `aspect` (16:9 4:3 1:1 9:16 free), `formats`, `maxMB` (10), `fit`, `library`            | after a validated upload or "show" from the library: `<address> s <absolute path on the installation machine>`                                                                                                    |
 | `mic`         | `address` prefix, `rateHz` (30), `outputs` ⊆ level / bands / beat, `bands` (8), `gain` (1)         | `<address>/level f` (RMS 0..1), `<address>/bands f×bands` (log-spaced, 0..1), `<address>/beat i 1` only on a beat. Audio never leaves the device.                                                                 |
+| `gyroscope`   | `address`, `rateHz` (30), `range` (30°, 5..90)                                                     | while switched on: `<address> f x f y` (−1..1, y up; roll → x, pitch → y) from the pose captured on switch-on, `range` degrees = ±1, clamped; at `rateHz`, throttled. Switch off / background: `0 0` once.        |
 | `prompt`      | `address`, `blend` (true), `maxLength` (500), `maxPresets` (32), `default` mix, `confirmMs` (4000) | blend: `<address>/a s`, `<address>/b s`, `<address>/mix f`; without blend: `<address> s`. A preset switched off (or no preset) sends `""` in its slot.                                                            |
 
 ### Where things live
@@ -79,8 +80,11 @@ Relative controls hold no value, ignore feedback and have no double-tap reset.
   normal `set` path.
 - HTTP calls use the socket's credentials: `x-otakoyi-secret` (PIN or studio key) and
   `x-otakoyi-device`. Anything that sends OSC or changes state needs the lease (or the studio).
-- Platform parts (photo picker, microphone capture) sit behind `ControlServices` interfaces in
-  `@osc/ui`; the app chooses the implementation. The web pult uses a file input and Web Audio.
+- Platform parts (photo picker, microphone capture, device motion) sit behind `ControlServices`
+  interfaces in `@osc/ui`; the app chooses the implementation. The web pult uses a file input, Web
+  Audio and DeviceOrientation (HTTPS only; iOS asks on the switch tap). The app reads motion with
+  expo-sensors `DeviceMotion` (in Expo Go). The gyroscope added later needs no schema bump: older
+  apps show it as "Update the app" (`UnsupportedControl`).
 
 ## Consequences
 

@@ -5,7 +5,7 @@ import { View } from "react-native";
 import { Text } from "../components/ui/text";
 import { controlRegistry } from "../controls/registry";
 import type { ControlProps } from "../controls/types";
-import { ControlServicesProvider } from "../platform/services";
+import { ControlServicesProvider, type ControlServices } from "../platform/services";
 import { storyServices } from "./services";
 
 /**
@@ -20,6 +20,7 @@ export function ControlHarness({
   width = 220,
   height = 160,
   showOsc = true,
+  services: overrides,
 }: {
   control: Control;
   value: ControlValue;
@@ -27,6 +28,8 @@ export function ControlHarness({
   width?: number;
   height?: number;
   showOsc?: boolean;
+  /** Replace story services, e.g. a motion input whose permission is denied. */
+  services?: Partial<ControlServices>;
 }) {
   const [v, setV] = React.useState<ControlValue>(value);
   const [sent, setSent] = React.useState<string>("—");
@@ -46,7 +49,7 @@ export function ControlHarness({
         : "(nothing)",
     );
   };
-  const services = React.useMemo(storyServices, []);
+  const services = React.useMemo(() => ({ ...storyServices(), ...overrides }), [overrides]);
   return (
     <ControlServicesProvider value={services}>
       <View style={{ gap: 12 }}>

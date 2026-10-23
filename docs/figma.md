@@ -102,7 +102,8 @@ Debug: Debug Row (Kind=Metric / Control), OSC Log, Debug Tag, Debug HUD.
 Controls: Fader (Absolute / Relative jog wheel / Crossfade × Vertical / Horizontal × Default / Active /
 Fine “×0.2” / Off / Disabled), Knob (Absolute / Relative / Color-Hue × Vertical / Horizontal ×
 Default / Active / Fine / Disabled × Size Regular / Compact, 240° travel), Pad (Size), Toggle (Size ×
-Content=Text / Image), Thumbstick,
+Content=Text / Image), Thumbstick, Gyroscope (Off / Live / Permission denied / View only; uses the
+Menu Switch),
 XY Pad, Meter, Toggle, Pad, Hold to Confirm, Segmented (single-select), Group Button and Button
 Group (multi-select with LED strip), Button Grid, Scene List, Label, Color Picker, Unsupported,
 Touch Light (press response, 134:795; board "Touch light — press response" 134:15404).
@@ -170,8 +171,8 @@ are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 | Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log, Stepper Group     | same names                                                                    | `patterns/Installation.tsx`                                                                    |
 
 New control types (ADR-015) — Fader Mode=Relative/Crossfade, Knob Mode=Relative/Color,
-Thumbstick, Button Group, Image, Mic, Prompt — live in `controls/*` (`Jog.tsx`, `Thumbstick.tsx`,
-`media.tsx`, `Prompt.tsx`, `discrete.tsx`) and have stories. Not in code on purpose: Status Bar and
+Thumbstick, Button Group, Image, Mic, Prompt — and Gyroscope (204:853) live in `controls/*` (`Jog.tsx`,
+`Thumbstick.tsx`, `Gyroscope.tsx`, `media.tsx`, `Prompt.tsx`, `discrete.tsx`) and have stories. Not in code on purpose: Status Bar and
 Home Indicator (device chrome in mockups). Control compositions on the Patterns page (Fader Bank,
 Knob Group, Camera Control, Scene Bar…) are page `panels` in the config, drawn by the pult renderer
 (`pult/Panels.tsx`).

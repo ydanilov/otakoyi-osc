@@ -18,6 +18,7 @@ export { XYPad } from "./controls/XYPad";
 export { Meter } from "./controls/Meter";
 export { JogFader } from "./controls/Jog";
 export { Thumbstick } from "./controls/Thumbstick";
+export { Gyroscope } from "./controls/Gyroscope";
 export {
   PinTouchLight,
   TouchLightSkia,
@@ -44,6 +45,8 @@ export {
   type ImagePicker,
   type ImageSource,
   type MediaLibrary,
+  type MotionInput,
+  type MotionPermission,
   type PickedImage,
   type PromptPresets,
 } from "./platform/services";

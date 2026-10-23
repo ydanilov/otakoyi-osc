@@ -35,6 +35,12 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Otakoyi Control reads how you tilt the phone to move things in the installation, only while Device tilt is switched on."
+        }
       ]
     ],
     "experiments": {

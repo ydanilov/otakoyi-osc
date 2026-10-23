@@ -21,7 +21,10 @@ export function ControlFrame({
   disabled,
   badge,
   relative,
+  valueMuted,
 }: {
+  /** Value in the muted colour: nothing live to show (Figma Gyroscope Off: `—`). */
+  valueMuted?: boolean;
   /** Endless (relative) control: the arrows-clockwise glyph before the value (Figma). */
   relative?: boolean;
   /** Header layout (Figma): `center` for vertical faders and knobs. */
@@ -64,7 +67,13 @@ export function ControlFrame({
             )}
             {relative && <Glyph icon={ArrowsClockwiseIcon} tone="muted" size={14} />}
             {value !== undefined && (
-              <Text className="text-foreground font-mono text-sm" numberOfLines={1}>
+              <Text
+                className={cn(
+                  "font-mono text-sm",
+                  valueMuted ? "text-muted-foreground" : "text-foreground",
+                )}
+                numberOfLines={1}
+              >
                 {value}
               </Text>
             )}
