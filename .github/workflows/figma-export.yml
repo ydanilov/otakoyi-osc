@@ -1,0 +1,98 @@
+name: Export from Figma
+
+# Builds a client's installation config from its Figma page (ADR-014).
+# Actions → Export from Figma → Run workflow → page name, e.g. "Client · Template".
+# Needs the repository secret FIGMA_ACCESS_TOKEN (Figma personal access token, file_content:read).
+
+on:
+  workflow_dispatch:
+    inputs:
+      page:
+        description: "Figma page of the client"
+        required: true
+        default: "Client · Template"
+      brand:
+        description: "Brand mode for the theme (empty = the page's own mode)"
+        required: false
+        default: ""
+      open_pr:
+        description: "Open a pull request with the result"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  FIGMA_FILE: D2HHS8lt7PxZqxibv9PlOQ
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+
+      - name: Client slug
+        id: slug
+        env:
+          PAGE: ${{ inputs.page }}
+        run: |
+          slug=$(printf '%s' "$PAGE" | sed -E 's/^Client[[:space:]]*·[[:space:]]*//' | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+          echo "slug=${slug:-client}" >> "$GITHUB_OUTPUT"
+
+      - name: Export
+        id: export
+        env:
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_ACCESS_TOKEN }}
+          PAGE: ${{ inputs.page }}
+          BRAND: ${{ inputs.brand }}
+          SLUG: ${{ steps.slug.outputs.slug }}
+        run: |
+          if [ -z "$FIGMA_ACCESS_TOKEN" ]; then
+            echo "::error::Add the FIGMA_ACCESS_TOKEN repository secret first (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          out="$GITHUB_WORKSPACE/configs/$SLUG"
+          mkdir -p "$out"
+          args=(--file "$FIGMA_FILE" --page "$PAGE" --out "$out/config.json" --report "$out/report.md" --report-json "$out/report.json" --save-snapshot "$out/snapshot.json" --allow-gaps)
+          [ -n "$BRAND" ] && args+=(--brand "$BRAND")
+          [ -f "$out/config.json" ] && cp "$out/config.json" "$RUNNER_TEMP/previous.json" && args+=(--previous "$RUNNER_TEMP/previous.json")
+          [ -f "$out/osc-contract.json" ] && args+=(--contract "$out/osc-contract.json")
+          pnpm figma-export -- "${args[@]}"
+          echo "dir=configs/$SLUG" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Figma export · $PAGE"
+            echo
+            cat "$out/report.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: config-${{ steps.slug.outputs.slug }}
+          path: ${{ steps.export.outputs.dir }}
+
+      - name: Pull request
+        if: ${{ inputs.open_pr }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGE: ${{ inputs.page }}
+          SLUG: ${{ steps.slug.outputs.slug }}
+          DIR: ${{ steps.export.outputs.dir }}
+        run: |
+          branch="export/$SLUG-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add "$DIR"
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "chore(configs): export $PAGE from Figma"
+          git push -u origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(configs): export $PAGE from Figma" \
+            --body-file "$DIR/report.md"
