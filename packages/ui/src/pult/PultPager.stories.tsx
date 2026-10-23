@@ -13,6 +13,9 @@ import { ThemeProvider } from "../theme/ThemeProvider";
 import { PultPager, PultProvider } from "./PultRenderer";
 import { PultStore } from "./store";
 
+/** Pult pages mount Skia canvases; on a busy CI runner the first paint can take several seconds. */
+const SLOW = { timeout: 8000 };
+
 /** A toggle and a knob that "Depends on" it (`enabledWhen`, Figma annotation). */
 const dependsJson = {
   schemaVersion: 2,
@@ -151,7 +154,7 @@ export const PanelsVjConsole: Story = {
   args: { config: "try", pultIndex: 0, height: 640 },
   globals: { viewport: { value: "tablet" } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByTestId("panel-mix")).toBeTruthy();
+    await expect(await canvas.findByTestId("panel-mix", {}, SLOW)).toBeTruthy();
     await expect(canvas.getByTestId("panel-shape")).toBeTruthy();
     await expect(canvas.getByText("Layer 3")).toBeTruthy();
   },
@@ -162,7 +165,7 @@ export const PanelsLobbyPhone: Story = {
   args: { config: "try", pultIndex: 2, height: 640 },
   globals: { viewport: { value: "phone" } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole("switch", { name: "Live data" })).toBeTruthy();
+    await expect(await canvas.findByRole("switch", { name: "Live data" }, SLOW)).toBeTruthy();
   },
 };
 
@@ -171,7 +174,7 @@ export const DependsOn: Story = {
   name: "Depends on (enabledWhen)",
   args: { config: "depends", height: 420 },
   play: async ({ canvas, userEvent }) => {
-    const gain = await canvas.findByRole("slider", { name: "Gain" });
+    const gain = await canvas.findByRole("slider", { name: "Gain" }, SLOW);
     await expect(gain).toHaveAttribute("aria-disabled", "true");
     await userEvent.click(canvas.getByRole("switch", { name: "Audio react" }));
     await expect(canvas.getByRole("slider", { name: "Gain" })).not.toHaveAttribute(
@@ -190,6 +193,6 @@ export const PhaseOneAurora: Story = {
   args: { config: "phaseOne", height: 640 },
   globals: { viewport: { value: "phone" } },
   play: async ({ canvas }) => {
-    await expect(await canvas.findByRole("switch", { name: "Live data" })).toBeTruthy();
+    await expect(await canvas.findByRole("switch", { name: "Live data" }, SLOW)).toBeTruthy();
   },
 };
