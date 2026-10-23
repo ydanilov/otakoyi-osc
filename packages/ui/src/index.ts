@@ -137,6 +137,7 @@ export {
 export { Dialog } from "./containers/Dialog";
 export { Inspector } from "./containers/Inspector";
 export { Drawer, DrawerHeader } from "./containers/Drawer";
+export { LAYOUT_TEST_ID, SheetScaffold, SheetSurface, SheetToolbar } from "./containers/Sheet";
 export { EdgeSwipe } from "./containers/EdgeSwipe";
 export { PullDownMenu } from "./menus/PullDownMenu";
 export { ContextMenu } from "./menus/ContextMenu";

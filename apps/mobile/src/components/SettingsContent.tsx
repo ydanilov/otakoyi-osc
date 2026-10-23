@@ -10,6 +10,8 @@ import {
   QrCodeIcon,
   ScanIcon,
   Section,
+  SheetScaffold,
+  SheetToolbar,
   StatusNotificationsRow,
   VibrateIcon,
   type StatusNotificationsState,
@@ -17,13 +19,12 @@ import {
 import { Text } from "@osc/ui/components/ui/text";
 import Constants from "expo-constants";
 import * as React from "react";
-import { ScrollView, View } from "react-native";
+
 import { useApp } from "@/lib/app-context";
 import { rowStateFor, toggleNotifications } from "@/lib/notifications";
 import { notifier } from "@/lib/platform/notifier";
 import { inExpoGo } from "@/lib/runtime";
 import { DebugContent } from "./DebugContent";
-import { SheetTop } from "./SheetTop";
 
 /**
  * Settings (ADR-013; Figma Demo › Phone / 04 Settings, Tablet / 04 Settings): inset-grouped sections
@@ -80,113 +81,119 @@ export function SettingsContent({
     variant === "drawer" ? (
       <DrawerHeader title={title} onBack={onBack} onClose={onClose} />
     ) : (
-      <SheetTop title={title} onBack={onBack} onClose={onClose} />
+      <SheetToolbar title={title} onBack={onBack} onClose={onClose} />
     );
+  // Figma: 12 pt from the sheet toolbar to the first section (Phone / 07 Settings 104:7979), 8 pt
+  // from the drawer header (Tablet / 07 Settings 99:7941).
+  const top = variant === "drawer" ? "pt-2" : "pt-3";
 
   if (page === "debug")
     return (
-      <View className="flex-1">
-        <Top title="Debug" onBack={() => setPage(null)} />
-        <ScrollView contentContainerClassName="px-4 pb-10 pt-2">
-          <DebugContent />
-        </ScrollView>
-      </View>
+      <SheetScaffold
+        header={<Top title="Debug" onBack={() => setPage(null)} />}
+        contentContainerClassName="px-4 pb-10 pt-2"
+      >
+        <DebugContent />
+      </SheetScaffold>
     );
 
   if (page)
     return (
-      <View className="flex-1">
-        <Top
-          title={page === "help" ? "Help & support" : "What's new"}
-          onBack={() => setPage(null)}
-        />
-        <ScrollView contentContainerClassName="gap-3 px-5 pb-10 pt-2">
-          {(page === "help" ? HELP : WHATS_NEW).map((p) => (
-            <Text key={p} className="text-foreground text-md leading-6">
-              {p}
-            </Text>
-          ))}
-        </ScrollView>
-      </View>
+      <SheetScaffold
+        header={
+          <Top
+            title={page === "help" ? "Help & support" : "What's new"}
+            onBack={() => setPage(null)}
+          />
+        }
+        contentContainerClassName="gap-3 px-5 pb-10 pt-2"
+      >
+        {(page === "help" ? HELP : WHATS_NEW).map((p) => (
+          <Text key={p} className="text-foreground text-md leading-6">
+            {p}
+          </Text>
+        ))}
+      </SheetScaffold>
     );
 
   return (
-    <View className="flex-1" testID="settings-panel">
-      <Top title="Settings" />
-      <ScrollView contentContainerClassName="gap-6 px-4 pb-10 pt-3">
-        <Section title="Pairing">
-          <ListCard>
-            <ListRow
-              icon={QrCodeIcon}
-              title="Show pairing QR on installation"
-              onPress={onShowPairing}
-              disabled={demo}
-            />
-            <ListRow icon={ScanIcon} title="Pair another installation" onPress={onLeave} />
-          </ListCard>
-        </Section>
+    <SheetScaffold
+      testID="settings-panel"
+      header={<Top title="Settings" />}
+      contentContainerClassName={`gap-6 px-4 pb-10 ${top}`}
+    >
+      <Section title="Pairing">
+        <ListCard>
+          <ListRow
+            icon={QrCodeIcon}
+            title="Show pairing QR on installation"
+            onPress={onShowPairing}
+            disabled={demo}
+          />
+          <ListRow icon={ScanIcon} title="Pair another installation" onPress={onLeave} />
+        </ListCard>
+      </Section>
 
-        <Section title="Control preferences">
-          <ListCard>
-            <ListRow
-              icon={VibrateIcon}
-              title="Haptics"
-              trailing="switch"
-              checked={prefs.haptics}
-              onCheckedChange={(v) => setPrefs({ haptics: v })}
-            />
-            <ListRow
-              icon={DeviceMobileIcon}
-              title="Keep screen awake"
-              trailing="switch"
-              checked={prefs.keepAwake}
-              onCheckedChange={(v) => setPrefs({ keepAwake: v })}
-            />
-            <StatusNotificationsRow state={notify} onChange={onNotify} />
-          </ListCard>
-        </Section>
+      <Section title="Control preferences">
+        <ListCard>
+          <ListRow
+            icon={VibrateIcon}
+            title="Haptics"
+            trailing="switch"
+            checked={prefs.haptics}
+            onCheckedChange={(v) => setPrefs({ haptics: v })}
+          />
+          <ListRow
+            icon={DeviceMobileIcon}
+            title="Keep screen awake"
+            trailing="switch"
+            checked={prefs.keepAwake}
+            onCheckedChange={(v) => setPrefs({ keepAwake: v })}
+          />
+          <StatusNotificationsRow state={notify} onChange={onNotify} />
+        </ListCard>
+      </Section>
 
-        <Section title="Developer">
-          <ListCard>
-            <ListRow
-              icon={InfoIcon}
-              title="Debug"
-              value="Bridge, OSC log"
-              onPress={() => setPage("debug")}
-            />
-          </ListCard>
-        </Section>
+      <Section title="Developer">
+        <ListCard>
+          <ListRow
+            icon={InfoIcon}
+            title="Debug"
+            value="Bridge, OSC log"
+            onPress={() => setPage("debug")}
+          />
+        </ListCard>
+      </Section>
 
-        <Section title="About">
-          <ListCard>
-            <ListRow
-              icon={ClockCounterClockwiseIcon}
-              title="What's new"
-              value={`v${version}`}
-              onPress={() => setPage("whatsNew")}
-            />
-            <ListRow icon={LifebuoyIcon} title="Help & support" onPress={() => setPage("help")} />
-            <ListRow
-              icon={InfoIcon}
-              title="App version"
-              trailing="value"
-              value={`${version} (${build})${inExpoGo ? " · Expo Go" : ""}`}
-            />
-          </ListCard>
-        </Section>
+      <Section title="About">
+        <ListCard>
+          <ListRow
+            icon={ClockCounterClockwiseIcon}
+            title="What's new"
+            value={`v${version}`}
+            onPress={() => setPage("whatsNew")}
+          />
+          <ListRow icon={LifebuoyIcon} title="Help & support" onPress={() => setPage("help")} />
+          <ListRow
+            icon={InfoIcon}
+            title="App version"
+            trailing="value"
+            value={`${version} (${build})${inExpoGo ? " · Expo Go" : ""}`}
+          />
+        </ListCard>
+      </Section>
 
-        <Section title="Account">
-          <ListCard>
-            <ListRow
-              icon={GearSixIcon}
-              title={demo ? "Exit demo" : "Forget this installation"}
-              trailing="destructive"
-              onPress={onLeave}
-            />
-          </ListCard>
-        </Section>
-      </ScrollView>
-    </View>
+      <Section title="Account">
+        <ListCard>
+          <ListRow
+            icon={GearSixIcon}
+            title={demo ? "Exit demo" : "Forget this installation"}
+            trailing="destructive"
+            onPress={onLeave}
+          />
+        </ListCard>
+      </Section>
+    </SheetScaffold>
   );
 }
 

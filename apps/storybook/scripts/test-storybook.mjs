@@ -1,6 +1,8 @@
 // Headless check of the static Storybook build (CI-friendly, no extra test framework):
 // serves storybook-static, opens every story in dark and light with Chromium (Playwright),
-// and fails if a story throws, logs a React error, or its `play` interaction test fails.
+// and fails if a story throws, logs a React error, its `play` interaction test fails, or the
+// layout sensor finds a sheet header over its content / content cut off at the side
+// (`layoutViolations` in packages/ui/src/stories/layout.ts — the Figma layout invariants).
 //
 //   pnpm build-storybook && pnpm test-storybook
 //   STORY=chrome-button pnpm test-storybook      # only stories whose id contains "chrome-button"
@@ -115,6 +117,7 @@ const recorder = () => {
 
 const failures = [];
 const timings = [];
+let layoutChecked = 0;
 let done = 0;
 // Per story: render + play. A full pult page is ~3 s alone; leave room for a loaded CI runner.
 const TIMEOUT = 60000;
@@ -157,6 +160,13 @@ async function worker() {
       const bad = window.__sbEvents.filter((e) => e.n !== "storyFinished" || e.msg === "error");
       return bad.length ? bad.map((e) => `${e.n}: ${e.msg}`.slice(0, 300)).join(" | ") : null;
     });
+    // Layout sensor (every story, both themes): header vs content, content inside the screen.
+    const layout = await page.evaluate(() =>
+      window.__oscLayout ? window.__oscLayout(document) : { checked: -1, violations: [] },
+    );
+    if (layout.checked < 0) errors.push("layout sensor missing from the preview");
+    else layoutChecked += layout.checked;
+    errors.push(...layout.violations.map((v) => `layout: ${v}`));
     if (shots) await page.screenshot({ path: join(shots, `${s.id}-${theme}.png`) });
     const errs = errors.filter((e) => !/Download the React DevTools/.test(e));
     const ms = Date.now() - t0;
@@ -186,6 +196,10 @@ console.log(
       .map((t) => `${t.id} ${t.ms} ms`)
       .join(", ")}).`,
 );
+// The sensor must have seen the sheet stories; zero means it went blind (test ids renamed…).
+if (!filter && layoutChecked === 0)
+  failures.push("layout sensor checked no SheetScaffold — is LAYOUT_TEST_ID still rendered?");
+console.log(`layout sensor: ${layoutChecked} sheet layouts checked`);
 if (failures.length) {
   console.error(
     `${failures.length} failed:\n` + failures.map((f) => "  ✗ " + f.slice(0, 500)).join("\n"),

@@ -7,7 +7,9 @@ import { ConnectionStatus } from "../chrome/Status";
 import { Text } from "../components/ui/text";
 import { ListRow } from "../forms/ListRow";
 import { InstallationActions } from "../patterns/Installation";
+import { SHEET } from "../ds/logic";
 import { componentDocs } from "../stories/docs";
+import { expectSheetLayout } from "../stories/layout";
 import { ListCard, Section } from "./Cards";
 import { Inspector } from "./Inspector";
 
@@ -74,6 +76,7 @@ const meta = {
             component: "Installation inspector (iPad screens)",
             variants: [
               ["iPad · Installation", "Inspector"],
+              ["Client · Template › Tablet / 10 Installation (inspector) 99:7287", "Inspector"],
               ["iPhone · Installation", "system sheet"],
             ],
           },
@@ -86,7 +89,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Open: Story = { globals: { viewport: { value: "tablet" } } };
+/** Figma Tablet / 10 Installation (inspector) 99:7287: content 24 pt down, Close × clear of it. */
+export const Open: Story = {
+  globals: { viewport: { value: "tablet" } },
+  play: async ({ canvasElement }) =>
+    expectSheetLayout(canvasElement, { gap: SHEET.inspector.content, floating: true }),
+};
 export const Closed: Story = {
   args: { startOpen: false },
   play: async ({ canvas }) => {
