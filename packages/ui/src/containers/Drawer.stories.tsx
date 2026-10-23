@@ -1,14 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import * as React from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { expect, userEvent, waitFor } from "storybook/test";
 import { Button } from "../chrome/Button";
 import { Text } from "../components/ui/text";
 import { BellIcon, DeviceMobileIcon, QrCodeIcon, ScanIcon, VibrateIcon } from "../ds/icons";
 import { ListRow } from "../forms/ListRow";
+import { SHEET } from "../ds/logic";
 import { componentDocs } from "../stories/docs";
+import { expectSheetLayout } from "../stories/layout";
 import { ListCard, Section } from "./Cards";
 import { Drawer, DrawerHeader } from "./Drawer";
+import { SheetScaffold } from "./Sheet";
 
 function Demo({ startOpen = true }: { startOpen?: boolean }) {
   const [open, setOpen] = React.useState(startOpen);
@@ -22,8 +25,10 @@ function Demo({ startOpen = true }: { startOpen?: boolean }) {
         <Button label="Open Settings" variant="secondary" onPress={() => setOpen(true)} />
       </View>
       <Drawer open={open} onClose={() => setOpen(false)} label="Settings">
-        <DrawerHeader title="Settings" onClose={() => setOpen(false)} />
-        <ScrollView contentContainerClassName="gap-6 px-4 pb-10 pt-2">
+        <SheetScaffold
+          header={<DrawerHeader title="Settings" onClose={() => setOpen(false)} />}
+          contentContainerClassName="gap-6 px-4 pb-10 pt-2"
+        >
           <Section title="Pairing">
             <ListCard>
               <ListRow
@@ -59,7 +64,7 @@ function Demo({ startOpen = true }: { startOpen?: boolean }) {
               />
             </ListCard>
           </Section>
-        </ScrollView>
+        </SheetScaffold>
       </Drawer>
     </View>
   );
@@ -87,7 +92,7 @@ const meta = {
             "Dim over the pult (overlay colour, 55 %)",
             "Panel: 400 pt wide, 12 pt in from the left and the bottom, top under the status bar, radius 28, dark fill (control track)",
             "Drawer Header: large title (28 semibold) + round close button",
-            "Scrolling body: inset-grouped Sections of List Cards",
+            "Scrolling body (`SheetScaffold`): inset-grouped Sections of List Cards, 8 pt below the header",
           ],
           behaviour: [
             "Slides in from the left in `motion.duration.base`; Reduce Motion jumps.",
@@ -120,8 +125,13 @@ type Story = StoryObj<typeof meta>;
 
 export const Open: Story = {
   globals: { viewport: { value: "tablet" } },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(await canvas.findByTestId("drawer")).toBeTruthy();
+    // Figma Tablet / 07 Settings (left drawer) 99:7941: 72 pt header, first section 8 pt below.
+    await expectSheetLayout(canvasElement, {
+      headerHeight: SHEET.drawer.header,
+      gap: SHEET.drawer.content,
+    });
     // A tap on the dim closes it.
     await userEvent.click(canvas.getByTestId("drawer-dim"));
     await waitFor(() => expect(canvas.queryByTestId("drawer")).toBeNull(), { timeout: 2000 });

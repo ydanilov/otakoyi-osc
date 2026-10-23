@@ -1,5 +1,4 @@
 import * as React from "react";
-import { ScrollView, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -11,8 +10,9 @@ import { scheduleOnRN } from "react-native-worklets";
 import { IconButton } from "../chrome/Button";
 import { useDepthStyle } from "../ds/depth";
 import { XIcon } from "../ds/icons";
-import { INSPECTOR_WIDTH } from "../ds/logic";
+import { INSPECTOR_WIDTH, SHEET } from "../ds/logic";
 import { useTheme } from "../theme/ThemeProvider";
+import { SheetScaffold } from "./Sheet";
 
 /**
  * iPad Installation inspector (ADR-013, HIG; Figma Tablet / 05 Installation): a 390 pt panel on the
@@ -74,12 +74,15 @@ export function Inspector({
       ]}
       accessibilityLabel={title}
     >
-      {/* Figma Tablet / 05 Installation: the content brings its own header; the round close
-          button floats top-right. */}
-      <ScrollView contentContainerClassName="gap-6 px-4 pb-6 pt-6">{children}</ScrollView>
-      <View className="absolute right-4" style={{ top: insets.top + 14 }}>
-        <IconButton icon={XIcon} label={`Close ${title}`} onPress={onClose} />
-      </View>
+      {/* Figma Tablet / 10 Installation (99:7287): the content brings its own header (24 pt from
+          the top); the round close button floats top-right, 14 pt down, clear of the content. */}
+      <SheetScaffold
+        floatingHeader={{ top: SHEET.inspector.close, right: 16 }}
+        header={<IconButton icon={XIcon} label={`Close ${title}`} onPress={onClose} />}
+        contentContainerClassName="gap-6 px-4 pb-6 pt-6"
+      >
+        {children}
+      </SheetScaffold>
     </Animated.View>
   );
 }

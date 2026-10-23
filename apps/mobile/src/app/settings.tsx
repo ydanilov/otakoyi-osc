@@ -1,8 +1,7 @@
-import { ThemeProvider } from "@osc/ui";
+import { SheetSurface, ThemeProvider } from "@osc/ui";
 import { router } from "expo-router";
 import * as React from "react";
 import { SettingsContent } from "@/components/SettingsContent";
-import { SheetSurface } from "@/components/SheetTop";
 import { useApp } from "@/lib/app-context";
 import { useBrand } from "@/lib/brand";
 import { closeSheet, resetTo } from "@/lib/navigation";

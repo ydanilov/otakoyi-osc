@@ -5,6 +5,7 @@ import { PortalHost } from "@rn-primitives/portal";
 import { ThemeProvider } from "@osc/ui";
 import { STORY_BRANDS, type StoryBrandId } from "@osc/ui/stories/brands";
 import { withPlainHandlers } from "@osc/ui/stories/handlers";
+import { layoutViolations } from "@osc/ui/stories/layout";
 import * as React from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -43,6 +44,9 @@ const withProviders: Decorator = (Story, ctx) => {
     </GestureHandlerRootView>
   );
 };
+
+// Layout sensor: `pnpm test-storybook` calls it after every story (see stories/layout.ts).
+(globalThis as { __oscLayout?: typeof layoutViolations }).__oscLayout = layoutViolations;
 
 const preview: Preview = {
   decorators: [withProviders],

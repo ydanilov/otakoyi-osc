@@ -7,6 +7,26 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-10-23 — Sheet layout: header never over the content, layout sensor
+
+**Added**
+
+- **Sheet** (Containers): `SheetScaffold` (header + scrolling body below it), `SheetSurface` and
+  `SheetToolbar` (the iPhone sheet toolbar, moved from the app) — Figma Client · Template › Phone /
+  07 Settings (sheet) 104:7979, Phone / 10 Installation (sheet) 104:8937. Metrics in `SHEET`
+  (`ds/logic.ts`): toolbar 16 + 44 + 10 = 70 pt, content 12 pt (Settings) / 16 pt (Installation)
+  below it; drawer header 72 pt + 8 pt; inspector content 24 pt, Close × 14 pt from the top.
+- **Layout sensor** (`stories/layout.ts`): `pnpm test-storybook` fails when a sheet header
+  overlaps its content or content is cut off at the side, in every story and both themes; sheet,
+  drawer and inspector stories compare the header height and the gap with Figma
+  (`expectSheetLayout`).
+
+**Fixed**
+
+- iPhone Settings / Installation sheets: the toolbar was drawn over the first section. Every
+  sheet, the iPad Settings drawer and the Installation inspector now use `SheetScaffold`; the
+  drawer's first section sits 8 pt below its header (was 12 pt), as in Tablet / 07 Settings 99:7941.
+
 ## 2026-10-23 — Gyroscope (device tilt)
 
 **Added**

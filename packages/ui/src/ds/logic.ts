@@ -107,6 +107,23 @@ export function drawerCloses(translationX: number, velocityX: number): boolean {
 export const INSPECTOR_WIDTH = 390;
 
 /**
+ * Sheet chrome metrics (Figma Client · Template › Phone / 07 Settings 104:7979, Phone / 10
+ * Installation 104:8937 — "Toolbar - Top - iPhone"; Tablet / 07 Settings drawer 99:7941; Tablet / 10
+ * Installation inspector 99:7287). `content` is the gap from the header's bottom edge to the first
+ * content element. The layout sensor (Storybook) checks the rendered sheets against these.
+ */
+export const SHEET = {
+  /** iPhone sheet toolbar: 16 pt from the sheet's top edge, a 44 pt row, 10 pt below it = 70. */
+  toolbar: { top: 16, row: 44, bottom: 10, height: 70 },
+  /** First content element below the toolbar: Settings 12 pt, Installation 16 pt. */
+  content: { settings: 12, installation: 16 },
+  /** iPad Settings drawer: 72 pt header, 8 pt to the first section. */
+  drawer: { header: 72, content: 8 },
+  /** iPad Installation inspector: content 24 pt from the top, Close × 14 pt from the top. */
+  inspector: { content: 24, close: 14 },
+} as const;
+
+/**
  * How Settings, Installation and dialogs are presented (ADR-013, HIG):
  * - Settings: iPhone system sheet, large detent; iPad a floating drawer from the left.
  * - Installation: iPhone system sheet, large detent; iPad trailing inspector (no dimming).

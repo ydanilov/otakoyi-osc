@@ -1,12 +1,11 @@
-import { ThemeProvider } from "@osc/ui";
+import { SheetScaffold, SheetSurface, SheetToolbar, ThemeProvider } from "@osc/ui";
 import * as React from "react";
-import { ScrollView, useWindowDimensions } from "react-native";
+import { useWindowDimensions } from "react-native";
 import {
   INSTALLATION_TITLE,
   InstallationContent,
   type InstallationView,
 } from "@/components/InstallationContent";
-import { SheetSurface, SheetTop } from "@/components/SheetTop";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { currentPult, formFactorOf } from "@/lib/nav";
 import { useBrand } from "@/lib/brand";
@@ -22,12 +21,17 @@ export default function Installation() {
   return (
     <ThemeProvider brand={brand.theme}>
       <SheetSurface>
-        <SheetTop
-          title={INSTALLATION_TITLE[view]}
-          onBack={view !== "main" ? () => setView("main") : undefined}
-          onClose={closeSheet}
-        />
-        <ScrollView contentContainerClassName="px-4 pb-10 pt-4">
+        {/* Figma Phone / 10 Installation (sheet) 104:8937: toolbar, then the content 16 pt below. */}
+        <SheetScaffold
+          header={
+            <SheetToolbar
+              title={INSTALLATION_TITLE[view]}
+              onBack={view !== "main" ? () => setView("main") : undefined}
+              onClose={closeSheet}
+            />
+          }
+          contentContainerClassName="px-4 pb-10 pt-4"
+        >
           <InstallationContent
             view={view}
             onView={setView}
@@ -37,7 +41,7 @@ export default function Installation() {
               closeSheet();
             }}
           />
-        </ScrollView>
+        </SheetScaffold>
       </SheetSurface>
     </ThemeProvider>
   );

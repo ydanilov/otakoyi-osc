@@ -94,7 +94,11 @@ Run `pnpm verify` before every commit.
 ## Workflow
 
 1. Branch `feat/<slug>` / `fix/<slug>`, conventional commits.
-2. `pnpm verify` green.
+2. `pnpm verify` green; for UI changes also `pnpm build-storybook && pnpm test-storybook` (CI runs it).
+   **Every new screen exists as a Figma frame first**, and is built on the DS layouts (sheets,
+   drawers, inspectors on `SheetScaffold`). The layout sensor in `test-storybook` checks the
+   rendered layout invariants on every story (header never over the content, nothing cut off at
+   the side); a screen's story asserts its Figma metrics with `expectSheetLayout` (`SHEET`).
 3. PR; Yura reviews and merges. Never push to `main` without explicit approval.
 
 ## Where things live
