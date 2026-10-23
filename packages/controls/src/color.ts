@@ -1,4 +1,4 @@
-import { hexToRgb, hsvToHex, rgbToHsv } from "./logic";
+import { hexToRgb, hsvToHex, rgbToHsv, type HsbChannel } from "./logic";
 
 /**
  * Colour Picker maths (Figma Patterns › Color Picker, Style=Knobs / Square / Wheel). The picker
@@ -139,4 +139,50 @@ export function hsbReadout({ h, s, b }: Hsb): { h: string; s: string; b: string 
     s: `${Math.round(clamp01(s) * 100)}%`,
     b: `${Math.round(clamp01(b) * 100)}%`,
   };
+}
+
+// ---------- feedback from the installation ----------
+
+const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+/**
+ * `hsb` format feedback: one channel arrived on `<address>/h|s|b`. `known` is the last full HSB the
+ * pult knew for this control (kept by the store, so a hue that arrives while the colour is grey is
+ * not lost); `current` is the control's hex. Returns the new HSB, or undefined for a bad value.
+ */
+export function applyHsbFeedback(
+  known: Hsb | undefined,
+  current: string,
+  channel: HsbChannel,
+  value: unknown,
+  hueRange: "degrees" | "unit" = "degrees",
+): Hsb | undefined {
+  if (!finite(value)) return undefined;
+  const base = known ? syncHsb(known, current) : hexToHsb(current);
+  if (channel === "h") return { ...base, h: wrapDeg(hueRange === "unit" ? value * 360 : value) };
+  return { ...base, [channel]: clamp01(value) };
+}
+
+/**
+ * Single-message formats: the installation echoes the colour on the control's own address in the
+ * format it was sent (`r g b` floats or ints, `h s v` floats, or `"#RRGGBB"`). Returns `#RRGGBB`, or
+ * undefined when the message does not look like a colour in that format.
+ */
+export function colorFromArgs(
+  format: "rgbFloat" | "rgbInt" | "hsvFloat" | "hex",
+  vals: unknown[],
+): string | undefined {
+  const [a, b, c] = vals;
+  if (typeof a === "string") return /^#[0-9a-f]{6}$/i.test(a) ? a.toUpperCase() : undefined;
+  if (format === "hex" || !finite(a) || !finite(b) || !finite(c)) return undefined;
+  if (format === "hsvFloat") return hsvToHex(((a % 1) + 1) % 1, clamp01(b), clamp01(c));
+  const k = format === "rgbInt" ? 255 : 1;
+  const ch = (v: number) => Math.round(clamp01(v / k) * 255);
+  return (
+    "#" +
+    [a, b, c]
+      .map((v) => ch(v).toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase()
+  );
 }

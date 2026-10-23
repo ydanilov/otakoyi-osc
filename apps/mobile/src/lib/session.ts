@@ -42,6 +42,8 @@ export interface SessionState {
   welcomedAt: number | null;
   /** Protocol version the bridge answered with (welcome `v`). */
   protocol: number | null;
+  /** The bridge refused this device's last quick action or mode (shortly after it was sent). */
+  actionError: { name: string; message: string; at: number } | null;
 }
 
 export interface SessionOptions {
@@ -57,6 +59,9 @@ export interface SessionOptions {
   http: BridgeHttp;
   now?: () => number;
 }
+
+/** An error from the bridge this soon after a quick action or mode is that action's, ms. */
+export const ACTION_ERROR_MS = 3000;
 
 /** Debug page: protocol ping and health (FPS) poll interval while it is open, ms. */
 export const DEBUG_POLL_MS = 2000;
@@ -95,7 +100,10 @@ export class Session {
     lost: false,
     welcomedAt: null,
     protocol: null,
+    actionError: null,
   };
+  /** The quick action / mode last sent, to match the bridge's error to it. */
+  private pendingAction: { name: string; at: number } | null = null;
 
   constructor(private opts: SessionOptions) {
     this.kind = opts.kind;
@@ -194,10 +202,12 @@ export class Session {
   }
 
   action(name: ActionName, on?: boolean) {
+    this.pendingAction = { name, at: this.now() };
     this.t?.send(on === undefined ? { t: "action", name } : { t: "action", name, on });
   }
 
   setMode(mode: ModeName, on: boolean) {
+    this.pendingAction = { name: mode, at: this.now() };
     this.t?.send({ t: "mode", mode, on });
   }
 
@@ -241,10 +251,10 @@ export class Session {
               p.id,
               new PultStore(cfg, p, {
                 send() {},
-                interact: (pult, control, value) => {
+                interact: (pult, control, value, previous) => {
                   this.t?.send({ t: "set", pult, id: control.id, value });
                   // What the bridge will send for it (the bridge is the one that sends OSC).
-                  this.debug.sent(control.id, safeMessages(control, value));
+                  this.debug.sent(control.id, safeMessages(control, value, previous));
                 },
               }),
             ]),
@@ -297,6 +307,13 @@ export class Session {
         // Lease / value errors are momentary; auth and version stop the connection.
         if (msg.code === "auth" || msg.code === "version")
           this.patch({ error: { code: msg.code, message: msg.message } });
+        else if (this.pendingAction && this.now() - this.pendingAction.at <= ACTION_ERROR_MS) {
+          // The bridge answers an action at once; an error right after one is that action's.
+          this.patch({
+            actionError: { name: this.pendingAction.name, message: msg.message, at: this.now() },
+          });
+          this.pendingAction = null;
+        }
         return;
       case "prompt":
         this.stores.get(msg.pult)?.setAck(msg.id, { state: msg.state, seq: msg.seq });

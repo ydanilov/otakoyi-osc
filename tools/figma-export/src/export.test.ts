@@ -207,6 +207,32 @@ describe("exportSnapshot — conventions", () => {
     expect(ok.issues.map((i) => i.code)).not.toContain("not-in-contract");
   });
 
+  it("a Color Picker exports one control with three channel addresses, checked against the contract", () => {
+    const picker: FNode = {
+      id: "cp-1",
+      name: "light-color",
+      type: "INSTANCE",
+      component: "Color Picker",
+      box: [0, 0, 370, 448],
+      props: { Title: "Colour" },
+      annotations: [{ category: "OSC", text: "**/light/color/{h,s,b}** · feedback ✓" }],
+    };
+    const frames = snap(conventionFrame("lobby / phone / live", 0, picker));
+    const r = exportSnapshot(frames);
+    expect(r.valid).toBe(true);
+    const parsed = parseConfig(r.config);
+    if (!parsed.ok) throw new Error("invalid");
+    const c = parsed.config.pults[0]!.pages[0]!.controls[0]!;
+    expect(c).toMatchObject({ type: "colorPicker", address: "/light/color", format: "hsb" });
+    const codes = (parameters: { address: string; type?: string }[]) =>
+      exportSnapshot(frames, { contract: { parameters } }).issues.map((i) => i.code);
+    expect(codes([{ address: "/light/color", type: "color" }])).not.toContain("not-in-contract");
+    expect(
+      codes(["h", "s", "b"].map((ch) => ({ address: `/light/color/${ch}`, type: "float" }))),
+    ).not.toContain("not-in-contract");
+    expect(codes([{ address: "/light/color/h", type: "float" }])).toContain("not-in-contract");
+  });
+
   it("bumps the revision when the pults changed", () => {
     const s = snap(conventionFrame("lobby / phone / live", 0, pad("a", "/a", 0)));
     const first = exportSnapshot(s);

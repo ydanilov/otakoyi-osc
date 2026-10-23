@@ -24,17 +24,24 @@ config that holds a phone and a tablet layout per page (ADR-013).
 
 ### Modes of existing controls
 
-| Field            | Values                                   | Sends                                                                     |
-| ---------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
-| `fader.mode`     | `absolute` (default)                     | `<address> f` in min..max                                                 |
-|                  | `relative` — endless jog                 | `<address> f` = change since the last message (full track = max − min)    |
-|                  | `crossfade` — A/B mix, centre detent     | `<address> f` in min..max (0..1 by default); `labels: {a, b}`, `detent`   |
-| `fader.response` | `relative` (default) / `absolute`        | unchanged (ADR-007): how a touch maps, for absolute and crossfade modes   |
-| `knob.mode`      | `absolute` (default)                     | `<address> f` in min..max over `travel` degrees (default 240, hard stops) |
-|                  | `relative` — endless encoder             | `<address> f` = change since the last message (one travel = max − min)    |
-|                  | `hue` — colour wheel                     | `<address> f` hue in degrees 0..360, wraps past 360; min/max ignored      |
-| `knob.endless`   | deprecated                               | still read as `mode: "relative"`                                          |
-| `toggle.style`   | `button` (default) / `switch` (two LEDs) | unchanged: `<address> on…` / `<address> off…`                             |
+| Field                | Values                                              | Sends                                                                                                                                                                                                |
+| -------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fader.mode`         | `absolute` (default)                                | `<address> f` in min..max                                                                                                                                                                            |
+|                      | `relative` — endless jog                            | `<address> f` = change since the last message (full track = max − min)                                                                                                                               |
+|                      | `crossfade` — A/B mix, centre detent                | `<address> f` in min..max (0..1 by default); `labels: {a, b}`, `detent`                                                                                                                              |
+| `fader.response`     | `relative` (default) / `absolute`                   | unchanged (ADR-007): how a touch maps, for absolute and crossfade modes                                                                                                                              |
+| `knob.mode`          | `absolute` (default)                                | `<address> f` in min..max over `travel` degrees (default 240, hard stops)                                                                                                                            |
+|                      | `relative` — endless encoder                        | `<address> f` = change since the last message (one travel = max − min)                                                                                                                               |
+|                      | `hue` — colour wheel                                | `<address> f` hue in degrees 0..360, wraps past 360; min/max ignored                                                                                                                                 |
+| `knob.endless`       | deprecated                                          | still read as `mode: "relative"`                                                                                                                                                                     |
+| `toggle.style`       | `button` (default) / `switch` (two LEDs)            | unchanged: `<address> on…` / `<address> off…`                                                                                                                                                        |
+| `colorPicker.format` | `hsb` (default) — three addresses                   | `<address>/h f` (degrees 0..360; `hueRange: "unit"` → 0..1), `<address>/s f`, `<address>/b f` (0..1); each only when that channel changed; feedback per channel (on `<feedback or address>/h\|s\|b`) |
+|                      | `hsvFloat` / `rgbFloat` / `rgbInt` / `hex` — opt-in | one message on `<address>`: `h s v` floats 0..1, `r g b` 0..1, 0..255, or `"#RRGGBB"`; feedback in the same format                                                                                   |
+
+Colour channels are separate so an installation maps each to its own parameter and a brightness
+move does not resend hue and saturation. A channel that is undefined for the colour is never sent
+(no hue for a grey, no saturation for black); one that becomes defined again is always sent. v1
+configs without `format` keep v1's default, `rgbFloat`, through `migrateConfig`.
 
 `int: true` sends `i` instead of `f` everywhere above. Relative controls sum their deltas inside the
 throttle window (`createDeltaAccumulator`), so no movement is lost; zero changes are not sent.

@@ -169,6 +169,7 @@ Inspector writes them and mirrors them into shared plugin data (namespace `otako
 **/camera/aim** `x y float −1…1` · springs back · 30 Hz
 **/scene** `int 1–4` · crossfade=1.5
 **/mic/level** `float 0–1`, **/mic/bands** `float×4`, **/mic/beat** `1` · 30 Hz
+**/light/color/{h,s,b}** · feedback ✓
 ```
 
 - Addresses in bold; each followed by its spec in backticks: type (`float`, `int`, `string`,
@@ -180,6 +181,12 @@ Inspector writes them and mirrors them into shared plugin data (namespace `otako
 - Shared keywords: `N Hz` (rate), `absolute` / `relative`, `feedback ✓`, `springs back`, `N°`,
   `multi-select`, and `key=value` (`min`, `max`, `step`, `curve`, `default`, `unit`, `target`,
   `lock`, `studioOnly`, `feedback=/addr`, `crossfade`, `holdMs`, `tone`, `deadzone`, `gain`, …).
+- **Color Picker**: the config's default format sends three addresses, `<base>/h`, `/s`, `/b`.
+  Annotate `<base>/{h,s,b}` (or the three channel addresses, or just `<base>`); the exporter writes
+  `address: <base>`. `/h` `float 0–1` → `hueRange: "unit"` (default degrees). `format=hsvFloat`
+  (or `rgbFloat`, `rgbInt`, `hex`) opts into one message on `<base>`; with channel addresses in the
+  annotation that is reported as `color-format`. The contract check accepts the three channels or
+  one `color` parameter at `<base>`.
 - A line starting with `draft` is a note; draft annotations are listed in the report.
 
 **Depends on** — `when <control-id> = <value>` lines (or `is on` / `is off`) become `enabledWhen`
@@ -190,7 +197,7 @@ notes for people and appear in the report.
 
 Errors: `missing-address`, `not-in-contract`, `schema`, `no-pult-frames`. Warnings:
 `unknown-component`, `duplicate-address`, `unused-address`, `option-count`, `tabs-disagree`,
-`tab-without-frame`, `missing-form-factor`, `not-on-form-factor`, `prompt-mix-address`,
+`tab-without-frame`, `missing-form-factor`, `not-on-form-factor`, `prompt-mix-address`, `color-format`,
 `draft-annotation`, … Notes: skipped frames, derived ids and labels, Depends on notes. A control
 without an address is left out of the config so the rest still validates.
 

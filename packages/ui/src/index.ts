@@ -154,6 +154,10 @@ export {
 export * from "./patterns/Installation";
 export { Mix, PromptMix } from "./patterns/Mix";
 export {
+  StatusNotificationsRow,
+  type StatusNotificationsState,
+} from "./patterns/StatusNotificationsRow";
+export {
   DebugHud,
   DebugTag,
   useTicker,

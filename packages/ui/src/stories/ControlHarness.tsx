@@ -33,8 +33,8 @@ export function ControlHarness({
   React.useEffect(() => setV(value), [value]);
   const Component = controlRegistry[control.type] as React.ComponentType<ControlProps<ControlType>>;
   const onChange = (next: ControlValue) => {
+    const msgs = messagesFor(control, next, v);
     setV(next);
-    const msgs = messagesFor(control, next);
     setSent(
       msgs.length
         ? msgs

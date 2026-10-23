@@ -22,6 +22,7 @@ const state = (p: Partial<SessionState> = {}): SessionState => ({
   lost: false,
   welcomedAt: 0,
   protocol: 2,
+  actionError: null,
   ...p,
 });
 

@@ -8,7 +8,8 @@ against real TD instead of a simulation. Same addresses as the demo config
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | OSC in       | UDP **7000** (`/wall/intensity`, `/wall/hue`, `/scene`, `/cue/{n}`, …)                                                              |
 | Feedback out | UDP **9000** on 127.0.0.1 — every received message is echoed back, plus simulated `/wall/audio/level` (10 Hz) and `/sys/fps` (1 Hz) |
-| Inside       | `/project1/otakoyi`: `osc_in` → `values` table → preview TOP (brightness, hue, blackout)                                            |
+| Inside       | `/project1/otakoyi`: `osc_in` → `values` table → preview TOP (brightness, hue, tint, blackout)                                      |
+| Colour       | the tint arrives as three addresses, `/wall/tint/h` (°), `/wall/tint/s`, `/wall/tint/b` (0..1), each only when it changes; echoed   |
 | System OSC   | `/otakoyi/*` and `/sys/ping` from the bridge go to the `system` table (see below), never echoed                                     |
 
 ## Installation actions and heartbeat (ADR-016)

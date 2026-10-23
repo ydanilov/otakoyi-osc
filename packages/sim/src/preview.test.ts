@@ -75,6 +75,16 @@ describe("demo bindings: OSC → preview", () => {
     expect(apply(undefined, message("/live/prompt/a", "neon rain")).prompt).toBe("neon rain");
   });
 
+  it("a colour picker in the hsb format tints from its three channel addresses", () => {
+    const p = apply(undefined, message("/wall/tint/h", 120), message("/wall/tint/s", 1));
+    expect(p.tintHsb).toEqual({ h: 120, s: 1, b: 1 });
+    expect(p.tint).toEqual([0, 1, 0]);
+    const darker = apply(p, message("/wall/tint/b", 0.5));
+    expect(darker.tint).toEqual([0, 0.5, 0]);
+    expect(apply(p, message("/wall/tint/x", 1))).toBe(p);
+    expect(apply(p, message("/wall/speed/h", 1))).toBe(p);
+  });
+
   it("system OSC: flash counts, blackout / idle / pause latch, restart un-pauses", () => {
     const p = apply(
       undefined,

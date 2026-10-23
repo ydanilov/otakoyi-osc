@@ -40,7 +40,7 @@ export interface BaseConfig {
 
 /** The installation's OSC contract (`otakoyi/osc-contract.json`, docs/osc-contract.schema.json). */
 export interface OscContract {
-  parameters: { address: string }[];
+  parameters: { address: string; type?: string }[];
 }
 
 export interface ExportOptions {
@@ -173,7 +173,10 @@ function topFrames(snap: Snapshot, section?: string): Array<{ frame: FNode; sect
 
 function addressesOf(c: RawControl): string[] {
   const out: string[] = [];
-  if (typeof c.address === "string") out.push(c.address);
+  // A colour picker in the default `hsb` format sends on <address>/h, /s and /b.
+  if (c.type === "colorPicker" && typeof c.address === "string" && (c.format ?? "hsb") === "hsb")
+    out.push(...["h", "s", "b"].map((ch) => `${String(c.address)}/${ch}`));
+  else if (typeof c.address === "string") out.push(c.address);
   if (Array.isArray(c.buttons))
     for (const b of c.buttons as { address?: unknown }[])
       if (typeof b.address === "string") out.push(b.address);
@@ -181,8 +184,11 @@ function addressesOf(c: RawControl): string[] {
 }
 
 function contractHas(contract: OscContract, address: string): boolean {
+  // `<base>/h|s|b` of a colour picker: the contract may list the channels or one `color` parameter.
+  const channel = /^(.+)\/[hsb]$/.exec(address);
   return contract.parameters.some((p) => {
     if (p.address === address) return true;
+    if (channel && p.address === channel[1] && p.type === "color") return true;
     if (!/\{[a-z]+\}/i.test(p.address)) return false;
     const re = new RegExp(
       "^" +

@@ -178,7 +178,14 @@
             "description": "For template addresses: number of indices (0-based)."
           },
           "colorFormat": {
-            "enum": ["rgbFloat", "rgbInt", "hsvFloat", "hex"]
+            "enum": ["hsb", "rgbFloat", "rgbInt", "hsvFloat", "hex"],
+            "default": "hsb",
+            "description": "For type color. hsb (default): three addresses <address>/h, <address>/s, <address>/b, each sent only when it changes and echoed on its own address. The others are one message on <address>: hsvFloat (h s v floats 0..1), rgbFloat (r g b 0..1), rgbInt (0..255), hex (\"#RRGGBB\")."
+          },
+          "hueRange": {
+            "enum": ["degrees", "unit"],
+            "default": "degrees",
+            "description": "For colorFormat hsb: hue on <address>/h in degrees 0..360 or normalised 0..1."
           },
           "feedback": {
             "type": "boolean",

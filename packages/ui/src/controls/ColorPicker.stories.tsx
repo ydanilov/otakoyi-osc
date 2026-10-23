@@ -14,7 +14,7 @@ function ColorStory({
 }: {
   value: string;
   disabled: boolean;
-  format: "rgbFloat" | "rgbInt" | "hsvFloat" | "hex";
+  format: "hsb" | "rgbFloat" | "rgbInt" | "hsvFloat" | "hex";
   pickerStyle: "knobs" | "square" | "wheel";
   palette: boolean;
 }) {
@@ -48,12 +48,15 @@ const meta = {
   args: {
     value: "#3A4CA6",
     disabled: false,
-    format: "hsvFloat",
+    format: "hsb",
     pickerStyle: "knobs",
     palette: false,
   },
   argTypes: {
-    format: { control: "inline-radio", options: ["rgbFloat", "rgbInt", "hsvFloat", "hex"] },
+    format: {
+      control: "inline-radio",
+      options: ["hsb", "hsvFloat", "rgbFloat", "rgbInt", "hex"],
+    },
     pickerStyle: { control: "inline-radio", options: ["knobs", "square", "wheel"] },
   },
   parameters: {
@@ -79,7 +82,7 @@ const meta = {
             "Wheel: hue × saturation wheel (angular hue, white centre, darkened by 1 − B), cursor, brightness slider black → hsb(h, S, 1), readout",
           ],
           behaviour: [
-            `Sends \`address\` per \`format\`: hsv floats (h, s, b — the same in every style), rgb floats 0–1, rgb ints or a hex string — ${OSC_SOURCE}. Throttled while dragging, the last value on release.`,
+            `Default \`format: "hsb"\`: three addresses, \`<address>/h\` (degrees 0–360, or 0–1 with \`hueRange: "unit"\`), \`<address>/s\` and \`<address>/b\` (0–1), each sent only when that channel changes; feedback is accepted per channel. Opt-in single messages: \`hsvFloat\` (h s v floats), \`rgbFloat\`, \`rgbInt\` or \`hex\` — ${OSC_SOURCE}. The same in every style. Throttled while dragging, the last value on release.`,
             "The style is a local view preference: switching never sends anything; the choice is kept per control on this device (`viewPrefs`). `pickerStyle` in the config is the default.",
             "Feedback moves the picker; a grey or black from the installation keeps the hue the user chose.",
           ],
@@ -119,5 +122,7 @@ export const SwitchStyle: Story = {
 };
 export const Square: Story = { args: { pickerStyle: "square" } };
 export const Wheel: Story = { args: { pickerStyle: "wheel" } };
+/** Opt-in: one `h s v` message instead of three addresses. */
+export const SingleMessage: Story = { args: { format: "hsvFloat" } };
 export const Palette: Story = { args: { palette: true, value: "#FF3B30", format: "hex" } };
 export const Disabled: Story = { args: { disabled: true } };

@@ -159,9 +159,17 @@ describe("messagesFor", () => {
     });
     expect(messagesFor(get("pads"), { cell: 6, on: true })[0]!.address).toBe("/cue/6");
     expect(messagesFor(get("mode"), 2)[0]!.args).toEqual([{ type: "s", value: "show" }]);
+    // Default colour format: three addresses (h in degrees, s and b 0..1).
     expect(
-      messagesFor(get("tint"), "#3DD6FF")[0]!.args.map((a) => ("value" in a ? a.value : null)),
-    ).toEqual([0.239216, 0.839216, 1]);
+      messagesFor(get("tint"), "#3DD6FF").map((m) => [
+        m.address,
+        ...m.args.map((a) => ("value" in a ? a.value : null)),
+      ]),
+    ).toEqual([
+      ["/wall/tint/h", 192.680412],
+      ["/wall/tint/s", 0.760784],
+      ["/wall/tint/b", 1],
+    ]);
   });
 
   it("button sends press and release; hold-to-confirm only on completion", () => {

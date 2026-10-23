@@ -370,7 +370,15 @@ export const ColorPicker = z.object({
   ...base,
   type: z.literal("colorPicker"),
   address,
-  format: z.enum(["rgbFloat", "rgbInt", "hsvFloat", "hex"]).default("rgbFloat"),
+  /**
+   * Wire format. `hsb` (default): three addresses, `<address>/h`, `<address>/s`, `<address>/b`,
+   * each sent only when its channel changes, with feedback accepted per channel. The single-message
+   * formats are an explicit opt-in: `hsvFloat` (`<address> h s v`, floats 0–1), `rgbFloat`
+   * (`r g b` 0–1), `rgbInt` (0–255) and `hex` (`"#RRGGBB"`).
+   */
+  format: z.enum(["hsb", "rgbFloat", "rgbInt", "hsvFloat", "hex"]).default("hsb"),
+  /** `hsb` format: hue on `<address>/h` in degrees 0–360 (default) or normalised 0–1 (`unit`). */
+  hueRange: z.enum(["degrees", "unit"]).default("degrees"),
   default: hex.optional(),
   /** Restrict to a palette (e.g. the client's brand colours): swatches instead of the pickers. */
   swatches: z.array(hex).optional(),

@@ -10,7 +10,8 @@ import { reflowForPhone, type Cell } from "./layout";
  *
  * Migration: `grid` becomes the tablet placement, and the phone placement is the same grid re-flowed
  * for phones (half / full rows) — exactly what the v1 app showed on a phone. `grid` is removed from
- * the control. Anything that is not a recognisable v1 config is returned unchanged for the schema
+ * the control. A v1 colour picker without `format` keeps v1's default, `rgbFloat` (one message),
+ * so the installation keeps receiving what it was built for. Anything that is not a recognisable v1 config is returned unchanged for the schema
  * to report.
  */
 export function migrateConfig(input: unknown): unknown {
@@ -24,6 +25,8 @@ export function migrateConfig(input: unknown): unknown {
         if (!isObj(c)) return c;
         const { grid, ...rest } = c;
         if (typeof c.id === "string" && isCell(grid)) tablet.set(c.id, grid);
+        // v1 colour pickers sent one `r g b` message by default; v2 defaults to three addresses.
+        if (c.type === "colorPicker" && rest.format === undefined) rest.format = "rgbFloat";
         return rest;
       });
       const columns = typeof page.columns === "number" ? page.columns : 12;

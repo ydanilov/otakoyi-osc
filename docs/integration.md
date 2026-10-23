@@ -54,8 +54,18 @@ The exact message each control type sends is defined in code:
 | `segmented`             | `address <option value>` (number or string)                           | mode: ambient / show   |
 | `sceneList`             | `address <scene value> [crossfadeSeconds]`                            | scene recall           |
 | `buttonGrid`            | `/cue/{index}` (or `{row}`/`{col}`) → `address 1` / `0`               | cue grid               |
-| `colorPicker`           | `address r g b` floats 0..1 (or ints 0..255, HSV floats, `"#RRGGBB"`) | tint                   |
+| `colorPicker`           | three addresses: `address/h` (hue °), `address/s`, `address/b` (0..1) | tint, light colour     |
 | `label`, `meter`        | nothing; they only **display** values you send back                   | FPS, audio level       |
+
+**Colour** (`colorPicker`, default `format: "hsb"`): each channel has its own address, e.g.
+`/light/color/h` (hue in degrees 0..360, or 0..1 when the config says `hueRange: "unit"`),
+`/light/color/s` and `/light/color/b` (0..1). A message is sent **only when that channel changes**
+(moving brightness sends only `/b`), and a grey or black never sends a hue (black never sends a
+saturation), so keep each channel in its own parameter. Echo each channel on its own address as
+feedback. In TouchDesigner that is three OSC In channels into e.g. an HSV Adjust or a Constant TOP's
+colour via `colorsys.hsv_to_rgb(h/360, s, b)`. If your project wants one message instead, ask the
+studio for an explicit single-message format: `hsvFloat` (`address h s v`, floats 0..1),
+`rgbFloat` (`address r g b`, 0..1), `rgbInt` (0..255) or `hex` (`"#RRGGBB"`).
 
 Schema v2 adds crossfade, relative and hue variants, thumbstick, button group, image, mic and
 prompt controls; `messagesFor()` and `packages/schema/src` are the reference for them.
@@ -181,6 +191,9 @@ Rules:
   a human label. The label is a suggestion; final copy lives in Figma.
 - Every address you send back appears in `telemetry` (or set `feedback: true` on the parameter
   when you echo it).
+- A colour is either one `color` parameter with `colorFormat: "hsb"` (the default; you accept
+  `<address>/h`, `/s`, `/b`, and `hueRange` says degrees or 0–1) or, for the single-message
+  formats, `colorFormat` `hsvFloat` / `rgbFloat` / `rgbInt` / `hex` on the address itself.
 - `hint` suggests a control (`fader`, `knob`, `xy`, `toggle`, `button`, `holdToConfirm`,
   `segmented`, `sceneList`, `colorPicker`, …). The studio may choose another. Destructive actions
   get `"dangerous": true`; the studio then uses hold-to-confirm.

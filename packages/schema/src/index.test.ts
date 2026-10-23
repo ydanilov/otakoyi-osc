@@ -205,6 +205,18 @@ describe("schema v2 layouts (ADR-014)", () => {
     expect("grid" in page.controls[0]!).toBe(false);
   });
 
+  it("colour pickers default to three addresses; v1 ones keep their single rgb message", () => {
+    expect(find<"colorPicker">(ok(demo), "tint")).toMatchObject({
+      format: "hsb",
+      hueRange: "degrees",
+    });
+    expect(find<"colorPicker">(ok(legacy), "tint").format).toBe("rgbFloat");
+    const explicit = clone(legacy) as any;
+    for (const pg of explicit.pults[0].pages)
+      for (const c of pg.controls) if (c.id === "tint") c.format = "hex";
+    expect(find<"colorPicker">(ok(explicit), "tint").format).toBe("hex");
+  });
+
   it("migration leaves v2 and unrecognisable input untouched", () => {
     expect(migrateConfig(demo)).toBe(demo);
     expect(migrateConfig(null)).toBe(null);

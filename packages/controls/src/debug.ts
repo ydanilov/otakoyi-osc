@@ -134,6 +134,7 @@ export function formatRate(r: number): string {
  */
 export function debugAddress(c: Control): string {
   if (c.type === "buttonGroup") return c.buttons.map((b) => b.address).join(" · ");
+  if (c.type === "colorPicker" && c.format === "hsb") return `${c.address}/{h,s,b}`;
   if ("address" in c && typeof c.address === "string") return c.address;
   // Display-only controls (meter, label) listen on their feedback address.
   return c.feedback ?? c.id;

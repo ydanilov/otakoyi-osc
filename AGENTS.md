@@ -122,6 +122,7 @@ tools/figma-export/     exporter: Figma snapshot/REST → config + report; mappi
 tools/figma-plugin/     Otakoyi Inspector (Figma dev plugin): exporter preview, OSC / Depends on editor
 tools/touchdesigner/     TouchDesigner test target + pairing overlay (.tox + build scripts)
 docs/integration.md     how an installation project plugs in (OSC contract, feedback, system OSC)
+docs/run-on-device.md   Expo Go on a phone, what works there, Android APK with EAS (apps/mobile/eas.json)
 docs/figma.md           Figma file, pages, components, conventions
 docs/figma-export.md    exporter + Inspector: running, CI, mapping table, annotation format
 ```

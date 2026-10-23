@@ -97,7 +97,9 @@
       "address": "/wall/tint",
       "type": "color",
       "label": "Tint",
-      "colorFormat": "rgbFloat",
+      "description": "Accepted as /wall/tint/h (degrees), /wall/tint/s and /wall/tint/b (0..1), each echoed.",
+      "colorFormat": "hsb",
+      "hueRange": "degrees",
       "feedback": true,
       "hint": "colorPicker",
       "group": "Wall"

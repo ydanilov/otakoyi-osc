@@ -329,7 +329,6 @@
               "type": "colorPicker",
               "label": "Colour",
               "address": "/vj/colour",
-              "format": "hsvFloat",
               "default": "#3A4CA6",
               "pickerStyle": "knobs"
             },

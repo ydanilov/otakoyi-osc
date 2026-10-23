@@ -32,6 +32,9 @@ export const DEMO_BINDINGS: Readonly<Record<string, PreviewBinding>> = {
   "/live/jog": "jog",
   "/wall/focus": "focus",
   "/wall/tint": "tint",
+  // Try the demo (try-the-demo.json): the VJ colour and the lighting colour tint the wall.
+  "/vj/colour": "tint",
+  "/light/colour": "tint",
   "/wall/flash": "flash",
   "/wall/blackout": "blackout",
   "/hall/blackout": "blackout",
@@ -94,7 +97,7 @@ export function applyToPreview(
       return { ...p, restarts: p.restarts + 1, pause: false };
   }
   const kind = bindings[m.address];
-  if (!kind) return p;
+  if (!kind) return applyColorChannel(p, m, bindings, controls);
   const c = controls.get(m.address);
   const v = num(m);
   switch (kind) {
@@ -150,4 +153,49 @@ export function applyToPreview(
       return { ...p, prompt: typeof t === "string" && t.trim() ? t.trim().slice(0, 80) : null };
     }
   }
+}
+
+/**
+ * `hsb` colour format: a colour picker bound to `tint` sends `<address>/h`, `/s` and `/b` one at a
+ * time, each only when it changed. The pretend installation keeps the three channels, like a
+ * TouchDesigner patch with three OSC parameters would, and tints the picture from them.
+ */
+function applyColorChannel(
+  p: PreviewParams,
+  m: OscMessage,
+  bindings: Readonly<Record<string, PreviewBinding>>,
+  controls: Map<string, Control>,
+): PreviewParams {
+  const cut = m.address.lastIndexOf("/");
+  const base = m.address.slice(0, cut);
+  const ch = m.address.slice(cut + 1);
+  if (bindings[base] !== "tint" || (ch !== "h" && ch !== "s" && ch !== "b")) return p;
+  const c = controls.get(base);
+  if (c?.type !== "colorPicker" || c.format !== "hsb") return p;
+  const v = num(m);
+  if (v === null) return p;
+  const cur = p.tintHsb ?? { h: 0, s: 0, b: 1 };
+  const next =
+    ch === "h"
+      ? { ...cur, h: (((c.hueRange === "unit" ? v * 360 : v) % 360) + 360) % 360 }
+      : { ...cur, [ch]: clamp01(v) };
+  return { ...p, tintHsb: next, tint: hsbToRgb(next) };
+}
+
+/** HSB (hue in degrees) → RGB 0..1. */
+export function hsbToRgb({
+  h,
+  s,
+  b,
+}: {
+  h: number;
+  s: number;
+  b: number;
+}): [number, number, number] {
+  const hh = (((h % 360) + 360) % 360) / 60;
+  const f = (n: number) => {
+    const k = (n + hh) % 6;
+    return b - b * s * Math.max(0, Math.min(k, 4 - k, 1));
+  };
+  return [f(5), f(3), f(1)];
 }
