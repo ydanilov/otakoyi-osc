@@ -16,6 +16,12 @@ Figma components or variants explicitly (they are exporter API, ADR-014).
   held, the store's otherwise), so feedback at 30–60 Hz costs one render per change instead of two
   and can no longer trip React's "Maximum update depth exceeded". The Color Picker follows feedback
   with a render-time adjustment and computes edits outside state updaters.
+- **Meter**: the peak hold is stepped during render instead of in an effect on every level, so a
+  meter fed at 10–30 Hz (e.g. `/wall/audio/level` right after connecting) costs one commit per
+  message. Store subscriptions (`useControlValue`, mode, meta) are stable and no longer resubscribe
+  after every render; the store notifies a copy of its listeners.
+- Story _Pult › Connected Control › High-rate feedback_ counts React commits (test hook in
+  `.storybook/preview-head.html`): one feedback message must cost one commit.
 - The bridge recognises an installation's echo of its own in-flight commands (`PultStore`), so a
   dragged control is no longer rewound to its older, float32 positions on every device.
 

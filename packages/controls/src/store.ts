@@ -223,8 +223,9 @@ export class PultStore {
   set(id: string, value: ControlValue) {
     if (sameValue(this.values.get(id), value)) return;
     this.values.set(id, value);
-    this.listeners.get(id)?.forEach((f) => f());
-    this.changeListeners.forEach((f) => f(id, value));
+    // A copy: a listener that (re)subscribes while being notified is not called again in this pass.
+    for (const f of [...(this.listeners.get(id) ?? [])]) f();
+    for (const f of [...this.changeListeners]) f(id, value);
   }
 
   /**
