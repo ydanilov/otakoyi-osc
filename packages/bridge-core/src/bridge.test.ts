@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { argValue, message, type OscMessage } from "@osc/core";
+import { argValue, decodeMessage, encodeMessage, message, type OscMessage } from "@osc/core";
 import type { ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
 import demo from "../../../packages/schema/examples/demo-installation.json";
+import { ECHO_WINDOW_MS } from "@osc/controls";
 import { Bridge, FEEDBACK_TIMEOUT_MS, type LogEntry, type Peer } from "./index";
 
 function setup(auth = {}) {
@@ -209,5 +210,116 @@ describe("pairing mode", () => {
     bridge.handle(studio, JSON.stringify({ t: "pairing", show: true }));
     expect(argValue(pairMsgs(osc).at(-1)!.args[0]!)).toBe(1);
     expect(inbox.at(-1)).toMatchObject({ t: "pairing" });
+  });
+});
+
+/**
+ * Regression (fix/feedback-echo-loop): an installation that echoes every message straight back
+ * (docs/integration.md encourages echoing state) while a device drags a continuous control at
+ * full rate. The echo is mapped back through the control's range and arrives as float32, so it
+ * never equals the value the device sent, and it arrives late — after newer values were sent.
+ * The bridge used to apply every echo as new installation state and broadcast it to every device,
+ * the sender included: the dragged control was rewound to its older positions ~30 times a second
+ * and the app crashed with "Maximum update depth exceeded".
+ */
+describe("installation echoing feedback while a device drags", () => {
+  /** Installation: echoes each OSC message back, through the OSC codec (float32), `lagMs` later. */
+  function echoing(lagMs: number) {
+    const s = setup();
+    const queue: Array<{ at: number; msg: OscMessage }> = [];
+    let now = 0;
+    const flushEchoes = () => {
+      while (s.osc.length)
+        queue.push({ at: now + lagMs, msg: decodeMessage(encodeMessage(s.osc.shift()!)) });
+      for (let e = queue[0]; e && e.at <= now; e = queue[0]) {
+        queue.shift();
+        s.bridge.feedback("td", e.msg);
+      }
+    };
+    /** Advance time by `ms`, delivering the echoes that are due. */
+    const step = (ms: number) => {
+      now += ms;
+      s.advance(ms);
+      flushEchoes();
+    };
+    return { ...s, step, flushEchoes };
+  }
+  const values = (p: { inbox: ServerMessage[] }, id: string) =>
+    p.inbox.filter((m) => m.t === "value" && m.id === id) as Extract<
+      ServerMessage,
+      { t: "value" }
+    >[];
+
+  const drags: Array<{ id: string; at: (i: number) => unknown }> = [
+    {
+      id: "position",
+      at: (i) => ({ x: 0.5 + 0.4 * Math.cos(i / 7), y: 0.5 + 0.4 * Math.sin(i / 7) }),
+    },
+    { id: "intensity", at: (i) => 0.5 + 0.45 * Math.sin(i / 9) },
+    { id: "hue", at: (i) => 170 * Math.sin(i / 11) },
+    {
+      id: "tint",
+      at: (i) => `#${((i * 0x10307) & 0xffffff).toString(16).padStart(6, "0").toUpperCase()}`,
+    },
+  ];
+
+  for (const { id, at } of drags)
+    it(`${id}: echoes of the device's own values never come back to it, nor rewind the state`, () => {
+      const { bridge, peer, step } = echoing(120);
+      const a = peer("a");
+      const b = peer("b");
+      const sent: unknown[] = [];
+      // 3 s of dragging at 30 Hz, the echo lagging ~4 messages behind.
+      for (let i = 0; i < 90; i++) {
+        const value = at(i);
+        sent.push(value);
+        a.say({ t: "set", pult: "lobby", id, value });
+        step(33);
+      }
+      step(1000);
+      const last = bridge.stores.get("lobby")!.get(id);
+      // The bridge keeps exactly what the device sent last (not a float32 / older echo of it).
+      expect(last).toEqual(sent.at(-1));
+      expect(values(a, id)).toEqual([]);
+      // The other device sees every move once, from "a" — no echoes in between.
+      expect(values(b, id).every((m) => m.by === "a")).toBe(true);
+      expect(values(b, id).at(-1)?.value).toEqual(last);
+    });
+
+  it("installation state that is not an echo applies at once, also mid-drag", () => {
+    const { bridge, peer, step } = echoing(120);
+    const a = peer("a");
+    for (let i = 0; i < 10; i++) {
+      a.say({ t: "set", pult: "lobby", id: "intensity", value: 0.3 + i / 100 });
+      step(33);
+    }
+    // The installation moves the parameter itself (automation, its own UI): every device hears it.
+    bridge.feedback("td", message("/wall/intensity", 0.8));
+    expect(values(a, "intensity").at(-1)).toMatchObject({ value: 0.8, by: null });
+    expect(bridge.stores.get("lobby")!.get("intensity")).toBe(0.8);
+  });
+
+  it("an echo of the newest command after an installation change is the installation's state", () => {
+    const { bridge, peer, step } = echoing(120);
+    const a = peer("a");
+    a.say({ t: "set", pult: "lobby", id: "intensity", value: 0.3 });
+    step(33);
+    bridge.feedback("td", message("/wall/intensity", 0.8));
+    // The installation applied our 0.3 after its own 0.8: that is where it is now.
+    step(200);
+    expect(bridge.stores.get("lobby")!.get("intensity")).toBeCloseTo(0.3, 6);
+    expect(values(a, "intensity").at(-1)?.value).toBeCloseTo(0.3, 6);
+  });
+
+  it("long after the last command, a matching value is installation state again", () => {
+    const { bridge, peer, step } = echoing(120);
+    const a = peer("a");
+    a.say({ t: "set", pult: "lobby", id: "intensity", value: 0.3 });
+    step(200);
+    expect(values(a, "intensity")).toEqual([]);
+    a.say({ t: "set", pult: "lobby", id: "intensity", value: 0.5 });
+    step(ECHO_WINDOW_MS + 1000);
+    bridge.feedback("td", message("/wall/intensity", 0.3));
+    expect(values(a, "intensity").at(-1)).toMatchObject({ value: 0.3, by: null });
   });
 });

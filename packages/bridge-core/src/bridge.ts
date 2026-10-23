@@ -136,7 +136,12 @@ export class Bridge {
   ) {
     this.startedAt = io.now();
     for (const pult of config.pults) {
-      const store = new PultStore(config, pult, { send: (t, m) => io.sendOsc(t, m) });
+      const store = new PultStore(
+        config,
+        pult,
+        { send: (t, m) => io.sendOsc(t, m) },
+        { now: () => io.now() },
+      );
       store.onChange((id, value) => this.broadcastValue(pult.id, id, value));
       this.stores.set(pult.id, store);
     }

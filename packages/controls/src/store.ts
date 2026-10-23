@@ -1,4 +1,4 @@
-import { argValue, type OscMessage } from "@osc/core";
+import { argValue, type OscArg, type OscMessage } from "@osc/core";
 import { applyHsbFeedback, colorFromArgs, hsbToHex, type Hsb } from "./color";
 import {
   HSB_CHANNELS,
@@ -39,6 +39,27 @@ export interface Transport {
 type Listener = () => void;
 
 /**
+ * How long OSC this store sent is remembered to recognise the installation's echo of it, ms.
+ * An echo normally arrives within a few ms on a LAN; past this window a matching value is treated
+ * as the installation's own state again.
+ */
+export const ECHO_WINDOW_MS = 2000;
+/** Per control, at most this many sent messages are remembered (a 60 Hz drag over the window). */
+const ECHO_KEEP = 128;
+
+/** One OSC message this store sent for a control: `slot` is its address relative to the control's. */
+interface Sent {
+  slot: string;
+  args: OscArg[];
+  at: number;
+}
+
+export interface PultStoreOptions {
+  /** Clock for echo recognition (the bridge passes its own, tests a fake one). */
+  now?: () => number;
+}
+
+/**
  * Shared state of every control in a pult. The app and the web pult keep one store per pult;
  * the bridge broadcasts changes so every device shows the same values.
  */
@@ -57,16 +78,25 @@ export class PultStore {
   /** `hsb` colour pickers: the last full HSB known per control (a grey keeps its hue here). */
   private hsb = new Map<string, Hsb>();
   private localSeq = 0;
+  /**
+   * OSC this store sent per control, oldest first, and the value that sent it — to tell the
+   * installation's echo of our own (possibly older, in-flight) commands from its own state changes.
+   */
+  private sent = new Map<string, Sent[]>();
+  private sentValue = new Map<string, ControlValue>();
+  private now: () => number;
   mode: ControlMode = "control";
 
   constructor(
     readonly config: InstallationConfig,
     readonly pult: Pult,
     private transport: Transport,
+    opts: PultStoreOptions = {},
   ) {
+    this.now = opts.now ?? Date.now;
     for (const c of this.controls()) {
       this.values.set(c.id, initialValue(c));
-      const fb = c.feedback ?? ("address" in c && !c.address.includes("{") ? c.address : undefined);
+      const fb = feedbackBase(c);
       // A button group listens on every button's own address; an `hsb` colour picker on its three
       // channel addresses (`<feedback or address>/h`, `/s`, `/b`).
       const addrs =
@@ -179,7 +209,10 @@ export class PultStore {
     }
     const msgs = messagesFor(control, value, previous);
     const target = targetOf(this.config, this.pult, control);
-    if (msgs.length && target) this.transport.send(target, msgs);
+    if (msgs.length && target) {
+      this.transport.send(target, msgs);
+      this.rememberSent(control, msgs, value);
+    }
     // Direct OSC (no bridge) has nobody to confirm a prompt: treat it as applied.
     if (control.type === "prompt")
       this.setAck(control.id, { state: "applied", seq: ++this.localSeq });
@@ -194,9 +227,20 @@ export class PultStore {
     this.changeListeners.forEach((f) => f(id, value));
   }
 
-  /** Apply an incoming OSC message to every control listening on its address. */
+  /**
+   * Apply an incoming OSC message to every control listening on its address.
+   *
+   * Installations echo what they receive (docs/integration.md). For a control this store is
+   * sending at full rate (a drag), the echo of an older command arrives after newer ones were sent,
+   * and it never equals the value it came from: it went through the control's range and back, and
+   * OSC floats are float32. Applying such an echo as new state rewinds the control and broadcasts
+   * the stale value to every device, the sender included — at 30 Hz, against the finger. So an echo
+   * of our own command is recognised as one (`isOwnEcho`); every other message is installation
+   * state and applies as before.
+   */
   receive(msg: OscMessage) {
     for (const c of this.byFeedback.get(msg.address) ?? []) {
+      if (this.isOwnEcho(c, msg)) continue;
       if (c.type === "colorPicker" && c.format === "hsb") {
         this.receiveHsb(c, msg);
         continue;
@@ -204,6 +248,48 @@ export class PultStore {
       const v = feedbackValue(c, msg, this.get(c.id));
       if (v !== undefined) this.set(c.id, v);
     }
+  }
+
+  private rememberSent(c: Control, msgs: OscMessage[], value: ControlValue) {
+    const base = sendBase(c);
+    const at = this.now();
+    const list = this.recentSent(c.id, at);
+    for (const m of msgs) list.push({ slot: slotOf(m.address, base), args: m.args, at });
+    if (list.length > ECHO_KEEP) list.splice(0, list.length - ECHO_KEEP);
+    this.sent.set(c.id, list);
+    this.sentValue.set(c.id, value);
+  }
+
+  /** What this store sent for a control within the echo window, oldest first. */
+  private recentSent(id: string, now: number): Sent[] {
+    const list = this.sent.get(id) ?? [];
+    const fresh = list.findIndex((e) => now - e.at <= ECHO_WINDOW_MS);
+    if (fresh !== 0) list.splice(0, fresh < 0 ? list.length : fresh);
+    return list;
+  }
+
+  /**
+   * Is `msg` the installation echoing a command this store sent for `c`? An echo of an older
+   * command while newer ones are in flight is stale: the installation is about to receive the newer
+   * ones. An echo of the newest command confirms the value we already hold exactly — unless the
+   * installation reported a different value in between, in which case it took our command after
+   * its own change and the echo is its state.
+   */
+  private isOwnEcho(c: Control, msg: OscMessage): boolean {
+    const list = this.recentSent(c.id, this.now());
+    if (!list.length) return false;
+    const slot = slotOf(msg.address, feedbackBase(c));
+    let i = list.length - 1;
+    for (; i >= 0; i--) if (list[i]!.slot === slot && sameArgs(list[i]!.args, msg.args)) break;
+    if (i < 0) return false;
+    const newer = list.slice(i + 1).some((e) => e.slot === slot);
+    // Echoes come back in order: what was sent before the echoed command will not be echoed now.
+    this.sent.set(
+      c.id,
+      list.filter((e, j) => j >= i || e.slot !== slot),
+    );
+    if (newer) return true;
+    return sameValue(this.values.get(c.id), this.sentValue.get(c.id) ?? null);
   }
 
   /** One channel of an `hsb` colour picker came back from the installation. */
@@ -217,6 +303,41 @@ export class PultStore {
     this.hsb.set(c.id, next);
     this.set(c.id, hsbToHex(next));
   }
+}
+
+/** The address a control listens on for feedback (its `feedback`, else its own fixed address). */
+function feedbackBase(c: Control): string | undefined {
+  return c.feedback ?? sendBase(c);
+}
+
+/** The control's own fixed address (none for templated addresses like `/cue/{index}`). */
+function sendBase(c: Control): string | undefined {
+  return "address" in c && typeof c.address === "string" && !c.address.includes("{")
+    ? c.address
+    : undefined;
+}
+
+/**
+ * Address relative to a control's base: `""` for the address itself, `"/h"` for an `hsb` channel.
+ * A control that sends on `address` and hears back on `feedback` gets the same slot for both.
+ */
+function slotOf(address: string, base: string | undefined): string {
+  return base && address.startsWith(base) ? address.slice(base.length) : address;
+}
+
+/**
+ * Same OSC arguments, allowing for the trip through the installation: a float comes back as
+ * float32 (and an integer-valued float may come back as an int, or the other way round).
+ */
+function sameArgs(a: OscArg[], b: OscArg[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((x, i) => {
+    const va = argValue(x);
+    const vb = argValue(b[i]!);
+    if (typeof va === "number" && typeof vb === "number")
+      return Math.abs(va - vb) <= 1e-6 * Math.max(1, Math.abs(va));
+    return va === vb && (typeof va !== "object" || va === null);
+  });
 }
 
 const isDelta = (v: ControlValue): v is { delta: number } =>
