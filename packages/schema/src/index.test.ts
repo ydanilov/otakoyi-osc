@@ -33,7 +33,7 @@ describe("parseConfig", () => {
     expect(cfg.schemaVersion).toBe(2);
     const used = new Set(controls(cfg).map((c) => c.type));
     expect([...used].sort()).toEqual([...CONTROL_TYPES].sort());
-    expect(CONTROL_TYPES).toHaveLength(17);
+    expect(CONTROL_TYPES).toHaveLength(18);
   });
 
   it("fills defaults", () => {

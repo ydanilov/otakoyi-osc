@@ -146,6 +146,7 @@ type Kind =
   | "sceneList"
   | "xy"
   | "thumbstick"
+  | "gyroscope"
   | "buttonGroup"
   | "buttonGrid"
   | "mic"
@@ -175,6 +176,7 @@ function compatible(kind: Kind, e: AddressSpec): boolean {
       );
     case "xy":
     case "thumbstick":
+    case "gyroscope":
       return untyped || !!e.pair;
     case "segmented":
     case "sceneList":
@@ -597,6 +599,22 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
           applyKeys(c, keys, ["deadzone", "press"]);
         }
         applyKeys(c, keys, ["target", "lock", "studioOnly", "feedback"]);
+        return push(annot?.nodeId);
+      }
+      case "gyroscope": {
+        const got = need();
+        if (!got) return;
+        c.address = got.address;
+        const r = got.entry.range;
+        if (r && (r[0] !== -1 || r[1] !== 1))
+          issue(
+            "warning",
+            "gyroscope-range",
+            `${id}: a gyroscope always sends −1…1 (set the tilt angle with range=<degrees>); annotation says ${r[0]}–${r[1]}`,
+            node.id,
+          );
+        if (osc?.rateHz && osc.rateHz !== 30) c.rateHz = osc.rateHz;
+        applyKeys(c, keys, ["target", "lock", "studioOnly", "feedback", "range"]);
         return push(annot?.nodeId);
       }
       case "buttonGroup": {

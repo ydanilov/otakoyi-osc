@@ -22,6 +22,7 @@ export const COMPONENTS: Record<string, ComponentRole> = {
   Knob: control("knob", "Mode=Absolute|Relative|Color → mode absolute|relative|hue; Size → size"),
   "XY Pad": control("xy"),
   Thumbstick: control("thumbstick"),
+  Gyroscope: control("gyroscope", "keys: range=<degrees>"),
   Meter: control("meter", "address = feedback"),
   Toggle: control("toggle", "style button; Size → size"),
   Switch: control("toggle", "style switch"),

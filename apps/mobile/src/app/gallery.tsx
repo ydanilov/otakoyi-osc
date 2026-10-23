@@ -93,6 +93,8 @@ function activeValue(c: Control): ControlValue {
       return { on: c.buttons.slice(0, 2).map((b) => b.id) };
     case "thumbstick":
       return { x: 0.6, y: -0.3 };
+    case "gyroscope":
+      return { x: 0.42, y: 0.28 };
     case "image":
       return { image: "sample", path: "/demo/uploads/sample.jpg" };
     case "mic":
@@ -116,6 +118,7 @@ function Cell({ control, state }: { control: Control; state: (typeof STATES)[num
     "sceneList",
     "buttonGrid",
     "thumbstick",
+    "gyroscope",
     "image",
     "mic",
     "prompt",

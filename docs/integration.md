@@ -67,8 +67,20 @@ colour via `colorsys.hsv_to_rgb(h/360, s, b)`. If your project wants one message
 studio for an explicit single-message format: `hsvFloat` (`address h s v`, floats 0..1),
 `rgbFloat` (`address r g b`, 0..1), `rgbInt` (0..255) or `hex` (`"#RRGGBB"`).
 
-Schema v2 adds crossfade, relative and hue variants, thumbstick, button group, image, mic and
-prompt controls; `messagesFor()` and `packages/schema/src` are the reference for them.
+Schema v2 adds crossfade, relative and hue variants, thumbstick, button group, image, mic, prompt
+and gyroscope controls; `messagesFor()` and `packages/schema/src` are the reference for them.
+
+| Control (config `type`) | Sends                                                                                           | Typical use              |
+| ----------------------- | ----------------------------------------------------------------------------------------------- | ------------------------ |
+| `thumbstick`            | `address float x float y` (−1..1, y up) at `rateHz` while held, `0 0` on release                | camera move, nudge       |
+| `gyroscope`             | `address float x float y` (−1..1, y up) at `rateHz` (30) while switched on; `0 0` when it stops | steer, lean, look-around |
+
+**Gyroscope** (device tilt): the phone becomes the controller. When the visitor switches it on, the
+pose they hold becomes the centre; tilting from there sends `x` = roll (right is positive) and `y` =
+pitch (top edge away is positive), with `range` degrees (default 30) reaching ±1 and clamped beyond.
+Only the device holding control sends; switching off or the app going to the background sends
+`0 0` once. Echo `address x y` as feedback and other phones draw the dot where it is. Treat it like
+a joystick that holds its position: smooth it on your side if the visual needs calm movement.
 
 ## 2. Send feedback
 

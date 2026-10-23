@@ -3,6 +3,7 @@ import { createMemoryServices, type ControlServices } from "@osc/ui";
 import { resolveAsset } from "./assets";
 import { DEMO_ASSETS } from "./demo";
 import { audioInput, imagePicker } from "./platform/media";
+import { motionInput } from "./platform/motion";
 import { prefsStorage } from "./platform/storage";
 
 /**
@@ -19,6 +20,7 @@ export function bridgeServices(
     asset: (path) => resolveAsset(path, opts),
     imagePicker,
     audio: audioInput,
+    motion: motionInput,
     viewPrefs: prefsStorage,
     media: {
       remote: true,
@@ -38,6 +40,7 @@ export function galleryServices(): Omit<ControlServices, "pult"> {
     asset: (path) => resolveAsset(path, { bundled: DEMO_ASSETS }),
     imagePicker,
     audio: audioInput,
+    motion: motionInput,
     viewPrefs: prefsStorage,
     media,
     prompts,

@@ -702,6 +702,12 @@
               "label": "Prompt",
               "address": "/live/prompt",
               "preset": "prompt/blend"
+            },
+            {
+              "id": "tilt",
+              "type": "gyroscope",
+              "label": "Device tilt",
+              "address": "/live/tilt"
             }
           ],
           "layout": {
@@ -723,6 +729,12 @@
                 "y": 3,
                 "w": 6,
                 "h": 5
+              },
+              "tilt": {
+                "x": 0,
+                "y": 8,
+                "w": 6,
+                "h": 3
               }
             },
             "phone": {
@@ -743,6 +755,12 @@
                 "y": 9,
                 "w": 12,
                 "h": 6
+              },
+              "tilt": {
+                "x": 0,
+                "y": 15,
+                "w": 12,
+                "h": 3
               }
             }
           }

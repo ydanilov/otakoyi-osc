@@ -380,6 +380,12 @@ function feedbackValue(
       if (typeof x !== "number" || typeof y !== "number") return undefined;
       return { x: (x - c.x.min) / (c.x.max - c.x.min), y: (y - c.y.min) / (c.y.max - c.y.min) };
     }
+    case "gyroscope": {
+      // Another device's tilt echoed by the installation: move the dot.
+      const [x, y] = vals;
+      if (typeof x !== "number" || typeof y !== "number") return undefined;
+      return { x: Math.min(1, Math.max(-1, x)), y: Math.min(1, Math.max(-1, y)) };
+    }
     case "segmented": {
       const i = c.options.findIndex((o) => o.value === first);
       return i >= 0 ? i : undefined;

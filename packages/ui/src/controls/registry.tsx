@@ -11,6 +11,7 @@ import {
 } from "./discrete";
 import { ColorPicker } from "./ColorPicker";
 import { Fader } from "./Fader";
+import { Gyroscope } from "./Gyroscope";
 import { HoldToConfirm } from "./HoldToConfirm";
 import { Knob } from "./Knob";
 import { ImageUpload, MicControl } from "./media";
@@ -40,6 +41,7 @@ export const controlRegistry: { [T in ControlType]: React.ComponentType<ControlP
   colorPicker: ColorPicker,
   buttonGroup: ButtonGroup,
   thumbstick: Thumbstick,
+  gyroscope: Gyroscope,
   image: ImageUpload,
   mic: MicControl,
   prompt: PromptControl,

@@ -443,6 +443,20 @@ export const Thumbstick = z.object({
   press: address.optional(),
 });
 
+/**
+ * Gyroscope (device tilt): the phone becomes the controller. Switched on, it captures the current
+ * pose as the centre and sends the tilt from it as x / y (−1..1, y up) at `rateHz`; `range` degrees
+ * of tilt reach ±1, beyond that the value is clamped. Only the device holding control sends.
+ */
+export const Gyroscope = z.object({
+  ...base,
+  type: z.literal("gyroscope"),
+  address,
+  rateHz: z.number().min(1).max(60).default(30),
+  /** Tilt (degrees from the captured centre) that reaches ±1 on each axis. */
+  range: z.number().min(5).max(90).default(30),
+});
+
 export const IMAGE_FORMATS = ["jpeg", "png", "webp", "heic", "gif"] as const;
 export type ImageFormat = (typeof IMAGE_FORMATS)[number];
 
@@ -523,6 +537,7 @@ export const Control = z.discriminatedUnion("type", [
   ColorPicker,
   ButtonGroup,
   Thumbstick,
+  Gyroscope,
   ImageUpload,
   Mic,
   Prompt,

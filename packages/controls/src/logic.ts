@@ -343,7 +343,7 @@ export type ControlValue =
   | number
   | boolean
   | string
-  /** xy (0..1) and thumbstick (−1..1). */
+  /** xy (0..1), thumbstick and gyroscope (−1..1). */
   | { x: number; y: number }
   /** button, thumbstick click. */
   | { pressed: boolean }
@@ -453,6 +453,11 @@ export function messagesFor(
       if (typeof o.x !== "number" || typeof o.y !== "number") return [];
       return [{ address: c.address, args: [num(roundFloat(o.x)), num(roundFloat(o.y))] }];
     }
+    case "gyroscope": {
+      const o = rec(value);
+      if (typeof o.x !== "number" || typeof o.y !== "number") return [];
+      return [{ address: c.address, args: [num(roundFloat(o.x)), num(roundFloat(o.y))] }];
+    }
     case "buttonGroup": {
       if (!isGroupValue(value)) return [];
       const lit = new Set(value.on);
@@ -550,6 +555,7 @@ export function initialValue(c: Control): ControlValue {
     case "buttonGroup":
       return { on: c.buttons.filter((b) => c.default.includes(b.id)).map((b) => b.id) };
     case "thumbstick":
+    case "gyroscope":
       return { x: 0, y: 0 };
     case "prompt":
       return { a: null, b: null, mix: c.default };

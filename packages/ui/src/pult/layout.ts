@@ -40,6 +40,9 @@ export function naturalHeightFor(c: AnyControl, s: ControlSizes): number | undef
       return c.label ? 104 : 78;
     case "label":
       return 118;
+    case "gyroscope":
+      // Figma Gyroscope: header 18 + 12 + card 124 + 12 + message 18 (pult "lab / phone / motion").
+      return 184;
     case "toggle":
       if (c.style === "switch") return 46;
       if (c.image) return c.size === "compact" ? s.picturePadCompact : s.picturePadRegular;
