@@ -1,6 +1,6 @@
 import demoJson from "@osc/schema/examples/demo-installation.json";
 import tryJson from "@osc/schema/examples/try-the-demo.json";
-import phaseOneJson from "../../../../tools/figma-export/fixtures/phase-one.config.json";
+import templateJson from "../../../../tools/figma-export/fixtures/template.config.json";
 import { parseConfig } from "@osc/schema";
 import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 import * as React from "react";
@@ -66,7 +66,7 @@ function Demo({
    * `sample`: every control type; `try`: the Figma "Try the demo" installation (panels);
    * `depends`: a knob enabled by a toggle (`enabledWhen`).
    */
-  config?: "sample" | "try" | "depends" | "phaseOne";
+  config?: "sample" | "try" | "depends" | "template";
 }) {
   const store = React.useMemo(() => {
     const parsed = parseConfig(
@@ -74,8 +74,8 @@ function Demo({
         ? tryJson
         : config === "depends"
           ? dependsJson
-          : config === "phaseOne"
-            ? phaseOneJson
+          : config === "template"
+            ? templateJson
             : demoJson,
     );
     if (!parsed.ok) throw new Error("demo config invalid");
@@ -94,7 +94,7 @@ function Demo({
   );
   // An exported client config carries its Figma Brand mode as `theme` (the app applies it the
   // same way); the toolbar brand applies to the other stories.
-  return config === "phaseOne" ? (
+  return config === "template" ? (
     <ThemeProvider brand={store.config.theme}>{pager}</ThemeProvider>
   ) : (
     pager
@@ -185,12 +185,12 @@ export const DependsOn: Story = {
 };
 
 /**
- * Client · Phase One as the exporter writes it (`tools/figma-export/fixtures/phase-one.config.json`):
- * its sections use the Figma Brand mode "Aurora · Phase One", so the pult is teal / lavender.
+ * Client · Template as the exporter writes it (`tools/figma-export/fixtures/template.config.json`):
+ * its sections use the Figma Brand mode "Aurora · Template", so the pult is teal / lavender.
  */
-export const PhaseOneAurora: Story = {
-  name: "Phase One · Aurora (exported from Figma)",
-  args: { config: "phaseOne", height: 640 },
+export const TemplateAurora: Story = {
+  name: "Template · Aurora (exported from Figma)",
+  args: { config: "template", height: 640 },
   globals: { viewport: { value: "phone" } },
   play: async ({ canvas }) => {
     await expect(await canvas.findByRole("switch", { name: "Live data" }, SLOW)).toBeTruthy();

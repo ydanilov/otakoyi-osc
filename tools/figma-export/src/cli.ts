@@ -2,8 +2,8 @@
 /**
  * figma-export — Figma client page → installation config (ADR-014). See docs/figma-export.md.
  *
- *   figma-export --file <key> --page "Client · Phase One" [--section Phone] --out config.json
- *   figma-export --snapshot fixtures/phase-one.json --out config.json --report report.md
+ *   figma-export --file <key> --page "Client · Template" [--section Phone] --out config.json
+ *   figma-export --snapshot fixtures/template.json --out config.json --report report.md
  */
 import { readFileSync, writeFileSync as write } from "node:fs";
 import { resolve } from "node:path";

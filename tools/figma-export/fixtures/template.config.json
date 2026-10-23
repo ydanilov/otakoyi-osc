@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "installation": {
-    "id": "phase-one",
-    "name": "Phase One",
+    "id": "template",
+    "name": "Template",
     "revision": 1
   },
   "targets": [
@@ -26,8 +26,8 @@
   },
   "pults": [
     {
-      "id": "phase-one",
-      "name": "Phase One",
+      "id": "template",
+      "name": "Template",
       "formFactor": "phone",
       "pages": [
         {
@@ -365,6 +365,7 @@
               "id": "mix-scene",
               "type": "sceneList",
               "address": "/scene",
+              "crossfade": 1.5,
               "scenes": [
                 {
                   "id": "lightning",
@@ -454,23 +455,23 @@
                 "x": 0,
                 "y": 7,
                 "w": 12,
-                "h": 5
+                "h": 4
               },
               "layers-panel": {
                 "x": 0,
-                "y": 19,
+                "y": 18,
                 "w": 12,
                 "h": 2
               },
               "camera": {
                 "x": 0,
-                "y": 12,
+                "y": 11,
                 "w": 12,
                 "h": 4
               },
               "scene-panel": {
                 "x": 0,
-                "y": 16,
+                "y": 15,
                 "w": 12,
                 "h": 3
               }
@@ -486,7 +487,7 @@
                 "x": 4,
                 "y": 0,
                 "w": 4,
-                "h": 5
+                "h": 4
               },
               "layers-panel": {
                 "x": 4,

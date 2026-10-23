@@ -16,7 +16,7 @@ import { DRAWER, drawerCloses } from "../ds/logic";
 import { useTheme } from "../theme/ThemeProvider";
 
 /**
- * iPad Settings (ADR-013; Figma Demo › Tablet / 04 Settings 106:209, Phase One 99:7941): a floating
+ * iPad Settings (ADR-013; Figma Demo › Tablet / 04 Settings 106:209, Client · Template 99:7941): a floating
  * drawer from the leading edge — 400 pt wide, 12 pt in from the left and the bottom, its top under
  * the status bar, radius 28, dark fill — over the dimmed pult. Slides in from the left; a swipe to
  * the left or a tap on the dim closes it (so does the round close button). The body scrolls; the

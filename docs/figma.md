@@ -13,7 +13,7 @@ Otakoyi Inspector plugin are described in [figma-export.md](figma-export.md).
 | Patterns             | Compositions: Channel Strip, Fader Bank, Knob Group, Mix, Prompt Presets, Installation Actions…       | `packages/ui`          |
 | Guidelines           | Rules for composing a client pult: which control when, do/don’t, layout, annotating a build, copy     | —                      |
 | iOS 27 · System      | System parts from the iOS and iPadOS 27 library: status bar, home indicator, sheets, keyboards, menus | native                 |
-| Client · Phase One   | First client build: 21 screens each for phone and tablet (same numbering), prototype flows            | config + `apps/mobile` |
+| Client · Template    | Template for every client pult (duplicate it per client): phone + tablet screens, standard OSC set    | config + `apps/mobile` |
 | Demo · Try the demo  | Demo-mode prototype (simulated installation) for App Review and prospects, phone + tablet             | `apps/mobile` demo     |
 | Research, References | Mobbin research board and visual references (Neumorphic Dark Knobs is the lead one)                   | —                      |
 
