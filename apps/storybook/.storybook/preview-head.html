@@ -69,7 +69,9 @@
   body.sb-main-padded {
     padding: 0 !important;
   }
-  #storybook-root {
+  /* :not([hidden]) — on docs pages Storybook hides the root with the attribute; display: flex here
+     would otherwise override it and leave an empty viewport-tall block above the docs. */
+  #storybook-root:not([hidden]) {
     min-height: 100vh;
     display: flex;
   }
