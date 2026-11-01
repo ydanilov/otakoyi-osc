@@ -10,6 +10,7 @@ import {
   installationStats,
   modeToggles,
   quickActions,
+  systemSummary,
 } from "./installation";
 import { MIN_LOADING_MS, UNREACHABLE_MS, loadingPhase, nextLoadingTick } from "./loading";
 import {
@@ -199,6 +200,14 @@ describe("installation panel", () => {
     expect(activityLine({ ts, event: "set", pult: "p", id: "c", device: "x" }, null).title).toBe(
       "Changed c",
     );
+  });
+});
+
+describe("System screen row (ADR-018)", () => {
+  it("summarises the reported output size and debug", () => {
+    expect(systemSummary({ resw: 1920, resh: 1080 })).toBe("1920 × 1080");
+    expect(systemSummary({ resw: 1280, resh: 1280, debug: true })).toBe("1280 × 1280 · Debug on");
+    expect(systemSummary({})).toBe("Output");
   });
 });
 

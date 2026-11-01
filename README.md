@@ -15,6 +15,15 @@ turns that into plain OSC for TouchDesigner or any other OSC software.
 | Designing in Figma                                                                          | [docs/figma.md](docs/figma.md)               |
 | Exporting a client page from Figma to a config (CLI, Otakoyi Inspector plugin)              | [docs/figma-export.md](docs/figma-export.md) |
 
+## Claude skill for installation projects
+
+`skills/otakoyi-integrate/SKILL.md` is a Claude skill that teaches any session how to make an
+installation controllable (it triggers on the pult, OSC, the controller, Otakoyi Control and every
+project named `[TD] …`). Install it once at account level so every project has it: in Claude, open
+**Settings › Capabilities › Skills**, choose **Upload skill** and upload a zip of the
+`skills/otakoyi-integrate` folder (in Claude Code, copy the folder to `~/.claude/skills/`).
+Re-upload it when the file changes.
+
 ## How it fits together
 
 ```
@@ -31,7 +40,8 @@ iPhone / iPad / browser ◀──WebSocket──▶ bridge (installation machine
 - `packages/*` — OSC codec, config schema, protocol, tokens, control logic, design system
 - `tools/figma-export` — the exporter: Figma client page → installation config + report
 - `tools/figma-plugin` — Otakoyi Inspector, the studio's Figma dev plugin (annotations, preview)
-- `tools/touchdesigner` — reference TouchDesigner target and the pairing overlay `.tox`
+- `tools/pult-plan` — contract → screen plan and draft config; the generated capacity table
+- `tools/touchdesigner` — contract generator + receiver for TD, the pairing overlay, a test target
 - `docs/osc-contract.schema.json` — what an installation declares it accepts over OSC
 
 ```bash

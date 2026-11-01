@@ -1,6 +1,6 @@
 import { argValue, type OscMessage } from "@osc/core";
 import { knobMode, valueToPosition } from "@osc/controls";
-import type { Control, InstallationConfig } from "@osc/schema";
+import { allPults, type Control, type InstallationConfig } from "@osc/schema";
 import type { PreviewParams } from "./preview";
 
 /** What an OSC address does to the preview. */
@@ -48,7 +48,7 @@ export const DEMO_BINDINGS: Readonly<Record<string, PreviewBinding>> = {
 /** Controls by the address they send on (fixed addresses only). */
 export function controlsByAddress(config: InstallationConfig): Map<string, Control> {
   const out = new Map<string, Control>();
-  for (const pult of config.pults)
+  for (const pult of allPults(config))
     for (const page of pult.pages)
       for (const c of page.controls as Control[])
         if ("address" in c && typeof c.address === "string" && !out.has(c.address))

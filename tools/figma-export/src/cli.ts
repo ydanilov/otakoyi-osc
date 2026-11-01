@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync as write } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { parseContract } from "@osc/schema";
 import { exportSnapshot, type BaseConfig, type OscContract } from "./export";
 import { formatReport } from "./report";
 import { fetchSnapshot } from "./rest";
@@ -23,7 +24,8 @@ Options:
   --section <name|id>     only frames in matching sections (e.g. Phone)
   --brand <mode>          Figma Brand mode for the theme colours (default: the page's mode)
   --base <path>           installation, targets, theme, presets, pult id/name (not in Figma)
-  --contract <path>       installation OSC contract; unknown addresses are errors
+  --contract <path>       installation OSC contract (validated); unknown addresses are errors,
+                          hidden parameters on the pult and live ones missing from it warnings
   --previous <path>       published config; revision is bumped when the pults changed
   --out <path>            config output (default: stdout)
   --report <path>         Markdown report (default: stderr)
@@ -39,6 +41,13 @@ const writeFileSync = (p: string, data: string) => write(at(p), data);
 
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(at(path), "utf8"));
+}
+
+/** The installation's contract, validated against docs/osc-contract.schema.json (zod mirror). */
+function readContract(path: string): OscContract {
+  const r = parseContract(readJson(path));
+  if (!r.ok) throw new Error(`${path} is not a valid OSC contract:\n  ${r.errors.join("\n  ")}`);
+  return r.contract;
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -86,7 +95,7 @@ async function main(argv: string[]): Promise<number> {
     section: a.section,
     brand: a.brand,
     base: a.base ? (readJson(a.base) as BaseConfig) : undefined,
-    contract: a.contract ? (readJson(a.contract) as OscContract) : undefined,
+    contract: a.contract ? readContract(a.contract) : undefined,
     previous: a.previous ? (readJson(a.previous) as never) : undefined,
   });
 

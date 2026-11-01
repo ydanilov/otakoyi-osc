@@ -21,7 +21,13 @@ import {
   type ServerMessage,
   type TargetStatus,
 } from "@osc/protocol";
-import { actionsOf, type Control, type InstallationConfig, type Target } from "@osc/schema";
+import {
+  actionsOf,
+  allPults,
+  type Control,
+  type InstallationConfig,
+  type Target,
+} from "@osc/schema";
 import { Lease } from "./lease";
 import type { Supervisor } from "./supervisor";
 
@@ -135,7 +141,8 @@ export class Bridge {
     private auth: BridgeAuth = {},
   ) {
     this.startedAt = io.now();
-    for (const pult of config.pults) {
+    // The System screen (ADR-018) runs as one more pult: same state, lease, echo and activity.
+    for (const pult of allPults(config)) {
       const store = new PultStore(
         config,
         pult,

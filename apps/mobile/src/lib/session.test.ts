@@ -35,7 +35,8 @@ describe("Session over a transport (here: the in-app simulator)", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(s.state.connection).toBe("open");
     expect(s.state.config?.installation.id).toBe("demo");
-    expect([...s.stores.keys()]).toEqual(["lobby", "hall", "live"]);
+    // + the hidden System pult (ADR-018): the demo config has `system`.
+    expect([...s.stores.keys()]).toEqual(["lobby", "hall", "live", "system"]);
     expect(s.controlMode()).toBe("control");
     expect(installationOnline(s.state)).toBe(true);
     expect(s.state.actions).toEqual(expect.arrayContaining(["flash", "restart", "blackout"]));

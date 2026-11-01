@@ -22,3 +22,5 @@ Consequences, and add a row below. Read the relevant ADR before proposing a diff
 | 014 | [Figma is the builder](014-figma-is-the-builder.md)                                                                        | Accepted |
 | 015 | [New control types and schema v2](015-new-control-types-schema-v2.md)                                                      | Accepted |
 | 016 | [Bridge: installation actions, activity, targets and the runtime](016-bridge-actions-targets-runtime.md)                   | Accepted |
+| 017 | [Contract priorities and the draft pult](017-contract-priorities-and-draft-pult.md)                                        | Accepted |
+| 018 | [Standard System screen](018-standard-system-screen.md)                                                                    | Accepted |

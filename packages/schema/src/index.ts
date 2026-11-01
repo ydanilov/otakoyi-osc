@@ -6,6 +6,7 @@ import { resolvePresets } from "./presets";
 
 export * from "./presets";
 export * from "./layout";
+export * from "./contract";
 export { migrateConfig } from "./migrate";
 
 /**
@@ -648,6 +649,46 @@ export const CustomPreset = z.object({
   props: z.record(z.string(), z.unknown()),
 });
 
+/**
+ * The standard System screen (ADR-018): output width / height, debug overlay and seed of every
+ * installation, shown in the Installation panel (never on a client pult). The addresses default to
+ * what the TouchDesigner contract component generates from the TD page `System`.
+ */
+export const SYSTEM_PULT_ID = "system";
+export const SYSTEM_ADDRESSES = {
+  resw: "/system/resw",
+  resh: "/system/resh",
+  debug: "/system/debug",
+  seed: "/system/seed",
+} as const;
+export type SystemParam = keyof typeof SYSTEM_ADDRESSES;
+/** Output sizes offered as presets on the System screen (px). */
+export const SYSTEM_SIZE_PRESETS: ReadonlyArray<{ w: number; h: number; label: string }> = [
+  { w: 1920, h: 1080, label: "1920 × 1080" },
+  { w: 1080, h: 1920, label: "1080 × 1920" },
+  { w: 1280, h: 1280, label: "1280 × 1280" },
+  { w: 3840, h: 2160, label: "3840 × 2160" },
+];
+/** The preset matching an output size, if any (its label). */
+export function systemPresetOf(w: number | undefined, h: number | undefined): string | undefined {
+  return SYSTEM_SIZE_PRESETS.find((p) => p.w === w && p.h === h)?.label;
+}
+
+/** Output size range the System screen accepts (px). */
+export const SYSTEM_SIZE_RANGE = { min: 16, max: 16384 } as const;
+/** Seed range (TouchDesigner Int parameter); 0 = random. */
+export const SYSTEM_SEED_MAX = 2147483647;
+
+export const SystemScreen = z.object({
+  /** Target the System controls send to (required when there are several targets). */
+  target: id.optional(),
+  resw: address.default(SYSTEM_ADDRESSES.resw),
+  resh: address.default(SYSTEM_ADDRESSES.resh),
+  debug: address.default(SYSTEM_ADDRESSES.debug),
+  seed: address.default(SYSTEM_ADDRESSES.seed),
+});
+export type SystemScreen = z.infer<typeof SystemScreen>;
+
 const InstallationConfigBase = z
   .object({
     schemaVersion: z.literal(SCHEMA_VERSION),
@@ -669,10 +710,33 @@ const InstallationConfigBase = z
     theme: Theme.default({ mode: "dark" }),
     presets: z.array(CustomPreset).default([]),
     pults: z.array(Pult).min(1),
+    system: SystemScreen.optional(),
   })
   .superRefine((cfg, ctx) => {
     const targets = new Set(cfg.targets.map((t) => t.id));
     const seen = new Set<string>();
+    if (cfg.system) {
+      if (cfg.system.target && !targets.has(cfg.system.target))
+        ctx.addIssue({
+          code: "custom",
+          path: ["system", "target"],
+          message: `Unknown target "${cfg.system.target}"`,
+        });
+      if (cfg.targets.length > 1 && !cfg.system.target)
+        ctx.addIssue({
+          code: "custom",
+          path: ["system", "target"],
+          message: "The System screen needs a target when there are several",
+        });
+      cfg.pults.forEach((pult, pi) => {
+        if (pult.id === SYSTEM_PULT_ID)
+          ctx.addIssue({
+            code: "custom",
+            path: ["pults", pi, "id"],
+            message: `Pult id "${SYSTEM_PULT_ID}" is reserved for the System screen`,
+          });
+      });
+    }
     cfg.pults.forEach((pult, pi) => {
       if (pult.defaultTarget && !targets.has(pult.defaultTarget))
         ctx.addIssue({
@@ -836,6 +900,65 @@ export function targetOf(
     pult.defaultTarget ??
     (cfg.targets.length === 1 ? cfg.targets[0]!.id : undefined);
   return cfg.targets.find((t) => t.id === tid);
+}
+
+/**
+ * The System screen as a pult the bridge and the app run like any other (state, lease, echo,
+ * activity), so system values need no protocol of their own (ADR-018). Not in `cfg.pults`: no
+ * pult list or pager ever shows it; the Installation panel draws it with `SystemScreen`.
+ */
+export function systemPult(cfg: Pick<InstallationConfig, "system">): Pult | undefined {
+  const s = cfg.system;
+  if (!s) return undefined;
+  const t = s.target ? { target: s.target } : {};
+  const size = (id: "resw" | "resh", label: string, def: number) => ({
+    id,
+    type: "fader",
+    label,
+    address: s[id],
+    ...SYSTEM_SIZE_RANGE,
+    step: 1,
+    int: true,
+    default: def,
+    unit: "px",
+    orientation: "horizontal",
+    ...t,
+  });
+  return Pult.parse({
+    id: SYSTEM_PULT_ID,
+    name: "System",
+    pages: [
+      {
+        id: SYSTEM_PULT_ID,
+        title: "System",
+        controls: [
+          size("resw", "Width", 1920),
+          size("resh", "Height", 1080),
+          { id: "debug", type: "toggle", label: "Debug", address: s.debug, style: "switch", ...t },
+          {
+            id: "seed",
+            type: "fader",
+            label: "Seed",
+            address: s.seed,
+            min: 0,
+            max: SYSTEM_SEED_MAX,
+            step: 1,
+            int: true,
+            default: 0,
+            orientation: "horizontal",
+            ...t,
+          },
+        ],
+        layout: { phone: {}, tablet: {} },
+      },
+    ],
+  });
+}
+
+/** Every pult the bridge serves: the config's pults plus the System screen when there is one. */
+export function allPults(cfg: Pick<InstallationConfig, "pults" | "system">): Pult[] {
+  const sys = systemPult(cfg);
+  return sys ? [...cfg.pults, sys] : cfg.pults;
 }
 
 /**

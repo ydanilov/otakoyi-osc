@@ -1,6 +1,10 @@
 {
-  "contractVersion": 1,
-  "installation": { "id": "demo", "name": "Demo installation", "useCase": "lobby" },
+  "contractVersion": 1.1,
+  "installation": {
+    "id": "demo",
+    "name": "Demo installation",
+    "useCase": "lobby"
+  },
   "software": {
     "app": "touchdesigner",
     "version": "2025.x",
@@ -9,8 +13,14 @@
     "machines": 1
   },
   "osc": {
-    "in": { "protocol": "udp", "port": 7000 },
-    "feedback": { "port": 9000, "aliveAddress": "/sys/fps" }
+    "in": {
+      "protocol": "udp",
+      "port": 7000
+    },
+    "feedback": {
+      "port": 9000,
+      "aliveAddress": "/sys/fps"
+    }
   },
   "parameters": [
     {
@@ -22,7 +32,8 @@
       "default": 0.6,
       "feedback": true,
       "hint": "fader",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "live"
     },
     {
       "address": "/wall/speed",
@@ -33,7 +44,9 @@
       "default": 0.5,
       "feedback": true,
       "hint": "fader",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "tune",
+      "formFactors": ["tablet"]
     },
     {
       "address": "/wall/focus",
@@ -43,7 +56,8 @@
       "max": 1,
       "feedback": true,
       "hint": "xy",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "live"
     },
     {
       "address": "/wall/hue",
@@ -53,7 +67,8 @@
       "max": 1,
       "feedback": true,
       "hint": "knob",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "tune"
     },
     {
       "address": "/wall/mode",
@@ -64,10 +79,20 @@
       "hint": "segmented",
       "group": "Wall",
       "options": [
-        { "value": "ambient", "label": "Ambient" },
-        { "value": "react", "label": "React" },
-        { "value": "show", "label": "Show" }
-      ]
+        {
+          "value": "ambient",
+          "label": "Ambient"
+        },
+        {
+          "value": "react",
+          "label": "React"
+        },
+        {
+          "value": "show",
+          "label": "Show"
+        }
+      ],
+      "priority": "live"
     },
     {
       "address": "/wall/logo",
@@ -76,14 +101,16 @@
       "default": false,
       "feedback": true,
       "hint": "toggle",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "live"
     },
     {
       "address": "/wall/flash",
       "type": "trigger",
       "label": "Flash",
       "hint": "button",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "live"
     },
     {
       "address": "/wall/blackout",
@@ -91,7 +118,8 @@
       "label": "Blackout",
       "dangerous": true,
       "hint": "holdToConfirm",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "live"
     },
     {
       "address": "/wall/tint",
@@ -102,7 +130,8 @@
       "hueRange": "degrees",
       "feedback": true,
       "hint": "colorPicker",
-      "group": "Wall"
+      "group": "Wall",
+      "priority": "tune"
     },
     {
       "address": "/scene",
@@ -114,11 +143,24 @@
       "group": "Scenes",
       "description": "Second argument: crossfade in seconds.",
       "options": [
-        { "value": 1, "label": "Morning" },
-        { "value": 2, "label": "Day" },
-        { "value": 3, "label": "Evening" },
-        { "value": 4, "label": "Event" }
-      ]
+        {
+          "value": 1,
+          "label": "Morning"
+        },
+        {
+          "value": 2,
+          "label": "Day"
+        },
+        {
+          "value": 3,
+          "label": "Evening"
+        },
+        {
+          "value": 4,
+          "label": "Event"
+        }
+      ],
+      "priority": "live"
     },
     {
       "address": "/cue/{index}",
@@ -126,7 +168,51 @@
       "label": "Cue",
       "count": 12,
       "hint": "buttonGrid",
-      "group": "Scenes"
+      "group": "Scenes",
+      "priority": "tune"
+    },
+    {
+      "address": "/system/resw",
+      "type": "int",
+      "label": "Screen Width px",
+      "min": 16,
+      "max": 16384,
+      "default": 1920,
+      "unit": "px",
+      "feedback": true,
+      "group": "System",
+      "priority": "setup"
+    },
+    {
+      "address": "/system/resh",
+      "type": "int",
+      "label": "Screen Height px",
+      "min": 16,
+      "max": 16384,
+      "default": 1080,
+      "unit": "px",
+      "feedback": true,
+      "group": "System",
+      "priority": "setup"
+    },
+    {
+      "address": "/system/debug",
+      "type": "bool",
+      "label": "Debug Overlay",
+      "default": false,
+      "feedback": true,
+      "group": "System",
+      "priority": "setup"
+    },
+    {
+      "address": "/system/seed",
+      "type": "int",
+      "label": "Seed (0 = random)",
+      "min": 0,
+      "default": 0,
+      "feedback": true,
+      "group": "System",
+      "priority": "setup"
     }
   ],
   "telemetry": [
@@ -138,7 +224,13 @@
       "max": 1,
       "rateHz": 10
     },
-    { "address": "/sys/fps", "type": "float", "label": "FPS", "unit": "fps", "rateHz": 1 }
+    {
+      "address": "/sys/fps",
+      "type": "float",
+      "label": "FPS",
+      "unit": "fps",
+      "rateHz": 1
+    }
   ],
   "actions": ["flash", "restart", "blackout", "idle"],
   "pairingOverlay": true

@@ -5,6 +5,7 @@ import {
   Button,
   CaretLeftIcon,
   ClockCounterClockwiseIcon,
+  CropIcon,
   ConnectionStatus,
   FlashlightIcon,
   HandPalmIcon,
@@ -27,6 +28,7 @@ import * as React from "react";
 import { View } from "react-native";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { DebugContent } from "./DebugContent";
+import { SystemContent, useSystemValues } from "./SystemContent";
 import {
   actionMessage,
   activityLine,
@@ -34,6 +36,7 @@ import {
   installationStats,
   modeToggles,
   quickActions,
+  systemSummary,
 } from "@/lib/installation";
 import { installationOnline } from "@/lib/session";
 import { pultRows } from "@/lib/nav";
@@ -43,20 +46,22 @@ const HEALTH_MS = 2000;
 /** Hold-to-confirm for Restart and Blackout (ADR-016). */
 const HOLD_MS = 1200;
 
-export type InstallationView = "main" | "activity" | "debug";
+export type InstallationView = "main" | "activity" | "debug" | "system";
 
 /** Title of the inspector / sheet for a view. */
 export const INSTALLATION_TITLE: Record<InstallationView, string> = {
   main: "Installation",
   activity: "Activity",
   debug: "Debug",
+  system: "System",
 };
 
 const ACTION_ICON = { flash: FlashlightIcon, restart: ArrowClockwiseIcon, blackout: PowerIcon };
 
 /**
  * Installation panel body (ADR-013): name and status with stats, pult switcher, quick actions
- * (Flash, Restart and Blackout with hold-to-confirm), modes (Idle, optional Pause), an Activity
+ * (Flash, Restart and Blackout with hold-to-confirm), modes (Idle, optional Pause), the standard
+ * System screen (output size, debug, seed; ADR-018) when the config has one, an Activity
  * row that pushes the activity list and a Debug row that pushes the Debug page. Built from DS parts; the route (iPhone sheet) or the DS
  * Inspector (iPad) provides the frame.
  */
@@ -77,12 +82,14 @@ export function InstallationContent({
   const back = showBack ? () => onView("main") : undefined;
   if (view === "activity") return <ActivityList onBack={back} />;
   if (view === "debug") return <DebugContent onBack={back} backLabel="Installation" />;
+  if (view === "system") return <SystemContent onBack={back} />;
   return (
     <Main
       pultId={pultId}
       onPult={onPult}
       onActivity={() => onView("activity")}
       onDebug={() => onView("debug")}
+      onSystem={() => onView("system")}
     />
   );
 }
@@ -92,14 +99,17 @@ function Main({
   onPult,
   onActivity,
   onDebug,
+  onSystem,
 }: {
   pultId: string | null;
   onPult: (id: string) => void;
   onActivity: () => void;
   onDebug: () => void;
+  onSystem: () => void;
 }) {
   const { session } = useApp();
   const s = useSessionState();
+  const system = useSystemValues(s.config?.system ? session?.stores.get("system") : undefined);
   const [health, setHealth] = React.useState<BridgeHealth | null>(null);
   React.useEffect(() => {
     if (!session) return;
@@ -199,6 +209,16 @@ function Main({
           modesDisabled={!canControl}
         />
         {!canControl && <Note>Take control to use the quick actions and modes.</Note>}
+        {s.config?.system && (
+          <ListCard>
+            <ListRow
+              icon={CropIcon}
+              title="System"
+              subtitle={systemSummary(system)}
+              onPress={onSystem}
+            />
+          </ListCard>
+        )}
       </View>
 
       <ListCard>

@@ -1,0 +1,21 @@
+{
+  "name": "@osc/pult-plan",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OSC contract → screen plan and draft pult config; generated capacity table (ADR-017). Uses the pult's own layoutPage.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "draft": "tsx src/cli.ts draft",
+    "plan": "tsx src/cli.ts plan",
+    "capacity": "tsx src/cli.ts capacity",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@osc/schema": "workspace:*",
+    "@osc/tokens": "workspace:*",
+    "@osc/ui": "workspace:*"
+  }
+}

@@ -71,7 +71,11 @@ client pult.
   yet, and prose-only Depends on notes stay in the report.
 - The installation side declares what it accepts in an **OSC contract**
   (`otakoyi/osc-contract.json` in the installation repo, format in `docs/osc-contract.schema.json`,
-  guide in `docs/integration.md`). The exporter fails on a control whose address is not in it.
+  guide in `docs/integration.md`). The exporter validates it (`parseContract`), fails on a
+  control whose address is not in it, warns about controls on `hidden` parameters and `live`
+  parameters missing from the pult (contract 1.1, ADR-017), and adds the standard System screen
+  when the contract has the System group (ADR-018). `pnpm pult-draft` turns a contract into a
+  draft config for testing before the Figma page exists (ADR-017).
 - Library component names and variant values are now API: renaming one is a breaking change and
   needs an exporter mapping update in the same PR.
 - A client's unique visual (not in the library) is added to the library first, then used.

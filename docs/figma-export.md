@@ -34,7 +34,7 @@ pnpm figma-export --snapshot tools/figma-export/fixtures/template.json \
 | `--section`         | Only frames inside sections whose name contains this text (e.g. `Tablet`), or an id.                                                                                        |
 | `--brand`           | Figma Brand mode for the `theme` colours (default: the mode set on the client page's sections). Needs a snapshot with Brand.                                                |
 | `--base`            | What Figma does not hold: `installation` (id, name, actions), `targets`, `theme` (mode, logo, splash, font), `presets`, `pult` (id, name, defaultTarget, formFactor, icon). |
-| `--contract`        | The installation's `otakoyi/osc-contract.json`; an address not in it is an error.                                                                                           |
+| `--contract`        | The installation's `otakoyi/osc-contract.json` (validated first); an address not in it is an error.                                                                         |
 | `--previous`        | The published config; `installation.revision` is bumped when the pults changed.                                                                                             |
 | `--out`, `--report` | Config JSON (default stdout) and Markdown report (default stderr).                                                                                                          |
 | `--report-json`     | The report as JSON (`valid`, `summary`, `issues`) for scripts.                                                                                                              |
@@ -199,7 +199,9 @@ notes for people and appear in the report.
 Errors: `missing-address`, `not-in-contract`, `schema`, `no-pult-frames`. Warnings:
 `unknown-component`, `duplicate-address`, `unused-address`, `option-count`, `tabs-disagree`,
 `tab-without-frame`, `missing-form-factor`, `not-on-form-factor`, `prompt-mix-address`, `color-format`,
-`draft-annotation`, … Notes: skipped frames, derived ids and labels, Depends on notes. A control
+`draft-annotation`, `hidden-in-contract` (a control sends a parameter the contract marks
+`priority: hidden`), `live-not-on-pult` (a `live` parameter no control sends), `system-on-pult` (a `/system/*` address on a
+client pult: it belongs to the standard System screen, ADR-018), … Notes: skipped frames, derived ids and labels, Depends on notes. A control
 without an address is left out of the config so the rest still validates.
 
 ### Snapshot format

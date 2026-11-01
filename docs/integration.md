@@ -8,6 +8,12 @@ finish, hand the studio the files listed in [step 7](#7-hand-back-to-the-studio)
 > Access: `ydanilov/otakoyi-osc` is private. In Claude Code on the web, attach it to your session
 > (owner `ydanilov`, repo `otakoyi-osc`) or clone it next to your project. Everything below
 > refers to paths in this repo.
+>
+> **TouchDesigner project (`[TD] <Name>`)?** The studio rules for TD projects (folder layout,
+> relative paths, Custom Parameter tags, adaptive output, system behaviour, sensor ports, delivery)
+> live in `ydanilov/otakoyi-td-template`; this page covers only the pult side. The short path for
+> TD is: [step 4](#4-touchdesigner-specifics) (drop in `otakoyi_contract`, press Generate) →
+> `pnpm pult-plan` / `pnpm pult-draft` ([step 6](#6-write-the-osc-contract)) → [step 7](#7-hand-back-to-the-studio).
 
 ## What Otakoyi Control is (in 60 seconds)
 
@@ -39,7 +45,10 @@ finish, hand the studio the files listed in [step 7](#7-hand-back-to-the-studio)
 - Make every parameter **idempotent**: the same value sent twice must not toggle anything. For
   one-shot triggers, expect `1` on press and `0` on release (that is the button default).
 - **Reserved prefixes** (never use them for your own parameters): `/otakoyi/*` (system messages
-  from the bridge) and `/sys/*` (telemetry and heartbeat).
+  from the bridge), `/sys/*` (telemetry and heartbeat) and `/system/*` (the standard System group,
+  [below](#standard-system-group)).
+- Ports: 7000 in, 9000 feedback; sensors use their own block in 10000–10099. Rules for several
+  targets on one machine: [ports.md](ports.md).
 
 The exact message each control type sends is defined in code:
 `packages/controls/src/logic.ts` → `messagesFor()`. Summary for schema v1:
@@ -120,16 +129,40 @@ Do not echo `/otakoyi/*` back to the bridge. The pult triggers these from its In
 (quick actions Flash / Restart / Blackout, modes Idle / Pause), and the panel shows your `/sys/fps`
 as the installation's FPS.
 
+### Standard System group
+
+Every installation's contract has a group **`System`** with exactly these four parameters (ADR-018):
+
+| Address         | Type | TouchDesigner (page `System`) | Meaning                          |
+| --------------- | ---- | ----------------------------- | -------------------------------- |
+| `/system/resw`  | int  | `Resw`                        | output width, px (applied live)  |
+| `/system/resh`  | int  | `Resh`                        | output height, px (applied live) |
+| `/system/debug` | bool | `Debug` (legacy `Rehearsal`)  | debug overlay                    |
+| `/system/seed`  | int  | `Seed`                        | random seed, 0 = random          |
+
+Echo each one like any parameter (report the real size, e.g. when TouchDesigner caps it). The pult
+never puts them on a project screen: the Installation panel shows them as the standard **System**
+screen, the same for every installation. Do not add other parameters to the group or to
+`/system/*`; the contract check rejects them.
+
 ## 4. TouchDesigner specifics
 
-`tools/touchdesigner/` has two ready pieces:
+`tools/touchdesigner/` (details in its `README.md`):
 
-- `otakoyi_test.tox` / `build_otakoyi_test.py`: a reference patch that behaves like an installation
-  (OSC In 7000 → values table → preview, echo to 9000, simulated `/sys/fps` and audio level).
-  Copy its wiring.
-- `otakoyi_pairing.tox`: the pairing overlay. Forward `/otakoyi/*` from your OSC In callback to
-  `op('otakoyi_pairing/logic').module.handle(address, args)` and composite the COMP over your
-  final output. Details are in `tools/touchdesigner/README.md`.
+- **`otakoyi_contract`** (`build_otakoyi_contract.py`): the one piece every TD installation drops
+  in. Point its `Target` at the top-level COMP with the tagged Custom Parameters and pulse
+  **Generate**: it writes `otakoyi/osc-contract.json` (page → group, label, help text after the
+  tags → description, style → type, normMin/normMax → min/max, default; tags → `priority`,
+  `[danger]` → `dangerous`; page `System` → the System group). The same COMP is the receiver:
+  OSC In 7000 sets the parameters (pulses for triggers), every change (pult or TD) is echoed to
+  9000, `/sys/fps` once a second, `/otakoyi/*` drives the pairing overlay, flash and blackout (its
+  overlay output) and the target's `Idle` / `Pause` / `Restart` parameters when they exist. Paths
+  are relative to `project.folder`. You write no OSC code.
+- `otakoyi_pairing.tox`: the pairing overlay. Set it as `otakoyi_contract`'s `Pairing` (or forward
+  `/otakoyi/*` to `op('otakoyi_pairing/logic').module.handle(address, args)` yourself) and
+  composite it over your final output.
+- `otakoyi_test.tox` / `build_otakoyi_test.py`: a reference patch that behaves like an
+  installation, for testing the app without a real project.
 
 For other engines, the same contract over any OSC library works. A browser engine cannot receive
 UDP; it connects to the bridge instead (ADR-005), so tell the studio if that is your case.
@@ -153,10 +186,20 @@ last value sent and its send rate, a live log of the last 50 OSC events (→ sen
 first) and the protocol / config / schema versions. The app pings the bridge and polls its health
 only while the page is open.
 
-The draft config is only for testing; the real one is exported from Figma. Start from
-`packages/schema/examples/demo-installation.json`: set `targets[0].port` / `feedbackPort` and
-replace the controls with your parameters. `parseConfig()` in `packages/schema` validates it, and
-the bridge refuses an invalid config with the reason.
+The draft config is only for testing; the real one is exported from Figma. Generate it from your
+contract (ADR-017):
+
+```bash
+pnpm pult-plan  --contract /abs/path/otakoyi/osc-contract.json            # which controls land on which screen
+pnpm pult-draft --contract /abs/path/otakoyi/osc-contract.json --out draft-config.json --report draft-report.md
+```
+
+`--form phone|tablet` overrides the primary form factor (default: `useCase` live → tablet, lobby /
+both → phone). The draft keeps `live` first, never splits a group unless it is bigger than a screen,
+sends `setup` to a separate Setup pult, leaves `hidden` out and turns the System group into the
+System screen. How much fits a screen: [pult-capacity.md](pult-capacity.md). `parseConfig()` in
+`packages/schema` validates the draft (the CLI does it for you), and the bridge refuses an invalid
+config with the reason.
 
 **See the expected behaviour without hardware.** The app's demo mode ("Try the demo" on the
 Connect screen, also in the web pult) runs a simulated installation in-process (`packages/sim`):
@@ -196,7 +239,9 @@ project and the pult. It lists every parameter you accept, every value you repor
 system actions you support. The studio designs the Figma pult from it, and the exporter checks
 that each control address exists in the contract.
 
-- Format: [`docs/osc-contract.schema.json`](osc-contract.schema.json) (JSON Schema).
+- In TouchDesigner it is generated (step 4); elsewhere write it by hand.
+- Format: [`docs/osc-contract.schema.json`](osc-contract.schema.json) (JSON Schema),
+  `contractVersion` 1.1.
 - Example: [`docs/examples/osc-contract.example.json`](examples/osc-contract.example.json), which
   matches the TouchDesigner test patch.
 
@@ -213,11 +258,17 @@ Rules:
   `segmented`, `sceneList`, `colorPicker`, …). The studio may choose another. Destructive actions
   get `"dangerous": true`; the studio then uses hold-to-confirm.
 - `actions` lists which of `flash`, `restart`, `blackout`, `idle`, `pause` you handle.
+- `priority` (`live` show operator · `tune` on-site tuning · `setup` one-off · `hidden` never on a
+  pult; default `tune`), `order` inside the group and `formFactors` drive the draft pult and the
+  exporter's checks (ADR-017). The TD help tags `[live]` `[tune]` `[setup]` `[hide]` `[danger]`
+  map to them (`otakoyi-td-template` standards §4).
+- The group `System` holds exactly the four standard parameters ([above](#standard-system-group)).
 
 ## 7. Hand back to the studio
 
-1. `otakoyi/osc-contract.json` (valid against the schema).
-2. The draft config you tested with (optional, but it speeds up the Figma layout).
+1. `otakoyi/osc-contract.json` (valid against the schema; `pnpm pult-plan` reads it without errors).
+2. The `pnpm pult-plan` output for phone and tablet, and the draft config you tested with
+   (`pnpm pult-draft`), with its report.
 3. Software and version (e.g. TouchDesigner 2025.x), project file, OS of the installation machine.
 4. Notes on anything unusual: several machines, a browser engine, parameters that must never change
    during a show.
@@ -233,6 +284,10 @@ Do **not**:
 
 | Topic                              | Where                                            |
 | ---------------------------------- | ------------------------------------------------ |
+| Ports, several targets, sensors    | [ports.md](ports.md)                             |
+| Screen capacity (generated)        | [pult-capacity.md](pult-capacity.md)             |
+| Draft / plan CLI                   | `tools/pult-plan` (ADR-017)                      |
+| TD studio rules                    | `ydanilov/otakoyi-td-template`                   |
 | Decisions (why things are so)      | `docs/decisions/README.md`                       |
 | Config schema                      | `packages/schema/src/index.ts`, `examples/`      |
 | Wire format per control            | `packages/controls/src/logic.ts` (`messagesFor`) |

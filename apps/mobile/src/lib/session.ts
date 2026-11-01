@@ -14,7 +14,7 @@ import {
   type TargetStatus,
   type TransportFactory,
 } from "@osc/protocol";
-import { parseConfig, type InstallationConfig } from "@osc/schema";
+import { allPults, parseConfig, type InstallationConfig } from "@osc/schema";
 
 /** Activity lines kept in memory (the bridge keeps 200; the welcome sends the last 50). */
 export const ACTIVITY_KEEP = 200;
@@ -247,7 +247,7 @@ export class Session {
         if (this.s.config?.installation.revision !== cfg.installation.revision) {
           this.debug.reset();
           this.stores = new Map(
-            cfg.pults.map((p) => [
+            allPults(cfg).map((p) => [
               p.id,
               new PultStore(cfg, p, {
                 send() {},

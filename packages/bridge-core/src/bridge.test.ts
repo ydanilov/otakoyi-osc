@@ -48,6 +48,33 @@ describe("Bridge", () => {
     expect(last(a, "lease")).toEqual({ t: "lease", holder: { device: "a", role: "client" } });
   });
 
+  it("runs the System screen as a hidden pult: OSC, clamping, feedback (ADR-018)", () => {
+    const { peer, osc, bridge, last } = setup();
+    const a = peer("a");
+    const b = peer("b");
+    const w = a.inbox[0];
+    if (w?.t !== "welcome") throw new Error("welcome");
+    expect(w.state.system).toEqual({ resw: 1920, resh: 1080, debug: false, seed: 0 });
+    a.say({ t: "set", pult: "system", id: "resw", value: 1280.4 });
+    a.say({ t: "set", pult: "system", id: "resh", value: 99999 });
+    a.say({ t: "set", pult: "system", id: "debug", value: true });
+    expect(osc.map((m) => [m.address, m.args[0]!.type, argValue(m.args[0]!)])).toEqual([
+      ["/system/resw", "i", 1280],
+      ["/system/resh", "i", 16384],
+      ["/system/debug", "i", 1],
+    ]);
+    // The installation reports its real size (e.g. capped by TouchDesigner): every device sees it.
+    bridge.feedback("td", message("/system/resw", 1280));
+    bridge.feedback("td", message("/system/resh", 720));
+    expect(last(b, "value")).toEqual({
+      t: "value",
+      pult: "system",
+      id: "resh",
+      value: 720,
+      by: null,
+    });
+  });
+
   it("sends OSC for the lease holder and syncs every other device", () => {
     const { peer, osc, last } = setup();
     const a = peer("a");

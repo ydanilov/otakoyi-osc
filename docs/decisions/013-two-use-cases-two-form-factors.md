@@ -37,8 +37,9 @@ the app and for every client pult. QA checks both before a delivery.
   appearance switch — the theme mode ships in the config.
 - **Installation**: iPhone → system sheet (large detent); iPad → inspector panel on the trailing side
   (390 pt, round Close × top-right, no dimming). Contents: name and status with stats (state, FPS, devices, uptime), pult switcher, quick
-  actions (Flash, Restart, Blackout with hold-to-confirm), modes (Idle, optional Pause) and an
-  Activity row that pushes the activity list.
+  actions (Flash, Restart, Blackout with hold-to-confirm), modes (Idle, optional Pause), a System
+  row that pushes the standard System screen (output size, debug, seed; ADR-018) and an Activity
+  row that pushes the activity list.
 - **Dialogs** are content inside the system sheet (iPhone medium detent) or form sheet (iPad); the
   system provides grabber, Close and material. Cancel / Close leading, one prominent action trailing.
 - **Menus**: long-press = system context menu with a preview; destructive item last, in red. (iOS:

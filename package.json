@@ -12,13 +12,17 @@
     "lint": "turbo run lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "pnpm tokens:check && pnpm format:check && pnpm typecheck && pnpm test",
+    "verify": "pnpm tokens:check && pnpm pult-capacity:check && pnpm format:check && pnpm typecheck && pnpm test",
     "tokens:check": "pnpm --filter @osc/tokens check",
     "bridge": "pnpm --filter @osc/bridge start",
     "figma-export": "pnpm --filter @osc/figma-export export",
     "storybook": "pnpm --filter @osc/storybook storybook",
     "build-storybook": "pnpm --filter @osc/storybook build-storybook",
-    "test-storybook": "pnpm --filter @osc/storybook test-storybook"
+    "test-storybook": "pnpm --filter @osc/storybook test-storybook",
+    "pult-plan": "pnpm --filter @osc/pult-plan plan",
+    "pult-draft": "pnpm --filter @osc/pult-plan draft",
+    "pult-capacity": "pnpm --filter @osc/pult-plan capacity",
+    "pult-capacity:check": "pnpm --filter @osc/pult-plan capacity --check"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
