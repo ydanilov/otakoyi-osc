@@ -31,8 +31,8 @@ SYSTEM_PARS = {
 SYSTEM_LABELS = {
     '/system/resw': 'Screen Width px',
     '/system/resh': 'Screen Height px',
-    '/system/debug': 'Debug',
-    '/system/seed': 'Seed',
+    '/system/debug': 'Debug Overlay',
+    '/system/seed': 'Seed (0 = random)',
 }
 # Parameters that implement /otakoyi/<action> instead of being parameters.
 ACTION_PARS = {'Idle': 'idle', 'Pause': 'pause', 'Restart': 'restart'}

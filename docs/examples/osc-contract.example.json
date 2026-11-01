@@ -198,8 +198,7 @@
     {
       "address": "/system/debug",
       "type": "bool",
-      "label": "Debug",
-      "description": "Debug overlay",
+      "label": "Debug Overlay",
       "default": false,
       "feedback": true,
       "group": "System",
@@ -208,8 +207,7 @@
     {
       "address": "/system/seed",
       "type": "int",
-      "label": "Seed",
-      "description": "0 = random",
+      "label": "Seed (0 = random)",
       "min": 0,
       "default": 0,
       "feedback": true,
