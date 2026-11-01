@@ -9,3 +9,4 @@ android
 storybook-static
 coverage
 apps/*/public/canvaskit.wasm
+__pycache__/

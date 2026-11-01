@@ -21,7 +21,8 @@
   },
   "properties": {
     "contractVersion": {
-      "const": 1
+      "enum": [1, 1.1],
+      "description": "1.1 adds the optional parameter fields priority, order and formFactors; a 1.0 contract stays valid. Writers emit 1.1."
     },
     "installation": {
       "type": "object",
@@ -199,11 +200,29 @@
           },
           "hint": {
             "type": "string",
-            "description": "Suggested control type (fader, knob, xy, toggle, button, holdToConfirm, segmented, sceneList, buttonGrid, colorPicker, …)."
+            "description": "Suggested control type (fader, knob, xy, toggle, button, holdToConfirm, segmented, sceneList, buttonGrid, colorPicker, \u2026)."
           },
           "group": {
             "type": "string",
-            "description": "Logical group, e.g. Wall, Scenes, Audio."
+            "description": "Logical group, e.g. Wall, Scenes, Audio. \"System\" is the standard System group (ADR-018): exactly /system/resw, /system/resh (int, px), /system/debug (bool) and /system/seed (int); /system/* is reserved for it. The pult shows it as the System screen in the Installation panel, never on a project screen."
+          },
+          "priority": {
+            "enum": ["live", "tune", "setup", "hidden"],
+            "default": "tune",
+            "description": "Who needs the parameter (help tags in otakoyi-td-template docs/standards.md \u00a74): live = show operator, first pult screen; tune = on-site tuning; setup = one-off, a separate Setup pult; hidden = never on a pult. Omitted: tune."
+          },
+          "order": {
+            "type": "number",
+            "description": "Order inside the group, ascending; ties keep the order of this array."
+          },
+          "formFactors": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "items": {
+              "enum": ["phone", "tablet"]
+            },
+            "description": "Where the parameter makes sense (ADR-013). Omitted: both."
           }
         }
       }

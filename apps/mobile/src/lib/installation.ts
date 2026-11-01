@@ -167,3 +167,13 @@ function formatTime(ts: string): string {
   if (Number.isNaN(d.getTime())) return "";
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
 }
+
+/** Installation › System row subtitle (ADR-018), e.g. "1920 × 1080 · Debug on". */
+export function systemSummary(v: {
+  resw?: number | undefined;
+  resh?: number | undefined;
+  debug?: boolean | undefined;
+}): string {
+  const size = v.resw !== undefined && v.resh !== undefined ? `${v.resw} × ${v.resh}` : "Output";
+  return v.debug ? `${size} · Debug on` : size;
+}

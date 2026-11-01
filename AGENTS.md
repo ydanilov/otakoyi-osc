@@ -48,6 +48,9 @@ pnpm storybook                        # component docs on :6006 (React Native We
 pnpm build-storybook                  # static Storybook → apps/storybook/storybook-static
 pnpm test-storybook                   # headless: every story × dark/light renders, play tests pass
 pnpm figma-export --snapshot tools/figma-export/fixtures/template.json   # Figma page → config + report (docs/figma-export.md)
+pnpm pult-plan  --contract <path> [--form phone|tablet]   # contract → which controls land on which screen (ADR-017)
+pnpm pult-draft --contract <path> --out draft.json        # contract → draft config for testing
+pnpm pult-capacity                                        # regenerate docs/pult-capacity.md (verify checks it)
 pnpm --filter @osc/figma-plugin build # Otakoyi Inspector → tools/figma-plugin/dist (import manifest.json in Figma desktop)
 # Control gallery (every control × state × brand): open /gallery in the web pult or the app
 # Demo without hardware: open the web pult (or the app) → Connect → "Try the demo"
@@ -124,8 +127,12 @@ apps/storybook/         Storybook config, MDX docs (Introduction, Guidelines, Ch
 docs/decisions/         ADRs, one file each, current version only — edit in place
 tools/figma-export/     exporter: Figma snapshot/REST → config + report; mapping shared with the plugin
 tools/figma-plugin/     Otakoyi Inspector (Figma dev plugin): exporter preview, OSC / Depends on editor
-tools/touchdesigner/     TouchDesigner test target + pairing overlay (.tox + build scripts)
+tools/pult-plan/        contract → screen plan / draft config, capacity table (uses the pult's layoutPage)
+tools/touchdesigner/     contract generator + receiver (otakoyi_contract), pairing overlay, test target
+skills/otakoyi-integrate/ Claude skill for installation projects (install at account level, README)
 docs/integration.md     how an installation project plugs in (OSC contract, feedback, system OSC)
+docs/ports.md           ports, mDNS, several targets, the sensor port range
+docs/pult-capacity.md   generated: how much fits one pult screen
 docs/run-on-device.md   Expo Go on a phone, what works there, Android APK with EAS (apps/mobile/eas.json)
 docs/figma.md           Figma file, pages, components, conventions
 docs/figma-export.md    exporter + Inspector: running, CI, mapping table, annotation format

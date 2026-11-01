@@ -7,6 +7,16 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API, ADR-014).
 
+## 2026-11-01 — System Screen (standard System group, ADR-018)
+
+**Added**
+
+- **System Screen** (Patterns): `SystemScreen` — output size presets (1920 × 1080, 1080 × 1920,
+  1280 × 1280, 3840 × 2160; the matching one lit), Width / Height steppers, Custom width / height
+  value inputs, Debug overlay switch row and Seed. The same for every installation; the app shows it
+  in Installation › System. Built only from existing parts (Console Panel, Button, Stepper, Value
+  Input, List Row). Figma: **System Screen** in the library, phone and tablet variants.
+
 ## 2026-10-23 — Sheet layout: header never over the content, layout sensor
 
 **Added**

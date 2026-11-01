@@ -468,6 +468,18 @@ importers:
         specifier: 0.28.2
         version: 0.28.2
 
+  tools/pult-plan:
+    dependencies:
+      '@osc/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+      '@osc/tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
+      '@osc/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
 packages:
 
   2g@1.0.1:

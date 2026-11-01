@@ -205,6 +205,45 @@ describe("exportSnapshot — conventions", () => {
     expect(ok.issues.map((i) => i.code)).not.toContain("not-in-contract");
   });
 
+  it("warns about hidden parameters on the pult and live parameters missing from it (contract 1.1)", () => {
+    const r = exportSnapshot(snap(conventionFrame("lobby / phone / live", 0, pad("a", "/x", 0))), {
+      contract: {
+        parameters: [
+          { address: "/x", priority: "hidden" },
+          { address: "/show/go", priority: "live", label: "Go" },
+          { address: "/tune/me", priority: "tune" },
+        ],
+      },
+    });
+    const codes = r.issues.map((i) => i.code);
+    expect(codes).toContain("hidden-in-contract");
+    expect(codes).not.toContain("not-in-contract");
+    const live = r.issues.filter((i) => i.code === "live-not-on-pult");
+    expect(live.map((i) => i.message)).toEqual([
+      "/show/go (Go) is a live parameter but no control sends it",
+    ]);
+  });
+
+  it("adds the System screen for a contract with the System group and flags /system/* on a pult", () => {
+    const sys = ["resw", "resh", "debug", "seed"].map((n) => ({
+      address: `/system/${n}`,
+      group: "System",
+      priority: "live",
+    }));
+    const r = exportSnapshot(
+      snap(conventionFrame("lobby / phone / live", 0, pad("a", "/system/debug", 0))),
+      { contract: { parameters: sys } },
+    );
+    expect(r.config.system).toEqual({});
+    const codes = r.issues.map((i) => i.code);
+    expect(codes).toContain("system-on-pult");
+    expect(codes).not.toContain("live-not-on-pult");
+    const plain = exportSnapshot(
+      snap(conventionFrame("lobby / phone / live", 0, pad("a", "/x", 0))),
+    );
+    expect(plain.config.system).toBeUndefined();
+  });
+
   it("a Color Picker exports one control with three channel addresses, checked against the contract", () => {
     const picker: FNode = {
       id: "cp-1",

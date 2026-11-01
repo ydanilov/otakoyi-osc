@@ -27,6 +27,8 @@ export interface BaseConfig {
   targets?: Record<string, unknown>[];
   theme?: Record<string, unknown>;
   presets?: Record<string, unknown>[];
+  /** Standard System screen (ADR-018); otherwise added when the contract has the System group. */
+  system?: Record<string, unknown>;
   pult?: {
     id?: string;
     name?: string;
@@ -40,7 +42,13 @@ export interface BaseConfig {
 
 /** The installation's OSC contract (`otakoyi/osc-contract.json`, docs/osc-contract.schema.json). */
 export interface OscContract {
-  parameters: { address: string; type?: string }[];
+  parameters: {
+    address: string;
+    type?: string;
+    priority?: string;
+    label?: string;
+    group?: string;
+  }[];
 }
 
 export interface ExportOptions {
@@ -183,23 +191,22 @@ function addressesOf(c: RawControl): string[] {
   return out;
 }
 
-function contractHas(contract: OscContract, address: string): boolean {
+/** Does the contract parameter `p` cover the control address `address`? */
+function covers(p: OscContract["parameters"][number], address: string): boolean {
   // `<base>/h|s|b` of a colour picker: the contract may list the channels or one `color` parameter.
   const channel = /^(.+)\/[hsb]$/.exec(address);
-  return contract.parameters.some((p) => {
-    if (p.address === address) return true;
-    if (channel && p.address === channel[1] && p.type === "color") return true;
-    if (!/\{[a-z]+\}/i.test(p.address)) return false;
-    const re = new RegExp(
-      "^" +
-        p.address
-          .split(/\{[a-z]+\}/i)
-          .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-          .join("[^/]+") +
-        "$",
-    );
-    return re.test(address);
-  });
+  if (p.address === address) return true;
+  if (channel && p.address === channel[1] && p.type === "color") return true;
+  if (!/\{[a-z]+\}/i.test(p.address)) return false;
+  const re = new RegExp(
+    "^" +
+      p.address
+        .split(/\{[a-z]+\}/i)
+        .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        .join("[^/]+") +
+      "$",
+  );
+  return re.test(address);
 }
 
 /** Stable key order for the JSON output. */
@@ -557,14 +564,40 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
           "depends-on-unknown",
           `${c.id}: "Depends on" refers to unknown control "${w.control}"`,
         );
-  if (opts.contract)
-    for (const [a, cids] of byAddress)
-      if (!contractHas(opts.contract, a))
+  for (const [a, cids] of byAddress)
+    if (a.startsWith("/system/"))
+      issue(
+        "warning",
+        "system-on-pult",
+        `${a} (${cids.join(", ")}) belongs to the standard System screen in the Installation panel (ADR-018), not on a client pult`,
+      );
+  if (opts.contract) {
+    const params = opts.contract.parameters;
+    for (const [a, cids] of byAddress) {
+      const p = params.find((q) => covers(q, a));
+      if (!p)
         issue(
           "error",
           "not-in-contract",
           `${a} (${cids.join(", ")}) is not in the installation's OSC contract`,
         );
+      else if (p.priority === "hidden")
+        issue(
+          "warning",
+          "hidden-in-contract",
+          `${a} (${cids.join(", ")}) is marked hidden in the contract ([hide]: never on a pult)`,
+        );
+    }
+    // Contract 1.1: every live parameter belongs on the pult.
+    const sent = [...byAddress.keys()];
+    for (const p of params)
+      if (p.priority === "live" && p.group !== "System" && !sent.some((a) => covers(p, a)))
+        issue(
+          "warning",
+          "live-not-on-pult",
+          `${p.address}${p.label ? ` (${p.label})` : ""} is a live parameter but no control sends it`,
+        );
+  }
 
   // 6. Assemble, bump revision, validate.
   // Primary form factor (ADR-013): the base config's, else the form factor drawn first.
@@ -627,6 +660,9 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
     JSON.stringify(opts.previous.pults) !== JSON.stringify([pult])
   )
     revision = opts.previous.installation.revision + 1;
+  // Standard System screen (ADR-018): from --base, or because the contract has the System group.
+  const system =
+    base.system ?? (opts.contract?.parameters.some((p) => p.group === "System") ? {} : undefined);
   const config: Record<string, unknown> = {
     schemaVersion: 2,
     installation: {
@@ -639,6 +675,7 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
     ...(theme ? { theme } : {}),
     ...(base.presets?.length ? { presets: base.presets } : {}),
     pults: [pult],
+    ...(system ? { system } : {}),
   };
   const parsed = parseConfig(config);
   if (!parsed.ok) {

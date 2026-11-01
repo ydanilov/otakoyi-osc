@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./components/ui/*": "./src/components/ui/*.tsx",
     "./lib/*": "./src/lib/*.ts",
+    "./pult/layout": "./src/pult/layout.ts",
     "./stories/*": "./src/stories/*.ts",
     "./tailwind-preset": "./tailwind-preset.js"
   },
