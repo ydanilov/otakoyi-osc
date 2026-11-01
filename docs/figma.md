@@ -169,7 +169,7 @@ are exporter API (ADR-014). Paths are under `packages/ui/src/`.
 | Debug Row (Kind=Metric / Control) · OSC Log — the Debug page (Phone / Tablet 20 Debug)                    | `DebugRow kind` · `OscLog` (+ `DebugStore` in `@osc/controls`)                | `debug/DebugRow.tsx`, `debug/OscLog.tsx`; page: `apps/mobile/src/components/DebugContent.tsx`  |
 | Debug Tag · Debug HUD (in the library, not used in the app now)                                           | `DebugTag` · `DebugHud`                                                       | `debug/Debug.tsx`                                                                              |
 | Patterns: Quick Actions Row, Installation Actions, Installation Switcher, Activity Log, Stepper Group     | same names                                                                    | `patterns/Installation.tsx`                                                                    |
-| System Screen (Patterns, Breakpoint=Phone / Tablet) — the standard System screen, ADR-018                 | `SystemScreen`                                                                | `patterns/System.tsx`                                                                          |
+| System Screen (Patterns 285:1953, Breakpoint=Phone / Tablet) — standard System screen, ADR-018            | `SystemScreen`                                                                | `patterns/System.tsx`                                                                          |
 
 New control types (ADR-015) — Fader Mode=Relative/Crossfade, Knob Mode=Relative/Color,
 Thumbstick, Button Group, Image, Mic, Prompt — and Gyroscope (204:853) live in `controls/*` (`Jog.tsx`,

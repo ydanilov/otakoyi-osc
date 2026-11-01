@@ -53,7 +53,14 @@ const meta = {
           ],
           a11y: ["See Stepper, Value Input and List Row; presets are buttons named by their size."],
           content: ["Fixed copy; the same in every installation."],
-          figma: { component: "System Screen (Patterns)" },
+          figma: {
+            component: "System Screen (Patterns)",
+            node: "285:1953",
+            variants: [
+              ["Breakpoint=Phone", "(sheet width)"],
+              ["Breakpoint=Tablet", "(inspector width)"],
+            ],
+          },
         }),
       },
     },
