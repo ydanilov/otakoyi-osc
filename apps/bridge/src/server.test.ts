@@ -14,7 +14,7 @@ import {
 import type { ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
 import { WebSocket } from "ws";
-import demo from "../../../packages/schema/examples/demo-installation.json";
+import demo from "../../../design-system/packages/schema/examples/demo-installation.json";
 import { startServer } from "./server";
 
 const closers: (() => Promise<unknown> | void)[] = [];

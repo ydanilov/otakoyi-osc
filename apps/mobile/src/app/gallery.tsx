@@ -13,7 +13,7 @@ import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { parseConfig, type InstallationConfig } from "@osc/schema";
-import allControls from "../../../../packages/schema/examples/demo-installation.json";
+import allControls from "../../../../design-system/packages/schema/examples/demo-installation.json";
 import { demoConfig } from "@/lib/demo";
 import { galleryServices } from "@/lib/services";
 

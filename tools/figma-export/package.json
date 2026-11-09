@@ -15,6 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@osc/contract": "workspace:*",
     "@osc/core": "workspace:*",
     "@osc/schema": "workspace:*",
     "@osc/tokens": "workspace:*"

@@ -3,7 +3,7 @@
 **Status:** Accepted
 
 **Decision.** A pult screen never scrolls vertically. The layout follows the Figma client page
-(ADR-014) exactly (`layoutPage` in `packages/ui/src/pult/layout.ts`, tokens `control.pult*`):
+(ADR-014) exactly (`layoutPage` in `design-system/packages/ui/src/pult/layout.ts`, tokens `control.pult*`):
 
 - **Packing.** The page's grid (12 columns, rows) gives each control or panel its columns and its
   order; rows only order. Items are packed from the top: each sits one gap below the lowest item

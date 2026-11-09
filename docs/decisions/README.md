@@ -24,3 +24,4 @@ Consequences, and add a row below. Read the relevant ADR before proposing a diff
 | 016 | [Bridge: installation actions, activity, targets and the runtime](016-bridge-actions-targets-runtime.md)                   | Accepted |
 | 017 | [Contract priorities and the draft pult](017-contract-priorities-and-draft-pult.md)                                        | Accepted |
 | 018 | [Standard System screen](018-standard-system-screen.md)                                                                    | Accepted |
+| 019 | [Design system lives in the public otakoyi-controls repo](019-design-system-in-the-public-repo.md)                         | Accepted |

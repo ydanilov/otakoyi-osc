@@ -2,17 +2,14 @@
  * Contract → screen plan → draft config (ADR-017). Every split decision goes through the pult's
  * real `layoutPage` (ADR-006) with the token sizes; nothing here re-implements the layout.
  */
+import { parseConfig, type AnyControl, type Cell, type FormFactor } from "@osc/schema";
 import {
   hasSystemGroup,
   isSystemParameter,
-  parseConfig,
   priorityOf,
-  type AnyControl,
-  type Cell,
-  type FormFactor,
   type OscContractDoc,
   type ParameterPriority,
-} from "@osc/schema";
+} from "@osc/contract";
 import { baseTokens } from "@osc/tokens";
 import { itemsFor, layoutPage, MIN_ROW, pultMetrics, type Screen } from "@osc/ui/pult/layout";
 import { controlFor, controlId, type DraftControl, type MapIssue, type Shape } from "./controls";

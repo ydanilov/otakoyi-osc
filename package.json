@@ -22,7 +22,8 @@
     "pult-plan": "pnpm --filter @osc/pult-plan plan",
     "pult-draft": "pnpm --filter @osc/pult-plan draft",
     "pult-capacity": "pnpm --filter @osc/pult-plan capacity",
-    "pult-capacity:check": "pnpm --filter @osc/pult-plan capacity --check"
+    "pult-capacity:check": "pnpm --filter @osc/pult-plan capacity --check",
+    "fixtures:sync": "cp tools/figma-export/fixtures/template.config.json design-system/packages/ui/src/stories/fixtures/template.config.json && prettier --write design-system/packages/ui/src/stories/fixtures/template.config.json"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",

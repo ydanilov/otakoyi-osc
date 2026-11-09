@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { promptValue } from "@osc/controls";
 import type { BridgeConnection, ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
-import demo from "../../schema/examples/demo-installation.json";
+import demo from "../../../design-system/packages/schema/examples/demo-installation.json";
 import { AUDIO_ADDRESS, DEMO_PROMPTS, ECHO_MS, Simulator } from "./simulator";
 
 const parsed = parseConfig(demo);

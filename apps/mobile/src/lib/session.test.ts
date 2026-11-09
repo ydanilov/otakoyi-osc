@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseConfig } from "@osc/schema";
 import { Simulator } from "@osc/sim";
-import demo from "../../../../packages/schema/examples/demo-installation.json";
+import demo from "../../../../design-system/packages/schema/examples/demo-installation.json";
 import { DEBUG_POLL_MS, Session, installationOnline } from "./session";
 
 const parsed = parseConfig(demo);

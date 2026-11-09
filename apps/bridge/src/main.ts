@@ -29,7 +29,7 @@ function defaults() {
       : dirname(fileURLToPath(import.meta.url));
   const repo = resolve(here, "../../..");
   return {
-    config: resolve(repo, "packages/schema/examples/demo-installation.json"),
+    config: resolve(repo, "design-system/packages/schema/examples/demo-installation.json"),
     web: resolve(repo, "apps/mobile/dist"),
     logs: resolve(repo, "apps/bridge/logs"),
     data: resolve(repo, "apps/bridge/data"),

@@ -2,12 +2,8 @@
  * Contract parameter → draft config control (ADR-017). The studio redraws the final pult in Figma
  * (ADR-014); this only picks a sensible first control per parameter.
  */
-import {
-  priorityOf,
-  type AnyControl,
-  type ContractParameter,
-  type ParameterPriority,
-} from "@osc/schema";
+import { type AnyControl } from "@osc/schema";
+import { priorityOf, type ContractParameter, type ParameterPriority } from "@osc/contract";
 
 /** How a control takes room in the draft grid. */
 export type Shape = "half" | "full" | "stretch";

@@ -1,13 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import {
-  parseConfig,
-  parseContract,
-  systemPult,
-  type ContractParameter,
-  type OscContractDoc,
-} from "@osc/schema";
+import { parseConfig, systemPult } from "@osc/schema";
+import { parseContract, type ContractParameter, type OscContractDoc } from "@osc/contract";
 import { controlFor, controlId, type MapIssue } from "./controls";
 import { draftConfig, fitsOneScreen, placeAll, planContract, validateDraft } from "./plan";
 

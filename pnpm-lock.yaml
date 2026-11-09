@@ -37,16 +37,16 @@ importers:
         version: link:../../packages/bridge-core
       '@osc/controls':
         specifier: workspace:*
-        version: link:../../packages/controls
+        version: link:../../design-system/packages/controls
       '@osc/core':
         specifier: workspace:*
-        version: link:../../packages/osc-core
+        version: link:../../design-system/packages/osc-core
       '@osc/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       '@osc/schema':
         specifier: workspace:*
-        version: link:../../packages/schema
+        version: link:../../design-system/packages/schema
       bonjour-service:
         specifier: ^1.4.4
         version: 1.4.4
@@ -89,25 +89,25 @@ importers:
         version: 58.0.22(@babel/core@7.29.7)(expo@58.0.16)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@osc/controls':
         specifier: workspace:*
-        version: link:../../packages/controls
+        version: link:../../design-system/packages/controls
       '@osc/core':
         specifier: workspace:*
-        version: link:../../packages/osc-core
+        version: link:../../design-system/packages/osc-core
       '@osc/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       '@osc/schema':
         specifier: workspace:*
-        version: link:../../packages/schema
+        version: link:../../design-system/packages/schema
       '@osc/sim':
         specifier: workspace:*
         version: link:../../packages/sim
       '@osc/tokens':
         specifier: workspace:*
-        version: link:../../packages/tokens
+        version: link:../../design-system/packages/tokens
       '@osc/ui':
         specifier: workspace:*
-        version: link:../../packages/ui
+        version: link:../../design-system/packages/ui
       '@rn-primitives/portal':
         specifier: ^1.5.2
         version: 1.5.3(@types/react@19.3.0)(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0))
@@ -209,7 +209,7 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
 
-  apps/storybook:
+  design-system/apps/storybook:
     dependencies:
       '@expo-google-fonts/inter':
         specifier: ^0.4.2
@@ -217,6 +217,9 @@ importers:
       '@expo-google-fonts/jetbrains-mono':
         specifier: ^0.4.1
         version: 0.4.1
+      '@expo/ui':
+        specifier: ~58.0.22
+        version: 58.0.22(@babel/core@7.29.7)(expo@58.0.16)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@osc/controls':
         specifier: workspace:*
         version: link:../../packages/controls
@@ -229,6 +232,75 @@ importers:
       '@osc/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@rn-primitives/portal':
+        specifier: ^1.5.2
+        version: 1.5.3(@types/react@19.3.0)(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0))
+      '@shopify/react-native-skia':
+        specifier: 2.14.0
+        version: 2.14.0(react-native-reanimated@4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      expo:
+        specifier: ~58.0.16
+        version: 58.0.16(@babel/core@7.29.7)(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.14)(expo-router@58.0.24)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
+      expo-asset:
+        specifier: ~58.0.17
+        version: 58.0.17(expo@58.0.16)(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
+      expo-constants:
+        specifier: ~58.0.13
+        version: 58.0.13(expo@58.0.16)(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(typescript@6.0.3)
+      expo-font:
+        specifier: ~58.0.9
+        version: 58.0.9(expo@58.0.16)(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      expo-haptics:
+        specifier: ~58.0.7
+        version: 58.0.7(expo@58.0.16)
+      expo-keep-awake:
+        specifier: ~58.0.3
+        version: 58.0.3(expo@58.0.16)(react@19.3.0)
+      expo-linking:
+        specifier: ~58.0.13
+        version: 58.0.13(expo@58.0.16)(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
+      expo-sensors:
+        specifier: ~58.0.4
+        version: 58.0.4(expo@58.0.16)(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))
+      lucide-react-native:
+        specifier: ^1.61.0
+        version: 1.61.0(@types/react@19.3.0)(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nativewind:
+        specifier: ^4.2.7
+        version: 4.2.7(react-native-reanimated@4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-safe-area-context@5.10.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(tailwindcss@3.4.19(tsx@4.23.15))
+      phosphor-react-native:
+        specifier: ^3.0.6
+        version: 3.0.6(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: 19.3.0
+        version: 19.3.0(react@19.3.0)
+      react-native:
+        specifier: 0.88.0
+        version: 0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
+      react-native-gesture-handler:
+        specifier: ~3.3.0
+        version: 3.3.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-reanimated:
+        specifier: 4.7.1
+        version: 4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-safe-area-context:
+        specifier: ~5.10.1
+        version: 5.10.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-screens:
+        specifier: ~4.30.0
+        version: 4.30.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-svg:
+        specifier: 15.16.0
+        version: 15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-web:
+        specifier: ^0.21.4
+        version: 0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react-native-worklets:
+        specifier: 0.13.0
+        version: 0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
     devDependencies:
       '@babel/plugin-proposal-export-namespace-from':
         specifier: 7.18.9
@@ -264,22 +336,7 @@ importers:
         specifier: ^8.3.5
         version: 8.3.5(@types/node@22.20.5)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.15)
 
-  packages/bridge-core:
-    dependencies:
-      '@osc/controls':
-        specifier: workspace:*
-        version: link:../controls
-      '@osc/core':
-        specifier: workspace:*
-        version: link:../osc-core
-      '@osc/protocol':
-        specifier: workspace:*
-        version: link:../protocol
-      '@osc/schema':
-        specifier: workspace:*
-        version: link:../schema
-
-  packages/controls:
+  design-system/packages/controls:
     dependencies:
       '@osc/core':
         specifier: workspace:*
@@ -291,15 +348,9 @@ importers:
         specifier: workspace:*
         version: link:../tokens
 
-  packages/osc-core: {}
+  design-system/packages/osc-core: {}
 
-  packages/protocol:
-    dependencies:
-      zod:
-        specifier: ^4.6.7
-        version: 4.6.7
-
-  packages/schema:
+  design-system/packages/schema:
     dependencies:
       '@osc/core':
         specifier: workspace:*
@@ -311,40 +362,19 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
-  packages/sim:
-    dependencies:
-      '@osc/bridge-core':
-        specifier: workspace:*
-        version: link:../bridge-core
-      '@osc/controls':
-        specifier: workspace:*
-        version: link:../controls
-      '@osc/core':
-        specifier: workspace:*
-        version: link:../osc-core
-      '@osc/protocol':
-        specifier: workspace:*
-        version: link:../protocol
-      '@osc/schema':
-        specifier: workspace:*
-        version: link:../schema
+  design-system/packages/tokens: {}
 
-  packages/tokens: {}
-
-  packages/ui:
+  design-system/packages/ui:
     dependencies:
       '@expo/ui':
         specifier: '*'
-        version: 58.0.21(@babel/core@7.29.7)(expo@58.0.16)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 58.0.22(@babel/core@7.29.7)(expo@58.0.16)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@osc/controls':
         specifier: workspace:*
         version: link:../controls
       '@osc/core':
         specifier: workspace:*
         version: link:../osc-core
-      '@osc/protocol':
-        specifier: workspace:*
-        version: link:../protocol
       '@osc/schema':
         specifier: workspace:*
         version: link:../schema
@@ -440,17 +470,65 @@ importers:
         specifier: 10.6.3
         version: 10.6.3(@types/react@19.3.0)(prettier@3.9.10)(react@19.3.0)
 
-  tools/figma-export:
+  packages/bridge-core:
     dependencies:
+      '@osc/controls':
+        specifier: workspace:*
+        version: link:../../design-system/packages/controls
       '@osc/core':
         specifier: workspace:*
-        version: link:../../packages/osc-core
+        version: link:../../design-system/packages/osc-core
+      '@osc/protocol':
+        specifier: workspace:*
+        version: link:../protocol
       '@osc/schema':
         specifier: workspace:*
-        version: link:../../packages/schema
+        version: link:../../design-system/packages/schema
+
+  packages/contract:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
+  packages/protocol:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
+  packages/sim:
+    dependencies:
+      '@osc/bridge-core':
+        specifier: workspace:*
+        version: link:../bridge-core
+      '@osc/controls':
+        specifier: workspace:*
+        version: link:../../design-system/packages/controls
+      '@osc/core':
+        specifier: workspace:*
+        version: link:../../design-system/packages/osc-core
+      '@osc/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@osc/schema':
+        specifier: workspace:*
+        version: link:../../design-system/packages/schema
+
+  tools/figma-export:
+    dependencies:
+      '@osc/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
+      '@osc/core':
+        specifier: workspace:*
+        version: link:../../design-system/packages/osc-core
+      '@osc/schema':
+        specifier: workspace:*
+        version: link:../../design-system/packages/schema
       '@osc/tokens':
         specifier: workspace:*
-        version: link:../../packages/tokens
+        version: link:../../design-system/packages/tokens
 
   tools/figma-plugin:
     dependencies:
@@ -459,7 +537,7 @@ importers:
         version: link:../figma-export
       '@osc/schema':
         specifier: workspace:*
-        version: link:../../packages/schema
+        version: link:../../design-system/packages/schema
     devDependencies:
       '@figma/plugin-typings':
         specifier: ^1.142.0
@@ -470,15 +548,18 @@ importers:
 
   tools/pult-plan:
     dependencies:
+      '@osc/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       '@osc/schema':
         specifier: workspace:*
-        version: link:../../packages/schema
+        version: link:../../design-system/packages/schema
       '@osc/tokens':
         specifier: workspace:*
-        version: link:../../packages/tokens
+        version: link:../../design-system/packages/tokens
       '@osc/ui':
         specifier: workspace:*
-        version: link:../../packages/ui
+        version: link:../../design-system/packages/ui
 
 packages:
 
@@ -1419,23 +1500,6 @@ packages:
 
   '@expo/sudo-prompt@9.3.2':
     resolution: {integrity: sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw==}
-
-  '@expo/ui@58.0.21':
-    resolution: {integrity: sha512-O+8DoGcGKq0/QVkKAndrG26dr4Js5oVgfqhuVP4JpwJVQo/KyEQOBWhXbvmQ+1eG9rxYzRjGPNurYyf4BIbwcA==}
-    peerDependencies:
-      '@babel/core': '*'
-      expo: '*'
-      react: '*'
-      react-dom: '*'
-      react-native: '*'
-      react-native-worklets: '*'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      react-dom:
-        optional: true
-      react-native-worklets:
-        optional: true
 
   '@expo/ui@58.0.22':
     resolution: {integrity: sha512-5g4vSLnBSGipQP/kwZL7uijs4CRHf6rL9sR5GX3uYwpekFpawhqTh6qdkbUsvmtzj+Y3++troCnym5VwTJrFdw==}
@@ -6537,17 +6601,6 @@ snapshots:
       cross-spawn: 7.0.6
 
   '@expo/sudo-prompt@9.3.2': {}
-
-  '@expo/ui@58.0.21(@babel/core@7.29.7)(expo@58.0.16)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
-    dependencies:
-      expo: 58.0.16(@babel/core@7.29.7)(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.14)(expo-router@58.0.24)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
-      react: 19.3.0
-      react-native: 0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
-      sf-symbols-typescript: 2.2.0
-    optionalDependencies:
-      '@babel/core': 7.29.7
-      react-dom: 19.3.0(react@19.3.0)
-      react-native-worklets: 0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
   '@expo/ui@58.0.22(@babel/core@7.29.7)(expo@58.0.16)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
     dependencies:

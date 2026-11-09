@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DebugStore } from "@osc/controls";
 import { message } from "@osc/core";
 import { parseConfig } from "@osc/schema";
-import demo from "../../../../packages/schema/examples/demo-installation.json";
+import demo from "../../../../design-system/packages/schema/examples/demo-installation.json";
 import { controlRows, debugModel } from "./debug";
 import type { SessionState } from "./session";
 

@@ -17,7 +17,7 @@ const container = (note?: string): ComponentRole => ({ role: "container", note }
 const chrome: ComponentRole = { role: "chrome" };
 
 export const COMPONENTS: Record<string, ComponentRole> = {
-  // Controls (packages/ui/src/controls)
+  // Controls (design-system/packages/ui/src/controls)
   Fader: control("fader", "Mode=Absolute|Relative|Crossfade → mode; Orientation → orientation"),
   Knob: control("knob", "Mode=Absolute|Relative|Color → mode absolute|relative|hue; Size → size"),
   "XY Pad": control("xy"),

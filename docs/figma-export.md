@@ -4,7 +4,7 @@ Figma is the builder (ADR-014). The studio lays out each client's pult on a clie
 **OSC** Figma file, then:
 
 - `tools/figma-export` (`@osc/figma-export`) reads that page and writes the installation config
-  (schema v2, `packages/schema`) plus a report of everything it could not map;
+  (schema v2, `design-system/packages/schema`) plus a report of everything it could not map;
 - `tools/figma-plugin` (**Otakoyi Inspector**, a Figma dev plugin) shows, for the selection, what
   the exporter will produce and edits the build annotations.
 
@@ -100,7 +100,8 @@ missing in one form factor's frame is appended full-width at the bottom of that 
 
 The outermost Console-Panel pattern instance around controls becomes a page **panel** (schema
 `page.panels`), placed in the layout instead of the controls in it; its Console Panel `Title`
-becomes the panel title (`MIX` → `Mix`), the layer name (or the title) its id:
+becomes the panel title (`MIX` → `Mix`) unless `showTitle` is off (the usual case: the controls
+carry their own labels), and the layer name (or the title) its id:
 
 | Figma pattern                                      | `pattern`                                              |
 | -------------------------------------------------- | ------------------------------------------------------ |
@@ -222,8 +223,8 @@ Enterprise-only (no Brand modes); use **Export snapshot** and run the CLI with `
 Each client's colours are a **mode** of the Figma `Brand` variable collection (`brand/primary`,
 `on-primary`, `primary-pressed`, `primary-subtle`, `accent`, `on-accent`,
 `primary-signal-light`); `Otakoyi` is the default and equals `brandDefaults` in
-`packages/tokens/tokens.json` (`pnpm tokens:check` fails when they drift, against
-`packages/tokens/figma/brand-modes.json`).
+`design-system/packages/tokens/tokens.json` (`pnpm tokens:check` fails when they drift, against
+`design-system/packages/tokens/figma/brand-modes.json`).
 
 1. In Figma, Variables › Brand: add a mode named after the client (`<Brand> · <Client>`, like the
    template's `Aurora · Template`) and set its colours. `primary-signal-light` must reach 3:1 on the light background (else the exporter
@@ -232,7 +233,7 @@ Each client's colours are a **mode** of the Figma `Brand` variable collection (`
 3. Run the Otakoyi Inspector › **Export snapshot** and `pnpm figma-export --snapshot <file>` (or
    pass `--brand "<mode>"`): the config's `theme` gets the mode's colours; `--base` adds the logo,
    splash and theme mode. The app recolours the loading screen, pult and controls from it.
-4. A new mode for the studio itself (not a client): also update `packages/tokens/figma/brand-modes.json`.
+4. A new mode for the studio itself (not a client): also update `design-system/packages/tokens/figma/brand-modes.json`.
 
 ## Otakoyi Inspector (Figma plugin)
 

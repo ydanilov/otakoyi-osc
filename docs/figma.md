@@ -5,17 +5,17 @@ File: **OSC** — https://www.figma.com/design/D2HHS8lt7PxZqxibv9PlOQ/OSC
 Figma is the builder (ADR-014): there is no separate pult-builder app. The exporter and the
 Otakoyi Inspector plugin are described in [figma-export.md](figma-export.md).
 
-| Page                 | What                                                                                                  | Code                   |
-| -------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
-| Cover                | File cover                                                                                            | —                      |
-| Foundations          | Colour, elevation & glow, typography, rules                                                           | `packages/tokens`      |
-| Components           | Design-system library in sections: icons, app chrome, forms & lists, controls, media, containers      | `packages/ui`          |
-| Patterns             | Compositions: Channel Strip, Fader Bank, Knob Group, Mix, Prompt Presets, Installation Actions…       | `packages/ui`          |
-| Guidelines           | Rules for composing a client pult: which control when, do/don’t, layout, annotating a build, copy     | —                      |
-| iOS 27 · System      | System parts from the iOS and iPadOS 27 library: status bar, home indicator, sheets, keyboards, menus | native                 |
-| Client · Template    | Template for every client pult (duplicate it per client): phone + tablet screens, standard OSC set    | config + `apps/mobile` |
-| Demo · Try the demo  | Demo-mode prototype (simulated installation) for App Review and prospects, phone + tablet             | `apps/mobile` demo     |
-| Research, References | Mobbin research board and visual references (Neumorphic Dark Knobs is the lead one)                   | —                      |
+| Page                 | What                                                                                                  | Code                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Cover                | File cover                                                                                            | —                               |
+| Foundations          | Colour, elevation & glow, typography, rules                                                           | `design-system/packages/tokens` |
+| Components           | Design-system library in sections: icons, app chrome, forms & lists, controls, media, containers      | `design-system/packages/ui`     |
+| Patterns             | Compositions: Channel Strip, Fader Bank, Knob Group, Mix, Prompt Presets, Installation Actions…       | `design-system/packages/ui`     |
+| Guidelines           | Rules for composing a client pult: which control when, do/don’t, layout, annotating a build, copy     | —                               |
+| iOS 27 · System      | System parts from the iOS and iPadOS 27 library: status bar, home indicator, sheets, keyboards, menus | native                          |
+| Client · Template    | Template for every client pult (duplicate it per client): phone + tablet screens, standard OSC set    | config + `apps/mobile`          |
+| Demo · Try the demo  | Demo-mode prototype (simulated installation) for App Review and prospects, phone + tablet             | `apps/mobile` demo              |
+| Research, References | Mobbin research board and visual references (Neumorphic Dark Knobs is the lead one)                   | —                               |
 
 ## Client pages are the pult builder
 
@@ -75,12 +75,12 @@ control, 6 pt apart; horizontal faders keep label left / value right (`ControlFr
 
 ## Variables
 
-| Collection  | Modes                     | Contents                                                                   | Code                                                                                                                                                                                                 |
-| ----------- | ------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Base`      | Value                     | Neutrals for dark and light, status colours (hidden primitives)            | `tokens.json → color`                                                                                                                                                                                |
-| `Brand`     | one mode per client brand | `brand/*` incl. `primary-signal-light` (primary darkened to ≥ 3:1)         | installation config `theme` (exporter, `docs/figma-export.md` › Adding a client theme); Otakoyi = `brandDefaults`, checked against `packages/tokens/figma/brand-modes.json`; Storybook Brand toolbar |
-| `Theme`     | Dark / Light              | `color/*`, `control/*` (incl. `control/signal`), `status/*`, `elevation/*` | `createTheme()` output                                                                                                                                                                               |
-| `Dimension` | Value                     | `space/*`, `radius/*`, `stroke/*`, `touch/*`, `control/*` sizes            | `tokens.json`                                                                                                                                                                                        |
+| Collection  | Modes                     | Contents                                                                   | Code                                                                                                                                                                                                               |
+| ----------- | ------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Base`      | Value                     | Neutrals for dark and light, status colours (hidden primitives)            | `tokens.json → color`                                                                                                                                                                                              |
+| `Brand`     | one mode per client brand | `brand/*` incl. `primary-signal-light` (primary darkened to ≥ 3:1)         | installation config `theme` (exporter, `docs/figma-export.md` › Adding a client theme); Otakoyi = `brandDefaults`, checked against `design-system/packages/tokens/figma/brand-modes.json`; Storybook Brand toolbar |
+| `Theme`     | Dark / Light              | `color/*`, `control/*` (incl. `control/signal`), `status/*`, `elevation/*` | `createTheme()` output                                                                                                                                                                                             |
+| `Dimension` | Value                     | `space/*`, `radius/*`, `stroke/*`, `touch/*`, `control/*` sizes            | `tokens.json`                                                                                                                                                                                                      |
 
 `control/fill` and `control/signal` use the brand primary in dark mode and the darkened signal
 colour in light mode — same rule as `createTheme()` (`SIGNAL_CONTRAST = 3`). Buttons keep the exact
@@ -118,7 +118,7 @@ Icons: Phosphor Regular as `Icon/<name>` components — use them for every glyph
 
 Docs for every component (purpose, states, behaviour, accessibility, content limits, variant → props)
 live in Storybook (`pnpm storybook`); Figma keeps a one-line description. Component and variant names
-are exporter API (ADR-014). Paths are under `packages/ui/src/`.
+are exporter API (ADR-014). Paths are under `design-system/packages/ui/src/`.
 
 | Figma component (variants)                                                                                | Code                                                                          | File                                                                                           |
 | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -178,7 +178,7 @@ Home Indicator (device chrome in mockups). Control compositions on the Patterns 
 Knob Group, Camera Control, Scene Bar…) are page `panels` in the config, drawn by the pult renderer
 (`pult/Panels.tsx`).
 
-The "Try the demo" installation (`packages/schema/examples/try-the-demo.json`) is the Figma page
+The "Try the demo" installation (`design-system/packages/schema/examples/try-the-demo.json`) is the Figma page
 **Demo · Try the demo**: VJ console (tablet: Mix / FX / Cues / Scenes), Lighting cues, Lobby wall
 (phone: Live / Scenes).
 
