@@ -2,4 +2,8 @@ packages:
   - "apps/*"
   - "packages/*"
   - "tools/*"
+  # The design system (tokens, osc-core, schema, controls, ui, storybook) lives in the public
+  # ydanilov/otakoyi-controls repo, checked out here as a submodule (ADR-019).
+  - "design-system/apps/*"
+  - "design-system/packages/*"
 nodeLinker: hoisted

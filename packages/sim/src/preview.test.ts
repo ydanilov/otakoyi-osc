@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { message } from "@osc/core";
 import { parseConfig } from "@osc/schema";
-import demo from "../../schema/examples/demo-installation.json";
+import demo from "../../../design-system/packages/schema/examples/demo-installation.json";
 import { DEMO_BINDINGS, applyToPreview, controlsByAddress } from "./bindings";
 import {
   DEFAULT_PREVIEW,

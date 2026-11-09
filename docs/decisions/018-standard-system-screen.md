@@ -29,7 +29,7 @@ would lay them out again, and they mix studio settings into the client's show co
   for it next to the config's pults (`allPults`), so state, lease, coercion, echo handling and the
   activity feed apply unchanged and the protocol needs nothing new. It is never in `config.pults`:
   pult lists and the pager never show it.
-- **Design system.** `SystemScreen` (`packages/ui/src/patterns/System.tsx`, story _Patterns/System
+- **Design system.** `SystemScreen` (`design-system/packages/ui/src/patterns/System.tsx`, story _Patterns/System
   Screen_) draws it; the app's `SystemContent` wires it to the `system` store. The Figma library
   holds one **System Screen** component (phone and tablet), so no client page redraws it.
 - `pult-plan`, `pult-draft` and the exporter skip the System group when splitting project screens;

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { argValue, decodeMessage, encodeMessage, message, type OscMessage } from "@osc/core";
 import type { ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
-import demo from "../../../packages/schema/examples/demo-installation.json";
+import demo from "../../../design-system/packages/schema/examples/demo-installation.json";
 import { ECHO_WINDOW_MS } from "@osc/controls";
 import { Bridge, FEEDBACK_TIMEOUT_MS, type LogEntry, type Peer } from "./index";
 

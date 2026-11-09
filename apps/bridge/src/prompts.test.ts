@@ -6,7 +6,7 @@ import { argValue, message, type OscMessage } from "@osc/core";
 import { promptValue } from "@osc/controls";
 import type { ServerMessage } from "@osc/protocol";
 import { parseConfig } from "@osc/schema";
-import demo from "../../../packages/schema/examples/demo-installation.json";
+import demo from "../../../design-system/packages/schema/examples/demo-installation.json";
 import { Bridge, type Peer } from "@osc/bridge-core";
 import { PromptStore, UNDO_WINDOW_MS } from "./prompts";
 

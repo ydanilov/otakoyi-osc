@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { argValue, decodePacket, messagesOf, type OscMessage } from "@osc/core";
 import { parseConfig } from "@osc/schema";
 import { WebSocket } from "ws";
-import demo from "../../../packages/schema/examples/demo-installation.json";
+import demo from "../../../design-system/packages/schema/examples/demo-installation.json";
 import { startServer } from "./server";
 
 const closers: (() => Promise<unknown> | void)[] = [];

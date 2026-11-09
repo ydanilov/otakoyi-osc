@@ -88,7 +88,7 @@ pairing overlay. The overlay takes its size from the target's `Resw` / `Resh`.
 
 A small TouchDesigner patch that behaves like an installation, so the app and the bridge can be tested
 against real TD instead of a simulation. Same addresses as the demo config
-(`packages/schema/examples/demo-installation.json`).
+(`design-system/packages/schema/examples/demo-installation.json`).
 
 |              |                                                                                                                                     |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |

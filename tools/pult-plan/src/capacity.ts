@@ -83,8 +83,8 @@ export function capacityMarkdown(): string {
   L.push(
     "How many controls fit one pult screen before the pult splits the page into another screen " +
       "(ADR-006: the pult never scrolls vertically). Every number comes from the pult's own " +
-      "`layoutPage`, `naturalHeightFor` and `panelMinHeight` (`packages/ui/src/pult/layout.ts`) " +
-      "and the token sizes (`packages/tokens/tokens.json`), with controls placed the way " +
+      "`layoutPage`, `naturalHeightFor` and `panelMinHeight` (`design-system/packages/ui/src/pult/layout.ts`) " +
+      "and the token sizes (`design-system/packages/tokens/tokens.json`), with controls placed the way " +
       "`pnpm pult-draft` places them. Use `pnpm pult-plan --contract <path>` to see the split for " +
       "a real installation.",
   );

@@ -51,7 +51,7 @@ finish, hand the studio the files listed in [step 7](#7-hand-back-to-the-studio)
   targets on one machine: [ports.md](ports.md).
 
 The exact message each control type sends is defined in code:
-`packages/controls/src/logic.ts` → `messagesFor()`. Summary for schema v1:
+`design-system/packages/controls/src/logic.ts` → `messagesFor()`. Summary for schema v1:
 
 | Control (config `type`) | Sends                                                                 | Typical use            |
 | ----------------------- | --------------------------------------------------------------------- | ---------------------- |
@@ -77,7 +77,7 @@ studio for an explicit single-message format: `hsvFloat` (`address h s v`, float
 `rgbFloat` (`address r g b`, 0..1), `rgbInt` (0..255) or `hex` (`"#RRGGBB"`).
 
 Schema v2 adds crossfade, relative and hue variants, thumbstick, button group, image, mic, prompt
-and gyroscope controls; `messagesFor()` and `packages/schema/src` are the reference for them.
+and gyroscope controls; `messagesFor()` and `design-system/packages/schema/src` are the reference for them.
 
 | Control (config `type`) | Sends                                                                                           | Typical use              |
 | ----------------------- | ----------------------------------------------------------------------------------------------- | ------------------------ |
@@ -198,7 +198,7 @@ pnpm pult-draft --contract /abs/path/otakoyi/osc-contract.json --out draft-confi
 both → phone). The draft keeps `live` first, never splits a group unless it is bigger than a screen,
 sends `setup` to a separate Setup pult, leaves `hidden` out and turns the System group into the
 System screen. How much fits a screen: [pult-capacity.md](pult-capacity.md). `parseConfig()` in
-`packages/schema` validates the draft (the CLI does it for you), and the bridge refuses an invalid
+`design-system/packages/schema` validates the draft (the CLI does it for you), and the bridge refuses an invalid
 config with the reason.
 
 **See the expected behaviour without hardware.** The app's demo mode ("Try the demo" on the
@@ -282,17 +282,17 @@ Do **not**:
 
 ## Reference
 
-| Topic                              | Where                                            |
-| ---------------------------------- | ------------------------------------------------ |
-| Ports, several targets, sensors    | [ports.md](ports.md)                             |
-| Screen capacity (generated)        | [pult-capacity.md](pult-capacity.md)             |
-| Draft / plan CLI                   | `tools/pult-plan` (ADR-017)                      |
-| TD studio rules                    | `ydanilov/otakoyi-td-template`                   |
-| Decisions (why things are so)      | `docs/decisions/README.md`                       |
-| Config schema                      | `packages/schema/src/index.ts`, `examples/`      |
-| Wire format per control            | `packages/controls/src/logic.ts` (`messagesFor`) |
-| Pult ↔ bridge protocol (WebSocket) | `packages/protocol/src/index.ts`                 |
-| Bridge system OSC, lease, logging  | `packages/bridge-core/src/bridge.ts`             |
-| Simulated installation (demo)      | `packages/sim/src/simulator.ts`                  |
-| Figma file and conventions         | `docs/figma.md`                                  |
-| Working on this repo itself        | `AGENTS.md`                                      |
+| Topic                              | Where                                                          |
+| ---------------------------------- | -------------------------------------------------------------- |
+| Ports, several targets, sensors    | [ports.md](ports.md)                                           |
+| Screen capacity (generated)        | [pult-capacity.md](pult-capacity.md)                           |
+| Draft / plan CLI                   | `tools/pult-plan` (ADR-017)                                    |
+| TD studio rules                    | `ydanilov/otakoyi-td-template`                                 |
+| Decisions (why things are so)      | `docs/decisions/README.md`                                     |
+| Config schema                      | `design-system/packages/schema/src/index.ts`, `examples/`      |
+| Wire format per control            | `design-system/packages/controls/src/logic.ts` (`messagesFor`) |
+| Pult ↔ bridge protocol (WebSocket) | `packages/protocol/src/index.ts`                               |
+| Bridge system OSC, lease, logging  | `packages/bridge-core/src/bridge.ts`                           |
+| Simulated installation (demo)      | `packages/sim/src/simulator.ts`                                |
+| Figma file and conventions         | `docs/figma.md`                                                |
+| Working on this repo itself        | `AGENTS.md`                                                    |

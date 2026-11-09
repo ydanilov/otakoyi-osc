@@ -17,26 +17,32 @@ checkpoints. Plan and business rules: Claude Doc "OSC Controller — план р
 
 ## Stack (see `docs/decisions/`)
 
-| Layer         | Choice                                                                          |
-| ------------- | ------------------------------------------------------------------------------- |
-| App           | Expo SDK 58 (React Native 0.88, New Architecture), Expo Router, TypeScript      |
-| App chrome    | React Native Reusables (shadcn for RN) + NativeWind 4, in `packages/ui`         |
-| Controls      | Skia + Reanimated + Gesture Handler 3 for continuous controls, in `packages/ui` |
-| Tokens        | `packages/tokens/tokens.json` → `pnpm tokens` → CSS vars + Tailwind preset      |
-| Config        | zod schema in `packages/schema` (`schemaVersion`, revisions)                    |
-| OSC           | Pure-TS codec in `packages/osc-core` (OSC 1.0/1.1, bundles, SLIP)               |
-| Control logic | `packages/controls` — value mapping, throttling, messages per control           |
-| Web pult      | The same app exported for web (`pnpm --filter @osc/mobile build:web`)           |
-| Bridge        | `apps/bridge` (Node): WebSocket for pults, UDP OSC, lease, log; `@osc/protocol` |
-| Bridge core   | `packages/bridge-core`: state, lease, actions, activity, presets — no Node APIs |
-| Demo          | `packages/sim`: the bridge core in-process + a pretend installation (ADR-012)   |
-| Tests         | Vitest; the web build driven in headless Chromium (Playwright) for the flows    |
+| Layer         | Choice                                                                                        |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| App           | Expo SDK 58 (React Native 0.88, New Architecture), Expo Router, TypeScript                    |
+| App chrome    | React Native Reusables (shadcn for RN) + NativeWind 4, in `design-system/packages/ui`         |
+| Controls      | Skia + Reanimated + Gesture Handler 3 for continuous controls, in `design-system/packages/ui` |
+| Tokens        | `design-system/packages/tokens/tokens.json` → `pnpm tokens` → CSS vars + Tailwind preset      |
+| Config        | zod schema in `design-system/packages/schema` (`schemaVersion`, revisions)                    |
+| OSC           | Pure-TS codec in `design-system/packages/osc-core` (OSC 1.0/1.1, bundles, SLIP)               |
+| Control logic | `design-system/packages/controls` — value mapping, throttling, messages per control           |
+| Web pult      | The same app exported for web (`pnpm --filter @osc/mobile build:web`)                         |
+| Bridge        | `apps/bridge` (Node): WebSocket for pults, UDP OSC, lease, log; `@osc/protocol`               |
+| Bridge core   | `packages/bridge-core`: state, lease, actions, activity, presets — no Node APIs               |
+| Demo          | `packages/sim`: the bridge core in-process + a pretend installation (ADR-012)                 |
+| Tests         | Vitest; the web build driven in headless Chromium (Playwright) for the flows                  |
+
+**The design system is a submodule (ADR-019).** Tokens, OSC codec, config schema, control logic,
+components and Storybook live in the public repo `ydanilov/otakoyi-controls`, checked out here as
+`design-system/` (clone with `--recurse-submodules`, or `git submodule update --init`). Change them
+there first (PR in otakoyi-controls), then bump the submodule here. The installation contract is
+product-only: `@osc/contract` in `packages/contract`.
 
 ## Commands
 
 ```bash
 pnpm install
-pnpm tokens          # regenerate packages/tokens/generated/*
+pnpm tokens          # regenerate design-system/packages/tokens/generated/*
 pnpm verify          # tokens check, format, types, unit tests
 pnpm --filter @osc/mobile start       # Expo dev server
 pnpm --filter @osc/mobile build:web   # web pult → apps/mobile/dist
@@ -45,7 +51,7 @@ pnpm --filter @osc/sim test           # simulated installation (demo mode)
 OTAKOYI_PIN=2468 pnpm bridge           # bridge on :8080 (serves the web pult, OSC to the demo target)
 pnpm --filter @osc/bridge bundle      # bridge as one file → apps/bridge/dist/bridge.mjs
 pnpm storybook                        # component docs on :6006 (React Native Web + Vite)
-pnpm build-storybook                  # static Storybook → apps/storybook/storybook-static
+pnpm build-storybook                  # static Storybook → design-system/apps/storybook/storybook-static
 pnpm test-storybook                   # headless: every story × dark/light renders, play tests pass
 pnpm figma-export --snapshot tools/figma-export/fixtures/template.json   # Figma page → config + report (docs/figma-export.md)
 pnpm pult-plan  --contract <path> [--form phone|tablet]   # contract → which controls land on which screen (ADR-017)
@@ -64,12 +70,12 @@ the in-app simulator through the same `TransportFactory` (`@osc/protocol`) and H
 
 ## Storybook — the component docs
 
-Storybook (`apps/storybook`) is the one home of component documentation; Figma keeps only a one-line
-description. **Every component in `packages/ui` has a story**: `<Component>.stories.tsx` next to the
+Storybook (`design-system/apps/storybook`) is the one home of component documentation; Figma keeps only a one-line
+description. **Every component in `design-system/packages/ui` has a story**: `<Component>.stories.tsx` next to the
 component, with `componentDocs()` (purpose, do/don't, anatomy, states, behaviour, accessibility,
 content limits, Figma component + variant → props) and a story per state/variant; `play` tests where
 interactive. Toolbar: theme, brand (Otakoyi + the two `/gallery` sample brands), phone/tablet
-viewport. Guidelines, Introduction and Changelog are MDX in `apps/storybook/docs`; add a Changelog
+viewport. Guidelines, Introduction and Changelog are MDX in `design-system/apps/storybook/docs`; add a Changelog
 entry with every design-system change.
 
 Run `pnpm verify` before every commit.
@@ -83,7 +89,7 @@ Run `pnpm verify` before every commit.
    Status colours (online, warning, critical, offline, studio) are never brandable.
 3. **The pult never scrolls vertically.** (Sheets may: Settings, Installation, Activity.) Controls
    are packed from the top at their Figma heights with the Figma gaps (ADR-006); pages that do not
-   fit are split into screens that swipe horizontally (`layoutPage` in `packages/ui/src/pult/layout.ts`).
+   fit are split into screens that swipe horizontally (`layoutPage` in `design-system/packages/ui/src/pult/layout.ts`).
 4. **Config, not code, defines a pult** — and the config is exported from Figma (ADR-014). New pults ship as config revisions, never as app releases.
    A new control type = schema entry + logic + component + tests, in one PR.
 5. **Platform code behind interfaces.** UDP/TCP, discovery and keep-awake live behind TS interfaces;
@@ -102,7 +108,10 @@ Run `pnpm verify` before every commit.
    drawers, inspectors on `SheetScaffold`). The layout sensor in `test-storybook` checks the
    rendered layout invariants on every story (header never over the content, nothing cut off at
    the side); a screen's story asserts its Figma metrics with `expectSheetLayout` (`SHEET`).
-3. PR; Yura reviews and merges. Never push to `main` without explicit approval.
+3. Design-system change: PR in `otakoyi-controls` first; after it merges, a PR here that moves the
+   submodule (`git submodule update --remote design-system`) plus any product changes it needs.
+   After re-exporting the template from Figma, `pnpm fixtures:sync` and send the fixture there too.
+4. PR; Yura reviews and merges. Never push to `main` without explicit approval.
 
 ## Where things live
 
@@ -115,15 +124,16 @@ apps/bridge/            the bridge program: sockets, UDP/TCP OSC, files, pairing
 packages/bridge-core/   the bridge's core (Bridge, Lease, PromptStore) — shared with packages/sim
 packages/sim/           simulated installation for demo mode: transport, HTTP API, preview model
 packages/protocol/      pult ↔ bridge protocol, transports, HTTP client, pairing links
-packages/osc-core/      OSC codec
-packages/schema/        installation config schema + examples (demo-installation.json: bridge sample with
-                        every control; try-the-demo.json: the in-app demo, = Figma "Demo · Try the demo")
-packages/tokens/        base tokens, createTheme(brand), contrast checks, generated CSS/preset
-packages/controls/      control logic (pure TS)
-packages/ui/            design system: Reusables components, Skia controls, pult renderer
-  src/ds/               depth (Surface, boxShadow), Phosphor icons, LED, pure DS logic (+ tests)
-  src/chrome|forms|containers|media|patterns/   DS components; stories next to each file
-apps/storybook/         Storybook config, MDX docs (Introduction, Guidelines, Changelog)
+packages/contract/      installation OSC contract (otakoyi/osc-contract.json): zod mirror of
+                        docs/osc-contract.schema.json, priorities, the System group
+design-system/          submodule: public ydanilov/otakoyi-controls (ADR-019)
+  packages/osc-core/    OSC codec
+  packages/schema/      installation config schema + examples (demo-installation.json: bridge sample
+                        with every control; try-the-demo.json: the in-app demo, = Figma "Demo · Try the demo")
+  packages/tokens/      base tokens, createTheme(brand), contrast checks, generated CSS/preset
+  packages/controls/    control logic (pure TS)
+  packages/ui/          design system: Reusables components, Skia controls, pult renderer
+  apps/storybook/       Storybook config, MDX docs (Introduction, Guidelines, Changelog)
 docs/decisions/         ADRs, one file each, current version only — edit in place
 tools/figma-export/     exporter: Figma snapshot/REST → config + report; mapping shared with the plugin
 tools/figma-plugin/     Otakoyi Inspector (Figma dev plugin): exporter preview, OSC / Depends on editor

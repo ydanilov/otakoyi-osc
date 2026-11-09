@@ -8,7 +8,7 @@
 import { readFileSync, writeFileSync as write } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { parseContract } from "@osc/schema";
+import { parseContract } from "@osc/contract";
 import { exportSnapshot, type BaseConfig, type OscContract } from "./export";
 import { formatReport } from "./report";
 import { fetchSnapshot } from "./rest";

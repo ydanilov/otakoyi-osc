@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { parseContract } from "@osc/schema";
+import { parseContract } from "@osc/contract";
 import { draftConfig, planContract, validateDraft } from "./plan";
 
 // The TouchDesigner contract generator's core is pure Python (tools/touchdesigner/

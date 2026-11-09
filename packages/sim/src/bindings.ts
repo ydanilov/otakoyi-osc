@@ -18,7 +18,7 @@ export type PreviewBinding =
   | "prompt";
 
 /**
- * How the demo installation (packages/schema/examples/demo-installation.json) reacts, like a
+ * How the demo installation (design-system/packages/schema/examples/demo-installation.json) reacts, like a
  * TouchDesigner patch would: its own parameters by address, plus the system OSC (`/otakoyi/*`).
  */
 export const DEMO_BINDINGS: Readonly<Record<string, PreviewBinding>> = {
