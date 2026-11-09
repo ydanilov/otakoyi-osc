@@ -353,7 +353,9 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
     }
     if (node.component === "Console Panel" && typeof node.props?.Title === "string") {
       next.panelTitle = node.props.Title;
-      if (next.panel && !next.panel.title) next.panel.title = humanize(node.props.Title);
+      // `showTitle` off (the usual case): the panel's controls carry their own labels.
+      if (next.panel && !next.panel.title && node.props.showTitle !== false)
+        next.panel.title = humanize(node.props.Title);
     }
     if (node.component === "Scene Bar") next.sceneBar = true;
     return next;
@@ -802,11 +804,18 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
             ? node.props.Title
             : node.children?.find((c) => c.component === "Console Panel")?.props?.Title;
         const title = typeof panelTitle === "string" ? humanize(panelTitle) : undefined;
+        // `showTitle` off on the Console Panel (the usual case): the title still names the panel's
+        // id, but nothing is drawn above its controls.
+        const cp =
+          node.component === "Console Panel"
+            ? node
+            : node.children?.find((c) => c.component === "Console Panel");
+        const shown = cp?.props?.showTitle !== false;
         const fromLayer = !isDefaultName(node) && slug(node.name);
         next.panel = {
           id: fromLayer || (title && slug(title)) || slug(name!),
           idFrom: fromLayer ? "layer" : title ? "title" : "pattern",
-          ...(title ? { title } : {}),
+          ...(title && shown ? { title } : {}),
           pattern,
           nodeId: node.id,
           component: name!,

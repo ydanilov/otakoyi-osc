@@ -475,6 +475,23 @@ describe("mapFrame — panels and icons", () => {
     expect(r.controls.map((c) => c.control.address)).toEqual(["/fx/hue", "/fx/speed", "/solo"]);
   });
 
+  it("leaves the panel untitled when the Console Panel hides its title", () => {
+    const r = mapFrame(
+      frame(
+        inst("Knob Group", {
+          annotations: osc("**/fx/{knob-id}** `float 0–1`"),
+          children: [
+            inst("Console Panel", {
+              props: { Title: "SHAPE", showTitle: false },
+              children: [inst("Knob", { name: "hue", props: { Label: "Hue" } })],
+            }),
+          ],
+        }),
+      ),
+    );
+    expect(r.panels.map((p) => [p.id, p.title])).toEqual([["shape", undefined]]);
+  });
+
   it("takes a control's own icon, never the component's glyphs", () => {
     const r = mapFrame(
       frame(

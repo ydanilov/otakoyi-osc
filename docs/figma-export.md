@@ -100,7 +100,8 @@ missing in one form factor's frame is appended full-width at the bottom of that 
 
 The outermost Console-Panel pattern instance around controls becomes a page **panel** (schema
 `page.panels`), placed in the layout instead of the controls in it; its Console Panel `Title`
-becomes the panel title (`MIX` → `Mix`), the layer name (or the title) its id:
+becomes the panel title (`MIX` → `Mix`) unless `showTitle` is off (the usual case: the controls
+carry their own labels), and the layer name (or the title) its id:
 
 | Figma pattern                                      | `pattern`                                              |
 | -------------------------------------------------- | ------------------------------------------------------ |
