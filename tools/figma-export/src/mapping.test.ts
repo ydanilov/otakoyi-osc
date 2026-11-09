@@ -379,7 +379,7 @@ describe("mapFrame — Color Picker → three addresses", () => {
   const picker = (text: string, name = "Color Picker") =>
     inst("Color Picker", {
       name,
-      props: { Title: "Colour", Style: "Wheel" },
+      props: { Title: "Colour", Style: "Square" },
       annotations: osc(text),
     });
 
@@ -388,6 +388,22 @@ describe("mapFrame — Color Picker → three addresses", () => {
     expect(r.issues).toEqual([]);
     expect(r.controls[0]!.control).toMatchObject({ type: "colorPicker", address: "/light/color" });
     expect(r.controls[0]!.control.format).toBeUndefined(); // schema default: hsb
+  });
+
+  it("maps Style=Knobs and the Square's slider booleans", () => {
+    const knobs = inst("Color Picker", {
+      props: { Title: "Colour", Style: "Knobs", showBrightness: true },
+      annotations: osc("/light/color/{h,s,b}"),
+    });
+    expect(mapFrame(frame(knobs)).controls[0]!.control).toMatchObject({ pickerStyle: "knobs" });
+    expect(mapFrame(frame(knobs)).controls[0]!.control.sliders).toBeUndefined();
+    const square = inst("Color Picker", {
+      props: { Title: "Colour", Style: "Square", showSaturation: true, showBrightness: true },
+      annotations: osc("/light/color/{h,s,b}"),
+    });
+    const c = mapFrame(frame(square)).controls[0]!.control;
+    expect(c.pickerStyle).toBeUndefined();
+    expect(c.sliders).toEqual(["saturation", "brightness"]);
   });
 
   it("takes the three channel addresses as one picker; /h 0–1 means hueRange unit", () => {

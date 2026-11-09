@@ -726,6 +726,13 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
         }
         // `/h float 0–1`: hue normalised instead of degrees.
         if (hue?.range?.[1] === 1) c.hueRange = "unit";
+        // Figma `Style` (Square default, Knobs) and the Square's optional precise sliders.
+        if (p.Style === "Knobs") c.pickerStyle = "knobs";
+        const sliders = [
+          p.showSaturation === true ? "saturation" : undefined,
+          p.showBrightness === true ? "brightness" : undefined,
+        ].filter(Boolean);
+        if (sliders.length && p.Style !== "Knobs") c.sliders = sliders;
         applyKeys(c, keys, ["target", "lock", "studioOnly", "format", "hueRange"]);
         if (ch && c.format !== undefined && c.format !== "hsb")
           issue(
