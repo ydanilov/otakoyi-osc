@@ -281,8 +281,8 @@ export interface DraftResult {
 
 /**
  * The draft config (`pnpm pult-draft`): pult `main` (one tab per TD parameter page, live first
- * inside each, then a tab for the other form factor's parameters), pult `setup` for `[setup]`
- * parameters, one tab per TD page too. Both form factors get a layout of the same tabs; the pult
+ * inside each, then a tab for the other form factor's parameters) and, for `[setup]` parameters, a
+ * Setup pult shown in the Installation panel (`placement: "installation"`), one panel per TD page. Both form factors get a layout of the same tabs; the pult
  * splits a tab into horizontally swiped screens where it does not fit.
  */
 export function draftConfig(contract: OscContractDoc, form = primaryForm(contract)): DraftResult {
@@ -324,13 +324,20 @@ export function draftConfig(contract: OscContractDoc, form = primaryForm(contrac
       formFactor: form,
       pages: mainPages,
     });
+  // [setup] parameters live in the Installation panel (Installation › Setup), not on the pult.
   if (plan.setup.length)
     pults.push({
       id: "setup",
       name: "Setup",
-      formFactor: "tablet",
-      icon: "wrench",
+      placement: "installation",
       pages: plan.setup.map((p) => page("setup", p.id, p.title, p.controls)),
+    });
+  if (!mainPages.length && plan.setup.length)
+    issues.push({
+      level: "warning",
+      code: "setup-only",
+      message:
+        "only [setup] parameters: the pult screen would be empty; tag the show parameters [live] or [tune]",
     });
   if (!pults.length) {
     issues.push({

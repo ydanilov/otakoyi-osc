@@ -159,12 +159,16 @@ describe("draftConfig", () => {
     expect(systemPult(r.config)!.pages[0]!.controls).toHaveLength(4);
   });
 
-  it("a live use case is cut for the tablet and gets a Setup pult", () => {
+  it("a live use case is cut for the tablet and puts [setup] in Installation › Setup", () => {
     const c = contract([fader("A", 1, "live"), { ...fader("S", 1), priority: "setup" }], "live");
     const d = draftConfig(c);
     expect(d.plan.form).toBe("tablet");
     expect(validateDraft(d.config)).toEqual([]);
-    expect((d.config.pults as Array<{ id: string }>).map((p) => p.id)).toEqual(["main", "setup"]);
+    const pults = d.config.pults as Array<{ id: string; placement?: string }>;
+    expect(pults.map((p) => [p.id, p.placement])).toEqual([
+      ["main", undefined],
+      ["setup", "installation"],
+    ]);
   });
 });
 

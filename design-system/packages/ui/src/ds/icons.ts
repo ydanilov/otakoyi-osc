@@ -34,6 +34,7 @@ export { UploadSimpleIcon } from "phosphor-react-native/src/icons/UploadSimple";
 export { CloudArrowUpIcon } from "phosphor-react-native/src/icons/CloudArrowUp";
 export { TrashIcon } from "phosphor-react-native/src/icons/Trash";
 export { CropIcon } from "phosphor-react-native/src/icons/Crop";
+export { WrenchIcon } from "phosphor-react-native/src/icons/Wrench";
 export { ArrowCounterClockwiseIcon } from "phosphor-react-native/src/icons/ArrowCounterClockwise";
 export { ScanIcon } from "phosphor-react-native/src/icons/Scan";
 export { QrCodeIcon } from "phosphor-react-native/src/icons/QrCode";

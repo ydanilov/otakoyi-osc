@@ -44,8 +44,8 @@ Untagged parameters count as `tune`. In TouchDesigner the priority comes from th
 
 ### Draft rules (`tools/pult-plan`)
 
-- Drop `hidden` and the System group (ADR-018). `setup` goes to a separate pult `setup`; `live` and
-  `tune` share the main pult.
+- Drop `hidden` and the System group (ADR-018). `live` and `tune` share the main pult; `setup` goes
+  to a Setup pult in the Installation panel (`placement: "installation"`, ADR-021).
 - **One tab per TouchDesigner parameter page** (contract group), in TD order. The planner never
   merges, splits or reorders pages: logical grouping is decided in TouchDesigner
   (`otakoyi-td-template` standards §4). Inside a tab `live` comes first, then `tune`, each by

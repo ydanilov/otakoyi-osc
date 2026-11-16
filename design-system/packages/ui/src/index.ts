@@ -157,6 +157,7 @@ export {
 } from "./media/Image";
 export * from "./patterns/Installation";
 export * from "./patterns/System";
+export * from "./patterns/Setup";
 export { Mix, PromptMix } from "./patterns/Mix";
 export {
   StatusNotificationsRow,

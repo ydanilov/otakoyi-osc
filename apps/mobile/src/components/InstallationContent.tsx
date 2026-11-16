@@ -1,4 +1,5 @@
 import type { ActivityEntry, BridgeHealth } from "@osc/protocol";
+import { screenPults, setupPults } from "@osc/schema";
 import {
   ActivityRow,
   ArrowClockwiseIcon,
@@ -6,6 +7,7 @@ import {
   CaretLeftIcon,
   ClockCounterClockwiseIcon,
   CropIcon,
+  WrenchIcon,
   ConnectionStatus,
   FlashlightIcon,
   HandPalmIcon,
@@ -28,6 +30,7 @@ import * as React from "react";
 import { View } from "react-native";
 import { useApp, useSessionState } from "@/lib/app-context";
 import { DebugContent } from "./DebugContent";
+import { SetupContent } from "./SetupContent";
 import { SystemContent, useSystemValues } from "./SystemContent";
 import {
   actionMessage,
@@ -46,15 +49,19 @@ const HEALTH_MS = 2000;
 /** Hold-to-confirm for Restart and Blackout (ADR-016). */
 const HOLD_MS = 1200;
 
-export type InstallationView = "main" | "activity" | "debug" | "system";
+/** `setup:<pult id>` opens that Setup pult. */
+export type InstallationView = "main" | "activity" | "debug" | "system" | `setup:${string}`;
 
 /** Title of the inspector / sheet for a view. */
-export const INSTALLATION_TITLE: Record<InstallationView, string> = {
+const TITLES: Record<string, string> = {
   main: "Installation",
   activity: "Activity",
   debug: "Debug",
   system: "System",
 };
+export function installationTitle(view: InstallationView): string {
+  return view.startsWith("setup:") ? "Setup" : (TITLES[view] ?? "Installation");
+}
 
 const ACTION_ICON = { flash: FlashlightIcon, restart: ArrowClockwiseIcon, blackout: PowerIcon };
 
@@ -83,6 +90,8 @@ export function InstallationContent({
   if (view === "activity") return <ActivityList onBack={back} />;
   if (view === "debug") return <DebugContent onBack={back} backLabel="Installation" />;
   if (view === "system") return <SystemContent onBack={back} />;
+  if (view.startsWith("setup:"))
+    return <SetupContent pultId={view.slice("setup:".length)} onBack={back} />;
   return (
     <Main
       pultId={pultId}
@@ -90,6 +99,7 @@ export function InstallationContent({
       onActivity={() => onView("activity")}
       onDebug={() => onView("debug")}
       onSystem={() => onView("system")}
+      onSetup={(id) => onView(`setup:${id}`)}
     />
   );
 }
@@ -100,12 +110,14 @@ function Main({
   onActivity,
   onDebug,
   onSystem,
+  onSetup,
 }: {
   pultId: string | null;
   onPult: (id: string) => void;
   onActivity: () => void;
   onDebug: () => void;
   onSystem: () => void;
+  onSetup: (pultId: string) => void;
 }) {
   const { session } = useApp();
   const s = useSessionState();
@@ -135,7 +147,8 @@ function Main({
   const modes = modeToggles(s.actions);
   const last = s.activity.at(-1);
   const lastLine = last ? activityLine(last, s.config, session?.device) : null;
-  const pults = s.config?.pults ?? [];
+  const pults = s.config ? screenPults(s.config) : [];
+  const setups = s.config ? setupPults(s.config) : [];
   const items: QuickActionItem[] = actions.map((a) => ({
     id: a.name,
     // Blackout is latched: while it is on, the same hold restores the picture.
@@ -209,14 +222,28 @@ function Main({
           modesDisabled={!canControl}
         />
         {!canControl && <Note>Take control to use the quick actions and modes.</Note>}
-        {s.config?.system && (
+        {(s.config?.system || setups.length > 0) && (
           <ListCard>
-            <ListRow
-              icon={CropIcon}
-              title="System"
-              subtitle={systemSummary(system)}
-              onPress={onSystem}
-            />
+            {s.config?.system && (
+              <ListRow
+                icon={CropIcon}
+                title="System"
+                subtitle={systemSummary(system)}
+                onPress={onSystem}
+              />
+            )}
+            {setups.map((p) => {
+              const n = p.pages.reduce((k, g) => k + g.controls.length, 0);
+              return (
+                <ListRow
+                  key={p.id}
+                  icon={WrenchIcon}
+                  title={setups.length > 1 ? p.name : "Setup"}
+                  subtitle={`${n} setting${n === 1 ? "" : "s"}`}
+                  onPress={() => onSetup(p.id)}
+                />
+              );
+            })}
           </ListCard>
         )}
       </View>
