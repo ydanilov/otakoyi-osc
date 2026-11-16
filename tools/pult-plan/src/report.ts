@@ -13,7 +13,7 @@ function issuesBlock(issues: MapIssue[]): string[] {
     .map((i) => `- **${i.level}** \`${i.code}\`: ${i.message}`);
 }
 
-/** `pnpm pult-plan`: which groups and controls land on which screen. */
+/** `pnpm pult-plan`: one tab per TD parameter page, its controls and screens. */
 export function formatPlan(plan: Plan): string {
   const r = REFERENCE[plan.form];
   const L = [`# Pult plan — ${plan.form} (${r.width} × ${r.height} pt, ${r.device})`, ""];
@@ -21,7 +21,8 @@ export function formatPlan(plan: Plan): string {
     if (!pages.length) return;
     L.push(`## ${title}`, "");
     pages.forEach((p, i) => {
-      L.push(`${i + 1}. **${p.title}** [${p.priority}] — ${p.controls.length} controls`);
+      const screens = p.screens > 1 ? `, ${p.screens} screens` : "";
+      L.push(`${i + 1}. **${p.title}** [${p.priority}] — ${p.controls.length} controls${screens}`);
       L.push(`   ${describe(p)}`);
     });
     L.push("");

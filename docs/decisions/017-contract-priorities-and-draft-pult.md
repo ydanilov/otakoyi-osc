@@ -44,19 +44,24 @@ Untagged parameters count as `tune`. In TouchDesigner the priority comes from th
 
 ### Draft rules (`tools/pult-plan`)
 
-- Drop `hidden` and the System group (ADR-018). `live` pages first, then `tune`; `setup` goes to a
-  separate pult `setup`.
-- Groups stay whole: a page takes groups in order while it fits one screen; a group is split only
-  when it alone is bigger than a screen, and then where `layoutPage` splits it. "Fits" also means
-  nothing is scaled below its Figma height.
+- Drop `hidden` and the System group (ADR-018). `setup` goes to a separate pult `setup`; `live` and
+  `tune` share the main pult.
+- **One tab per TouchDesigner parameter page** (contract group), in TD order. The planner never
+  merges, splits or reorders pages: logical grouping is decided in TouchDesigner
+  (`otakoyi-td-template` standards §4). Inside a tab `live` comes first, then `tune`, each by
+  `order`, so the first screen runs the show. A tab bigger than one screen gets more screens,
+  swiped horizontally, where `layoutPage` splits it.
 - Control from `hint`, otherwise by `type`: float → horizontal fader, int → fader with `int`, bool →
   toggle (live: pad, otherwise switch), trigger → button (`dangerous` → holdToConfirm, template →
   buttonGrid), enum → segmented (≤ 4 options) or list (sceneList), color → colorPicker, xy → xy,
   string → prompt without blending.
-- Pages are cut for the primary form factor (`useCase` live → tablet, lobby / both → phone, or
-  `--form`); the other form factor gets a layout of the same pages and splits them as usual.
-  Parameters limited to the other form factor go to a last page.
-- The report warns when `live` needs more than one screen of the form factor.
+- Screens are counted for the primary form factor (`useCase` live → tablet, lobby / both → phone,
+  or `--form`); the other form factor gets a layout of the same tabs and splits them as usual.
+  Parameters limited to the other form factor go to a last tab.
+- The report names the TouchDesigner fix: `live-scattered` (live on more than one page),
+  `live-not-first` (the first page has no live), `live-overflow` (the live part of a tab needs more
+  than one screen; "fits" also means nothing is scaled below its Figma height), `small-tab` (a page
+  of one or two parameters).
 - `docs/pult-capacity.md` (how much fits one screen, per control and mix, panel heights, the split
   rule) is generated from the same functions and checked by `pnpm verify`.
 
