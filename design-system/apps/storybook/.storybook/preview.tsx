@@ -126,7 +126,7 @@ const preview: Preview = {
       storySort: {
         order: [
           "Docs",
-          ["Introduction", "Guidelines", "Changelog"],
+          ["Getting started", "Introduction", "Principles", "Guidelines", "Pult anatomy", "Tokens", "Decisions", "Changelog"],
           "Foundations",
           "Chrome",
           "Forms",

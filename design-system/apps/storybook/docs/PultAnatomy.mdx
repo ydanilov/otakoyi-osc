@@ -1,0 +1,36 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import * as Pager from "../../../packages/ui/src/pult/PultPager.stories";
+
+<Meta title="Docs/Pult anatomy" />
+
+# Pult anatomy
+
+A _pult_ is the client's control surface for one installation. It is the same on every client;
+only the brand, the tabs and the controls change. Here is a phone pult for a lobby installation:
+
+<Canvas of={Pager.PanelsLobbyPhone} />
+
+## From top to bottom
+
+| Part              | What it is                                                                                                   | Component                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------- |
+| **Header**        | Settings (leading), the connection, Installation (trailing). Nothing else.                                   | `PultHeader`                  |
+| **View only**     | Shown on every pult screen while another device is in control, with _Take control_.                          | `StatusBanner`                |
+| **Tabs**          | One tab per settings page of the installation, in the installation's order.                                  | `ScreenTab`, `TabBar`         |
+| **Screen**        | What fits one screen. A tab that does not fit gets more screens, swiped horizontally — the pult never scrolls. | `PultPager`, `PageDots`       |
+| **Panels**        | Groups of controls. Usually untitled; a title only when the purpose is unclear without it.                   | `ConsolePanel`                |
+| **Controls**      | Faders, knobs, pads, switches, pickers — each sends one OSC address.                                         | _Controls_ section             |
+
+## Around the pult
+
+- **Settings** — the app's own sheet: pairing, haptics, developer options. Never the installation's.
+- **Installation** — status, the pult switcher, quick actions (Flash, Restart, Blackout), modes,
+  the standard **System** screen (output size, debug overlay, seed) and **Setup** (one-off
+  parameters of this installation), Activity and Debug.
+
+## On a tablet
+
+The same pult as a dense console: panels in a bento grid, Settings as a drawer from the leading
+edge, Installation as an inspector on the trailing side.
+
+<Canvas of={Pager.PanelsVjConsole} />
