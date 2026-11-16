@@ -68,36 +68,51 @@ describe("controlFor", () => {
 });
 
 describe("planContract", () => {
-  it("puts live first, keeps groups whole and splits only a group bigger than a screen", () => {
+  it("makes one tab per TD page, in TD order, never merging or splitting pages", () => {
     // Phone: 5 horizontal faders fit one screen (docs/pult-capacity.md).
     const c = contract([
-      ...[1, 2, 3].map((i) => fader("A", i)),
-      ...[1, 2, 3].map((i) => fader("B", i)),
-      ...Array.from({ length: 12 }, (_, i) => fader("Big", i)),
       fader("Show", 1, "live"),
+      ...[1, 2].map((i) => fader("A", i)),
+      ...[1, 2].map((i) => fader("B", i)),
+      ...Array.from({ length: 12 }, (_, i) => fader("Big", i)),
     ]);
     const plan = planContract(c, "phone");
-    expect(plan.main.map((p) => p.title)).toEqual([
-      "Show",
-      "A",
-      "B",
-      "Big 1/3",
-      "Big 2/3",
-      "Big 3/3",
-    ]);
+    // A and B would fit one screen together, but grouping is decided in TouchDesigner.
+    expect(plan.main.map((p) => p.title)).toEqual(["Show", "A", "B", "Big"]);
+    expect(plan.main.map((p) => p.screens)).toEqual([1, 1, 1, 3]);
     expect(plan.main[0]!.priority).toBe("live");
-    for (const p of plan.main)
-      expect(
-        fitsOneScreen(
-          p.controls.map((d) => ({
-            id: d.control.id as string,
-            shape: d.shape,
-            group: d.group,
-            control: d.control,
-          })),
-          "phone",
-        ),
-      ).toBe(true);
+  });
+
+  it("puts live before tune inside a tab, so the first screen runs the show", () => {
+    const c = contract([
+      fader("Look", 1),
+      fader("Look", 2, "live"),
+      fader("Look", 3),
+      fader("Look", 4, "live"),
+    ]);
+    const [tab] = planContract(c, "phone").main;
+    expect(tab!.priority).toBe("live");
+    expect(tab!.controls.map((d) => d.param.address)).toEqual([
+      "/look/p2",
+      "/look/p4",
+      "/look/p1",
+      "/look/p3",
+    ]);
+  });
+
+  it("names the TD fix when live is scattered, not first, or too big", () => {
+    const codes = (ps: ContractParameter[], ff: "phone" | "tablet" = "phone") =>
+      planContract(contract(ps), ff).issues.map((i) => i.code);
+    expect(codes([fader("A", 1), fader("B", 1, "live")])).toContain("live-not-first");
+    const scattered = codes([fader("A", 1, "live"), fader("B", 1, "live")]);
+    expect(scattered).toContain("live-scattered");
+    expect(scattered).not.toContain("live-not-first");
+    const big = Array.from({ length: 8 }, (_, i) => fader("Show", i, "live"));
+    expect(codes(big)).toContain("live-overflow");
+    expect(codes(big, "tablet")).not.toContain("live-overflow");
+    expect(codes([fader("A", 1, "live"), ...[1, 2, 3].map((i) => fader("B", i))])).toEqual([
+      "small-tab",
+    ]);
   });
 
   it("drops hidden, sends setup to its own pult and orders by `order`", () => {
@@ -115,12 +130,6 @@ describe("planContract", () => {
     );
     expect(all).not.toContain("/a/p3");
   });
-
-  it("warns when live does not fit one phone screen", () => {
-    const c = contract(Array.from({ length: 8 }, (_, i) => fader(`G${i}`, 1, "live")));
-    expect(planContract(c, "phone").issues.map((i) => i.code)).toContain("live-overflow");
-    expect(planContract(c, "tablet").issues.map((i) => i.code)).not.toContain("live-overflow");
-  });
 });
 
 describe("draftConfig", () => {
@@ -134,7 +143,9 @@ describe("draftConfig", () => {
     );
     expect(d.config.system).toEqual({}); // the System group → the standard System screen
     expect(d.plan.form).toBe("phone"); // useCase lobby
-    expect(d.screens.every((s) => s.phone === 1)).toBe(true);
+    // One draft tab per TD page, in TD order (then the other form factor's tab).
+    const mainTabs = d.screens.filter((s) => s.pult === "main").map((s) => s.page);
+    expect(mainTabs.slice(0, d.plan.main.length)).toEqual(d.plan.main.map((p) => p.id));
   });
 
   it("never lays out the System group on a project screen", () => {

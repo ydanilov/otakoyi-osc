@@ -83,14 +83,18 @@ export function screensFor(
 export interface PlannedPage {
   id: string;
   title: string;
+  /** `live` when the tab holds any live parameter, otherwise the priority of its parameters. */
   priority: ParameterPriority;
   groups: string[];
+  /** Live parameters first, then tune, each in `order` (the first screen runs the show). */
   controls: DraftControl[];
+  /** Screens of this tab on the plan's form factor; swiped horizontally inside the tab. */
+  screens: number;
 }
 
 export interface Plan {
   form: FormFactor;
-  /** Main pult pages (live, then tune), then the Setup pult pages. */
+  /** Main pult tabs: one per TouchDesigner parameter page (contract group), in TD order. */
   main: PlannedPage[];
   setup: PlannedPage[];
   /** Parameters for the other form factor only (`formFactors`), on a last page. */
@@ -133,53 +137,26 @@ const fits = (cs: DraftControl[], ff: FormFactor) => fitsOneScreen(units(cs), ff
 
 const slug = (s: string) => controlId(`/${s}`) || "page";
 
+const RANK: Record<ParameterPriority, number> = { live: 0, tune: 1, setup: 2, hidden: 3 };
+
 /**
- * Splits one priority's groups into pages that each fit one screen of `ff`: groups are added in
- * order while the page still fits; a group is never split unless it alone is bigger than a
- * screen, and then it is split where `layoutPage` splits it.
+ * One tab per TouchDesigner parameter page (contract group), in TD order. The planner never merges
+ * or reorders pages: logical grouping is decided in TouchDesigner (otakoyi-td-template
+ * standards §4). Inside a tab live parameters come first, then tune, each by `order`; a tab bigger
+ * than one screen gets more screens, swiped horizontally, where `layoutPage` splits it.
  */
-function pagesFor(
-  priority: ParameterPriority,
-  groups: Array<[string, DraftControl[]]>,
-  ff: FormFactor,
-): PlannedPage[] {
-  const pages: PlannedPage[] = [];
-  let cur: Array<[string, DraftControl[]]> = [];
-  const flush = () => {
-    if (!cur.length) return;
-    pages.push({
+function tabsFor(groups: Array<[string, DraftControl[]]>, ff: FormFactor): PlannedPage[] {
+  return groups.map(([g, cs]) => {
+    const controls = [...cs].sort((a, b) => RANK[a.priority] - RANK[b.priority]);
+    return {
       id: "",
-      title: cur.map(([g]) => g).join(" · "),
-      priority,
-      groups: cur.map(([g]) => g),
-      controls: cur.flatMap(([, cs]) => cs),
-    });
-    cur = [];
-  };
-  for (const [g, cs] of groups) {
-    if (fits([...cur.flatMap(([, x]) => x), ...cs], ff)) {
-      cur.push([g, cs]);
-      continue;
-    }
-    flush();
-    if (fits(cs, ff)) {
-      cur.push([g, cs]);
-      continue;
-    }
-    const byId = new Map(cs.map((c) => [c.control.id as string, c]));
-    const screens = screensFor(units(cs), ff);
-    screens.forEach((s, i) =>
-      pages.push({
-        id: "",
-        title: `${g} ${i + 1}/${screens.length}`,
-        priority,
-        groups: [g],
-        controls: s.ids.map((id) => byId.get(id)!),
-      }),
-    );
-  }
-  flush();
-  return pages;
+      title: g,
+      priority: controls[0]!.priority,
+      groups: [g],
+      controls,
+      screens: Math.max(1, screensFor(units(controls), ff).length),
+    };
+  });
 }
 
 const PRIORITY_TITLE: Record<ParameterPriority, string> = {
@@ -220,10 +197,10 @@ export function planContract(contract: OscContractDoc, form: FormFactor): Plan {
       message: `${untagged} parameter(s) without priority, drafted as tune`,
     });
 
-  const grouped = (prio: ParameterPriority): Array<[string, DraftControl[]]> => {
+  const grouped = (prios: ParameterPriority[]): Array<[string, DraftControl[]]> => {
     const order: string[] = [];
     const by = new Map<string, DraftControl[]>();
-    for (const d of drafts.filter((x) => x.priority === prio)) {
+    for (const d of drafts.filter((x) => prios.includes(x.priority))) {
       if (!by.has(d.group)) {
         by.set(d.group, []);
         order.push(d.group);
@@ -246,19 +223,40 @@ export function planContract(contract: OscContractDoc, form: FormFactor): Plan {
     }
     return pages;
   };
-  const main = name([
-    ...pagesFor("live", grouped("live"), form),
-    ...pagesFor("tune", grouped("tune"), form),
-  ]);
-  const setup = name(pagesFor("setup", grouped("setup"), form));
+  const main = name(tabsFor(grouped(["live", "tune"]), form));
+  const setup = name(tabsFor(grouped(["setup"]), form));
 
-  const live = main.filter((p) => p.priority === "live");
-  if (live.length > 1)
+  // The first screen runs the show: one TD page holds every live parameter, comes first, and its
+  // live part fits one screen. Grouping is fixed in TouchDesigner, so the fixes name TD pages.
+  const liveTabs = main.filter((p) => p.priority === "live");
+  if (liveTabs.length > 1)
     issues.push({
       level: "warning",
-      code: "live-overflow",
-      message: `live parameters need ${live.length} ${form} screens; the first screen should hold the whole show (move some to [tune])`,
+      code: "live-scattered",
+      message: `live parameters are on ${liveTabs.length} TD pages (${liveTabs.map((p) => p.title).join(", ")}); put the show on one page in TouchDesigner`,
     });
+  if (liveTabs.length && main[0]!.priority !== "live")
+    issues.push({
+      level: "warning",
+      code: "live-not-first",
+      message: `the first tab "${main[0]!.title}" has no live parameters; make "${liveTabs[0]!.title}" the first page in TouchDesigner`,
+    });
+  for (const t of liveTabs) {
+    const live = t.controls.filter((c) => c.priority === "live");
+    if (!fits(live, form))
+      issues.push({
+        level: "warning",
+        code: "live-overflow",
+        message: `live parameters on "${t.title}" need more than one ${form} screen; the first screen should hold the whole show (move some to [tune])`,
+      });
+  }
+  if (main.length > 1)
+    for (const t of main.filter((p) => p.controls.length <= 2))
+      issues.push({
+        level: "info",
+        code: "small-tab",
+        message: `tab "${t.title}" has ${t.controls.length} control(s); if it belongs with another page, merge the pages in TouchDesigner`,
+      });
   if (otherOnly.length)
     issues.push({
       level: "info",
@@ -276,16 +274,16 @@ export function primaryForm(contract: OscContractDoc): FormFactor {
 export interface DraftResult {
   config: Record<string, unknown>;
   plan: Plan;
-  /** Screens per page on each form factor (the primary is 1 by construction). */
+  /** Screens per tab on each form factor; a tab bigger than a screen swipes to more. */
   screens: Array<{ pult: string; page: string; phone: number; tablet: number }>;
   issues: MapIssue[];
 }
 
 /**
- * The draft config (`pnpm pult-draft`): pult `main` (live pages, then tune pages, then a page for
- * the other form factor's parameters), pult `setup` for `[setup]` parameters. Pages are cut for the
- * primary form factor; the other form factor gets a layout of the same pages and the pult splits
- * them into screens as usual.
+ * The draft config (`pnpm pult-draft`): pult `main` (one tab per TD parameter page, live first
+ * inside each, then a tab for the other form factor's parameters), pult `setup` for `[setup]`
+ * parameters, one tab per TD page too. Both form factors get a layout of the same tabs; the pult
+ * splits a tab into horizontally swiped screens where it does not fit.
  */
 export function draftConfig(contract: OscContractDoc, form = primaryForm(contract)): DraftResult {
   const plan = planContract(contract, form);
