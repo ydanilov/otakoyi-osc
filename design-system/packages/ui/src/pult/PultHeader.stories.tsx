@@ -36,7 +36,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The minimal header above every pult (ADR-013, Apple HIG): leading Settings button, connection, trailing Installation button, and the view-only / studio banners.",
+            "The minimal header above every pult (Apple HIG): leading Settings button, connection, trailing Installation button, and the view-only / studio banners.",
           use: ["Top of the pult screen, on phone and tablet."],
           avoid: [
             "Settings or installation actions — they live in the Settings / Installation surfaces.",

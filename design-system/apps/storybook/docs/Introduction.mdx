@@ -20,11 +20,11 @@ mapping live on each component's **Docs** page here.
 - **Toolbar:** switch **Theme** (dark / light), **Brand** (Otakoyi and the two sample client brands
   used by `/gallery`) and **Viewport** (phone 390 × 844, tablet 1180 × 820). Overlays pick sheet vs.
   form sheet from the viewport width (`presentationFor`). Theme and brand switching is a review
-  tool only — in the app, branding and `theme.mode` come from the config (ADR-004).
+  tool only — in the app, branding and `theme.mode` come from the config.
 
 Read [Guidelines](?path=/docs/docs-guidelines--docs) before designing a screen.
 
-## Depth rules (ADR-013 addendum)
+## Depth rules
 
 | Depth                                      | Use for                                                                          | Code                               |
 | ------------------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------- |
@@ -69,6 +69,6 @@ _Figma variant → props_. Example — `Button`:
 
 The full component → file table is in `docs/figma.md`.
 
-> **Figma names are API for the exporter (ADR-014).** Component and variant names are read by
+> **Figma names are API for the exporter.** Component and variant names are read by
 > the studio's Figma exporter (`tools/figma-export`) to build installation configs. Renaming a component or a variant value is a
 > breaking change and needs an exporter mapping update in the same PR.

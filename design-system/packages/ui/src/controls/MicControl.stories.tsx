@@ -30,7 +30,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Lets the installation react to sound near the phone: level, frequency bands, beat. Schema type `mic` (ADR-015).",
+            "Lets the installation react to sound near the phone: level, frequency bands, beat. Schema type `mic`.",
           use: ["Interactive moments where the audience's sound drives the visuals."],
           avoid: ["Streaming audio — audio never leaves the device."],
           do: ["Explain why the microphone is needed before the permission prompt."],

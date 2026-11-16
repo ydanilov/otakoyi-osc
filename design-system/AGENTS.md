@@ -19,6 +19,7 @@ app in the same PR.
    components only draw and forward gestures.
 5. **Every component has a story** with `componentDocs()` and a story per state; `play` tests where
    interactive. Add a Changelog entry (`apps/storybook/docs/Changelog.mdx`) with every change.
+   Storybook text is for readers: no ADR numbers or other internal references — say the rule.
 6. **Figma names are API.** Renaming a component or variant is a breaking change.
 7. **One switch.** Every on/off switch is the iOS-size `MenuSwitch` (Figma `Menu Switch`), on the
    pult too. Never add a larger or restyled switch.

@@ -66,7 +66,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Continuous value on a straight track: levels, speeds, intensities. The workhorse of the live VJ pult (ADR-013). Schema type `fader`.",
+            "Continuous value on a straight track: levels, speeds, intensities. The workhorse of the live VJ pult. Schema type `fader`.",
           use: [
             "One continuous parameter with a known range.",
             "Banks of levels (Fader Bank pattern).",
@@ -88,8 +88,8 @@ const meta = {
           ],
           behaviour: [
             `Sends \`address\` with one float (int when \`int: true\`) per change — ${OSC_SOURCE}. Throttled to \`throttleHz\` (60); the last value is always sent on release; \`sendOn: "release"\` sends only on release.`,
-            "`mode` (ADR-015): absolute (default) sends a value; relative is an endless jog wheel that sends the change since the last message (`{ delta }`, no position, no reset); crossfade is a bipolar A/B mix with a centre detent and end labels.",
-            "Touch response (ADR-007), absolute and crossfade: relative (default) — a touch changes nothing; dragging moves the value by the distance dragged, 1:1 with the track. Absolute: the value jumps to the finger.",
+            "`mode`: absolute (default) sends a value; relative is an endless jog wheel that sends the change since the last message (`{ delta }`, no position, no reset); crossfade is a bipolar A/B mix with a centre detent and end labels.",
+            "Touch response, absolute and crossfade: relative (default) — a touch changes nothing; dragging moves the value by the distance dragged, 1:1 with the track. Absolute: the value jumps to the finger.",
             "Fine mode: drag with two fingers — ×`fineFactor` (0.2) slower; FINE badge and focus-coloured border.",
             "Double-tap returns to `default` (`doubleTapReset`, on by default).",
             "Feedback from the installation moves the fader unless a finger is on it. `centered` fills from the middle.",

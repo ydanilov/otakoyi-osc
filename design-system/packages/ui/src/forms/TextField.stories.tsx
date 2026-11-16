@@ -29,7 +29,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Free-text field for pairing (bridge address and PIN, ADR-012 — there is no login). Exported as `TextField`.",
+            "Free-text field for pairing (bridge address and PIN — there is no login). Exported as `TextField`.",
           use: ["Address and PIN in the Connect form."],
           avoid: [
             "Numbers with a unit — use Value Input.",

@@ -31,7 +31,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The client's own image on the installation screen: pick, upload, show; earlier uploads can be shown again. Schema type `image` (ADR-015). Exported as `ImageUpload` (control); its visual states are the DS `ImageUploadView` and `ImageTile`.",
+            "The client's own image on the installation screen: pick, upload, show; earlier uploads can be shown again. Schema type `image`. Exported as `ImageUpload` (control); its visual states are the DS `ImageUploadView` and `ImageTile`.",
           use: ["Lobby pults where the client may put a picture on the wall."],
           avoid: ["Pre-made looks — Scene List."],
           do: ["Set `aspect` and `maxMB` to what the installation can show."],
@@ -47,7 +47,7 @@ const meta = {
           behaviour: [
             `Upload goes to the bridge (HTTP); then \`address\` is sent with the stored file's absolute path — ${OSC_SOURCE}. With a remote bridge the bridge sends it.`,
             "Picking and uploading go through `useControlServices()` (image picker, media library); the story uses in-memory services and a sample image.",
-            "Source choice is a pull-down menu (Take Photo / Photo Library / Choose File / Uploads, ADR-013) — see Menus/Pull-down Menu.",
+            "Source choice is a pull-down menu (Take Photo / Photo Library / Choose File / Uploads) — see Menus/Pull-down Menu.",
           ],
           a11y: ["Buttons are labelled; the preview is an image with its status."],
           content: ["Errors in one sentence; the image is kept on failure."],

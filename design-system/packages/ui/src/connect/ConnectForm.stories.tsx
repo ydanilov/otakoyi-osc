@@ -20,7 +20,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "“Enter address and PIN” — the fallback when the camera cannot scan (ADR-012). Content of a sheet.",
+            "“Enter address and PIN” — the fallback when the camera cannot scan. Content of a sheet.",
           use: ["From Connect → Enter address and PIN."],
           avoid: ["Typing anything else — there are no accounts."],
           do: ["Accept what is printed under the QR: an IP, host[:port] or full ws:// URL."],

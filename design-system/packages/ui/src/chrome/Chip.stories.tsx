@@ -22,7 +22,7 @@ const meta = {
             "A plain tag next to text — use Badge.",
           ],
           do: ["Use mono digits so countdowns don't jitter."],
-          dont: ["Don't raise a chip: nested information is flat (ADR-013 addendum)."],
+          dont: ["Don't raise a chip: nested information is flat."],
           anatomy: ["Flat capsule (bg muted)", "LED in the tone (lit, glows)", "Mono label"],
           behaviour: ["Static; the parent updates the label."],
           a11y: ["One element; the label is read. Tone is reinforced by the words."],

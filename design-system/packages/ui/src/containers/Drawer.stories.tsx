@@ -80,7 +80,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "iPad Settings surface (ADR-013): a floating drawer from the leading edge over the dimmed pult.",
+            "iPad Settings surface: a floating drawer from the leading edge over the dimmed pult.",
           use: ['Settings on iPad (`presentationFor("settings", width)` → `drawer`).'],
           avoid: [
             "iPhone — Settings is the system sheet there.",

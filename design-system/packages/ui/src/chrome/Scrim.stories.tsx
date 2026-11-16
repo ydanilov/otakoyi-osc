@@ -25,7 +25,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Dims the console behind the iPad form sheet and the web/Android context menu. Dim only — no blur (ADR-013, HIG).",
+            "Dims the console behind the iPad form sheet and the web/Android context menu. Dim only — no blur (HIG).",
           use: [
             "Behind custom overlays that the system does not present (context menu fallback, story stand-ins).",
           ],

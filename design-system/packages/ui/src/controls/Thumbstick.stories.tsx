@@ -36,7 +36,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Relative 2-D joystick for moving things (camera, a light, a particle field) at a speed. Schema type `thumbstick` (ADR-015).",
+            "Relative 2-D joystick for moving things (camera, a light, a particle field) at a speed. Schema type `thumbstick`.",
           use: ["Continuous movement where the stick's deflection is a speed, not a position."],
           avoid: ["Setting an absolute position — XY Pad."],
           do: ["Keep a dead zone (`deadzone`, default 0.1) so a resting thumb sends nothing."],

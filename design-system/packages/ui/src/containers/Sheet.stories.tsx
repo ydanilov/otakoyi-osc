@@ -182,12 +182,12 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The layout every sheet, drawer and inspector uses: a header, then a scrolling body that starts below it — the header never floats over the content (ADR-013).",
+            "The layout every sheet, drawer and inspector uses: a header, then a scrolling body that starts below it — the header never floats over the content.",
           use: [
             "iPhone Settings and Installation sheets (`SheetSurface` + `SheetScaffold` + `SheetToolbar`).",
             "iPad Settings drawer (`DrawerHeader` as the header) and Installation inspector (floating Close ×).",
           ],
-          avoid: ["The pult — it never scrolls vertically (ADR-006)."],
+          avoid: ["The pult — it never scrolls vertically."],
           do: [
             "Take the content's top padding from the Figma frame: 12 pt (Settings), 16 pt (Installation), 8 pt (drawer).",
             "Every new sheet screen exists as a Figma frame first; its story calls `expectSheetLayout()`.",

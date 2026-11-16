@@ -24,7 +24,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The first screen (ADR-012, no client login): scan the pairing QR, enter address and PIN, or try the demo.",
+            "The first screen (no client login): scan the pairing QR, enter address and PIN, or try the demo.",
           use: ["App start without a saved pairing; after “Forget this installation”."],
           avoid: ["Accounts, passwords or sign-in — clients never log in."],
           do: ["Scan is the primary action; demo is the low-emphasis one."],

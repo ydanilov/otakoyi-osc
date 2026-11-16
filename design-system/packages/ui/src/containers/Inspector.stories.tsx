@@ -49,7 +49,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "iPad Installation surface (ADR-013, HIG): a 390 pt inspector panel on the trailing side with a Close ×. It never dims the console, so the operator keeps playing.",
+            "iPad Installation surface (HIG): a 390 pt inspector panel on the trailing side with a Close ×. It never dims the console, so the operator keeps playing.",
           use: [
             "Installation on iPad: name and status, pult switcher, quick actions, modes, activity.",
           ],

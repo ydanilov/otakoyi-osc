@@ -27,7 +27,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Shortcut gestures on the pult screen edges (ADR-013): right edge → Installation (phone and tablet), left edge → Settings (phone only).",
+            "Shortcut gestures on the pult screen edges: right edge → Installation (phone and tablet), left edge → Settings (phone only).",
           use: ["Once per pult screen, next to the Pult Header buttons."],
           avoid: ["As the only way in — the header buttons are the primary path."],
           do: ["Keep controls 20 pt away from the edges so swipes don't fight them."],

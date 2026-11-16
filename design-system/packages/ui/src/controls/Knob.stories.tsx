@@ -88,7 +88,7 @@ const meta = {
             `Sends \`address\` with one float (int with \`int: true\`) per change — ${OSC_SOURCE}. Throttled like the Fader.`,
             "Relative only: dragging up/right increases by distance (220 px per full sweep); a touch never moves it.",
             "Fine mode with two fingers (×`fineFactor`); double-tap resets to `default`.",
-            "`mode` (ADR-015): absolute (default) over `travel` degrees (240° in the Figma library); relative = endless encoder sending `{ delta }`; hue = colour wheel sending degrees 0–360 and wrapping.",
+            "`mode`: absolute (default) over `travel` degrees (240° in the Figma library); relative = endless encoder sending `{ delta }`; hue = colour wheel sending degrees 0–360 and wrapping.",
           ],
           a11y: [
             "Role `adjustable`, value with unit; VoiceOver swipe steps.",

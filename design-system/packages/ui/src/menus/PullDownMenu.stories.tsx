@@ -63,7 +63,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Commands from a button (HIG pull-down menu, 3+ items) — e.g. the image source picker: Take Photo / Photo Library / Choose File / Uploads. Replaces the image source sheet (ADR-013).",
+            "Commands from a button (HIG pull-down menu, 3+ items) — e.g. the image source picker: Take Photo / Photo Library / Choose File / Uploads. Replaces the image source sheet.",
           use: ["A button that offers several ways to do one thing."],
           avoid: [
             "Choosing one value of many that stays visible — Select (pop-up button).",

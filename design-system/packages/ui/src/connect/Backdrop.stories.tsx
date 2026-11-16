@@ -24,7 +24,7 @@ const meta = {
         component: componentDocs({
           purpose:
             "Full-screen client image with a legibility gradient — the background of the client-branded loading screen.",
-          use: ["Client loading screen after launch (ADR-013 launch)."],
+          use: ["Client loading screen after launch."],
           avoid: [
             "The system launch screen — that is a plain background with no logo or text.",
             "Behind the pult.",
