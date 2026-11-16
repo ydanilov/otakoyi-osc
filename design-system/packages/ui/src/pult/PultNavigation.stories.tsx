@@ -148,7 +148,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "How the pult screen reaches Settings and Installation (ADR-013, Apple HIG). Composition of Pult Header, Edge Swipe, system sheets (stand-in) and the iPad Inspector.",
+            "How the pult screen reaches Settings and Installation (Apple HIG). Composition of Pult Header, Edge Swipe, system sheets (stand-in) and the iPad Inspector.",
           use: ["Every pult screen."],
           avoid: ["Custom swipe drawers — removed in favour of system presentations."],
           do: [

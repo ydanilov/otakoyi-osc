@@ -112,7 +112,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The pult body: renders a config's pages from the control registry. Pages never scroll; they split into horizontally swiped screens (ADR-006).",
+            "The pult body: renders a config's pages from the control registry. Pages never scroll; they split into horizontally swiped screens.",
           use: [
             "The pult screen, under the Pult Header, with Settings / Installation presented over it.",
           ],
@@ -126,14 +126,14 @@ const meta = {
             "Panels: Fader Bank, Knob Group, Knob Row, Layer Toggles, Camera Control, Scene Bar, Show Actions, List — max width 640 / 480 / 560, centred when capped, never shorter than their content",
           ],
           behaviour: [
-            "Controls are packed from the top at their Figma heights (phone 18 pt gaps, free space below; tablet 16 pt gaps, each column's last item to the bottom); a page that does not fit splits into screens (`layoutPage`, unit-tested, ADR-006).",
+            "Controls are packed from the top at their Figma heights (phone 18 pt gaps, free space below; tablet 16 pt gaps, each column's last item to the bottom); a page that does not fit splits into screens (`layoutPage`, unit-tested).",
             "Phones re-flow controls to half/full width (`reflowForPhone`).",
             "Controls read/write the PultStore; view-only disables them.",
             "`enabledWhen` (Figma “Depends on”): the control is drawn Disabled until every condition holds.",
           ],
           a11y: ["Each control carries its own role; the pager is swipeable and tabbable."],
           content: ["Page titles ≤ 12 characters (tabs)."],
-          figma: { component: "Screens / client pages (ADR-014 exporter input)" },
+          figma: { component: "Screens / client pages (exporter input)" },
         }),
       },
     },

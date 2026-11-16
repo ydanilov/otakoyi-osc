@@ -27,7 +27,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The standard System screen of every installation (ADR-018): output width and height, debug overlay and seed. Identical everywhere, so no client page redraws it.",
+            "The standard System screen of every installation: output width and height, debug overlay and seed. Identical everywhere, so no client page redraws it.",
           use: [
             "Installation panel › System, next to the system actions (Flash, Restart, Blackout, Idle, Pause).",
           ],

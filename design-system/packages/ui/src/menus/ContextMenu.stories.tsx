@@ -86,7 +86,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Long-press an element (a prompt card, an image tile) → the system context menu with a preview of the element (ADR-013, HIG).",
+            "Long-press an element (a prompt card, an image tile) → the system context menu with a preview of the element (HIG).",
           use: ["Secondary actions on an element: On/Off, Edit, Duplicate, Delete."],
           avoid: [
             "The primary action — that is the tap.",

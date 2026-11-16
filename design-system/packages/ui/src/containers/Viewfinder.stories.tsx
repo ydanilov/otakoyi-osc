@@ -12,7 +12,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Frame over the camera preview while scanning the pairing QR on the installation screen (ADR-012).",
+            "Frame over the camera preview while scanning the pairing QR on the installation screen.",
           use: ["The Connect screen's scanner."],
           avoid: ["Showing images — Image Tile / Image Upload."],
           do: ["Put the camera view in `children`; keep the frame on top."],

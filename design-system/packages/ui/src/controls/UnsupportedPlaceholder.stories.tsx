@@ -25,7 +25,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Shown in a grid cell for a control type this app version does not know (ADR-001). The rest of the pult keeps working.",
+            "Shown in a grid cell for a control type this app version does not know. The rest of the pult keeps working.",
           use: ["Automatically, by the renderer."],
           avoid: ["Placing it by hand."],
           do: ["Ship new control types in an app release before configs use them."],

@@ -33,7 +33,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Client-branded screen after launch while the app connects to the paired installation (ADR-013 launch).",
+            "Client-branded screen after launch while the app connects to the paired installation.",
           use: ["Every launch with a saved pairing, and while reconnecting from the start."],
           avoid: ["The system launch screen (plain background, no logo)."],
           do: ["Show connection problems inline with Retry."],

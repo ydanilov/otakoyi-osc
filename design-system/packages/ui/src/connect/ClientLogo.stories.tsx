@@ -16,7 +16,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "The installation's logo (config `theme.logo`) or, without one, its name set as a wordmark. Studio branding (ADR-004): clients never change it.",
+            "The installation's logo (config `theme.logo`) or, without one, its name set as a wordmark. Studio branding: clients never change it.",
           use: ["Client loading screen; Installation sheet header."],
           avoid: ["The Otakoyi app identity — Brand Mark / Wordmark."],
           do: ["Ship a logo asset with the config when the client has one."],

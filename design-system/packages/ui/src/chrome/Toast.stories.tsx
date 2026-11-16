@@ -29,7 +29,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            'A brief confirmation with an optional action — "Prompt deleted · Undo". Undoable actions happen at once and offer Undo here instead of asking first (ADR-013).',
+            'A brief confirmation with an optional action — "Prompt deleted · Undo". Undoable actions happen at once and offer Undo here instead of asking first.',
           use: ["After delete, remove from screen, reset — anything that can be undone."],
           avoid: [
             "Errors that need a decision — inline errors or a Dialog.",

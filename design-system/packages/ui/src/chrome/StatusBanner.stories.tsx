@@ -21,7 +21,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Tells this device it is not in control (ADR-005 lease, ADR-013 addendum). Part of the Pult Header.",
+            "Tells this device it is not in control (another device holds control). Part of the Pult Header.",
           use: [
             "View: another device holds the lease — offers Take control.",
             "Studio: the studio is controlling remotely — no take-over.",

@@ -31,11 +31,11 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Text prompts for generative installations: the client writes presets and turns them on, or blends two. Schema type `prompt` (ADR-015/016).",
+            "Text prompts for generative installations: the client writes presets and turns them on, or blends two. Schema type `prompt`.",
           use: ["Generative pieces driven by text."],
           avoid: ["Fixed looks — Scene List."],
           do: ["Keep preset labels short; the text can be long (`maxLength`)."],
-          dont: ["Don't ask to confirm a delete — delete at once and offer Undo (ADR-013)."],
+          dont: ["Don't ask to confirm a delete — delete at once and offer Undo."],
           anatomy: [
             "Prompt Presets (cards: Off / On / In blend / Applying / Error)",
             "Mix (A ↔ B) when `blend`",

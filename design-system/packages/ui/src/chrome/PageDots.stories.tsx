@@ -17,7 +17,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Which pult screen is showing when a page is split into horizontally swiped screens (ADR-006).",
+            "Which pult screen is showing when a page is split into horizontally swiped screens.",
           use: ["Under the pult on phones, where Screen Tabs would not fit."],
           avoid: ["Navigation between unrelated pages — use the Tab Bar with names."],
           do: ["Show only when there are 2+ screens."],

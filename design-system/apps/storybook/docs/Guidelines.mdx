@@ -17,7 +17,7 @@ The intent behind them — what the pult should feel like, and what was tried an
   on buttons **while pressed**. Never on a resting button, never as decoration.
 - One level of nesting: a raised panel may contain flat info and inset beds, not another raised panel.
 
-## Two use cases, two form factors (ADR-013)
+## Two use cases, two form factors
 
 |                | Lobby / permanent installation        | Live event                               |
 | -------------- | ------------------------------------- | ---------------------------------------- |
@@ -32,13 +32,13 @@ Every delivery ships **both** layouts from one config. Components choose by wind
 platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for the grid,
 `presentationFor(surface, width)` for Settings, Installation and dialogs. Check both viewports in the toolbar.
 
-## The pult never scrolls (ADR-006)
+## The pult never scrolls
 
 - Rows stretch to the screen height. A page that does not fit at the 40 pt minimum row height is
   split into screens that swipe **horizontally**, with Screen Tabs (tablet) or Page Dots (phone).
 - Never wrap a pult page in a vertical ScrollView. A Scene List may scroll inside its own cell.
 
-## Navigation (ADR-013, Apple HIG)
+## Navigation (Apple HIG)
 
 - The pult screen shows only the controls and a minimal **Pult Header**: **Settings** button
   (leading), Connection, **Installation** button (trailing) — and, when this device is not in
@@ -65,13 +65,13 @@ platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for
 - **No confirmation for undoable actions**: delete at once, show a **Toast** with Undo for 5 s.
   Confirm only what cannot be undone.
 
-## Connect and launch (ADR-012, no client login)
+## Connect and launch (no client login)
 
 - First screen: **Connect** — Scan pairing QR · Enter address and PIN (form in a sheet) · Try the demo.
 - After launch with a saved pairing: the **client loading** screen — Backdrop (installation image +
   legibility gradient), Client Logo and a loader. Connection problems are inline (Retry / Forget),
   never an alert at startup. The system launch screen is a plain background.
-- Branding is the studio's delivery (ADR-004): the app has **no appearance switch and no brand or
+- Branding is the studio's delivery: the app has **no appearance switch and no brand or
   theme editor**; the theme mode comes from the config's `theme.mode`. (Storybook's theme and brand
   switchers are a dev tool.)
 
@@ -85,7 +85,7 @@ platform: `dialogPresentation(width)` (< 600 pt → sheet), `reflowForPhone` for
 - **Settings pages are tabs.** A pult page (tab) holds whole TouchDesigner parameter pages
   (contract groups); a group is split only when it alone is bigger than a screen. `live` first,
   then `tune`; `setup` is a separate Setup pult. The most important controls are on the first
-  screen; the rest go to the next screens, swiped horizontally (product ADR-017, `pnpm pult-plan`).
+  screen; the rest go to the next screens, swiped horizontally (`pnpm pult-plan`).
 - **Dense by default.** Controls sit close at their Figma sizes; free space collects at the bottom
   on a phone and goes to the last item of each column on a tablet.
 

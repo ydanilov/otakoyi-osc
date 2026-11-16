@@ -45,7 +45,7 @@ const meta = {
       description: {
         component: componentDocs({
           purpose:
-            "Content of a focused task or confirmation over the pult: pairing QR, what's new, confirming actions that cannot be undone. Content only — no background, grabber, scrim or home indicator: the system presentation provides those (ADR-013, HIG).",
+            "Content of a focused task or confirmation over the pult: pairing QR, what's new, confirming actions that cannot be undone. Content only — no background, grabber, scrim or home indicator: the system presentation provides those (HIG).",
           use: ["Short tasks that must finish before going back to the pult."],
           avoid: [
             "Confirming undoable actions — act at once and offer Undo in a Toast.",

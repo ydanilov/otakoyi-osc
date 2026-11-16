@@ -24,7 +24,7 @@ const meta = {
     docs: {
       description: {
         component: componentDocs({
-          purpose: "One event in the installation's activity log (from the bridge log, ADR-005).",
+          purpose: "One event in the installation's activity log (from the bridge log).",
           use: ["Inside the Activity Log pattern's List Card."],
           avoid: ["Live notifications — the header banners cover current state."],
           do: ["Name the device and what happened (“iPad · Main stage took control”)."],
