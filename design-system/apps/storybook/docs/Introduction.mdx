@@ -1,5 +1,4 @@
 import { Meta } from "@storybook/addon-docs/blocks";
-import { ColorTable, DepthTable, ScaleTable } from "./TokenTables";
 
 <Meta title="Docs/Introduction" />
 
@@ -24,35 +23,12 @@ mapping live on each component's **Docs** page here.
 
 Read [Guidelines](?path=/docs/docs-guidelines--docs) before designing a screen.
 
-## Depth rules
+## Where to go next
 
-| Depth                                      | Use for                                                                          | Code                               |
-| ------------------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------- |
-| **Raised** (`Neu/Raised`, `Neu/Raised SM`) | interactive elements, top-level cards and panels                                 | `depth="raised"` / `"raisedSm"`    |
-| **Inset** (`Neu/Inset`, `Neu/Pressed`)     | active / pressed states; beds under controls (tracks, inputs, tab bars)          | `depth="inset"` / `"pressed"`      |
-| **Flat**                                   | information nested inside a card (chips, stat tiles, icon wells)                 | `depth="flat"`                     |
-| **Glow** (`Glow/*`)                        | lit values (LEDs, active page dot, live tile) and buttons **only while pressed** | `glow="signal" \| "critical" \| …` |
-
-Never glow at rest. Depth is never the only signal of state — pair it with colour, an icon or words.
-
-<DepthTable />
-
-## Tokens
-
-Everything visual comes from `@osc/tokens` (`packages/tokens/tokens.json` → `createTheme(brand)`).
-NativeWind classes use semantic names (`bg-primary`, `text-muted-foreground`, `bg-control-track`);
-Skia controls and depth read `useTheme()`. **No hex in components** (AGENTS.md rule 1).
-A client brand overrides primary, accent, neutrals, font and logo only; **status colours are never
-brandable** (rule 2). In light mode, lines and LEDs use a darkened signal colour (`control.fill`,
-≥ 3:1 against the background); buttons keep the exact brand colour.
-
-<ColorTable />
-
-<ScaleTable />
-
-Elevation colours (`elevation.dark` / `elevation.light`) and effect stacks (`elevation.effects`)
-mirror the Figma `elevation/*` variables and `Neu/*`, `Glow/*` styles; `boxShadow(theme, depth, glow)`
-turns them into a CSS box-shadow for web and React Native ≥ 0.76.
+- [Principles](?path=/docs/docs-principles--docs) — what the pult should feel like, and what was tried and rejected.
+- [Pult anatomy](?path=/docs/docs-pult-anatomy--docs) — the parts of a pult and where each one lives.
+- [Tokens](?path=/docs/docs-tokens--docs) — colour, depth, space, radius and type, drawn from `tokens.json`.
+- [Decisions](?path=/docs/docs-decisions--docs) — why things are the way they are.
 
 ## How a component maps to Figma
 

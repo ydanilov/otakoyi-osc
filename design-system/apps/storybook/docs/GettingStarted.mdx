@@ -1,0 +1,53 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Docs/Getting started" />
+
+# Getting started
+
+**Otakoyi Control** turns a phone or tablet into a branded control surface — a _pult_ — for the
+studio's generative installations. A small bridge on the installation machine turns the pult into
+plain OSC for TouchDesigner. This Storybook documents the design system the pult is made of: every
+component, in every state, theme and form factor.
+
+Everything lives in one public repo: [ydanilov/otakoyi-osc](https://github.com/ydanilov/otakoyi-osc).
+
+## Pick your path
+
+| You want to…                                   | Start here                                                                                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Understand what the pult should feel like**  | [Principles](?path=/docs/docs-principles--docs), then [Pult anatomy](?path=/docs/docs-pult-anatomy--docs)                           |
+| **Design a client pult in Figma**              | [Guidelines](?path=/docs/docs-guidelines--docs) and the [OSC Figma file](https://www.figma.com/design/D2HHS8lt7PxZqxibv9PlOQ/OSC) |
+| **Use or change a component**                  | Its **Docs** page in the sidebar, and [Tokens](?path=/docs/docs-tokens--docs)                                                       |
+| **Make an installation controllable**          | [Integration guide](https://github.com/ydanilov/otakoyi-osc/blob/main/docs/integration.md)                                          |
+| **Know why something is the way it is**        | [Decisions](?path=/docs/docs-decisions--docs)                                                                                       |
+| **See what changed**                           | [Changelog](?path=/docs/docs-changelog--docs)                                                                                       |
+
+## How a pult is made
+
+1. **TouchDesigner.** The installation's Custom Parameters are tagged by priority. Each settings
+   page becomes one tab of the pult.
+2. **Contract.** The project generates `otakoyi/osc-contract.json`: every parameter, its address,
+   type and range.
+3. **Plan.** `pnpm pult-plan` shows the tabs and screens before anything is drawn.
+4. **Figma.** The studio lays the pult out from library components only.
+5. **Config.** The exporter turns the Figma page into the installation's config.
+6. **App.** The bridge serves the config; the app and the web pult draw it from this design system.
+
+## Reading a component page
+
+Every component's **Docs** page has the same sections: when to use and when not, anatomy, states,
+behaviour, accessibility, content and the Figma mapping. The stories below it are the component in
+each state; use the toolbar to switch **Theme**, **Brand** and **Viewport** (phone 390 × 844,
+tablet 1180 × 820). Theme and brand switching is a review tool only: in the app they come from the
+installation's config.
+
+## Working on the code
+
+```bash
+pnpm install
+pnpm storybook                                 # this Storybook, locally
+pnpm verify                                    # tokens, formatting, types, unit tests
+pnpm build-storybook && pnpm test-storybook    # every story in both themes, play tests, layout checks
+```
+
+Rules for changes are in `design-system/AGENTS.md`.

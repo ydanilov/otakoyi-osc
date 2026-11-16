@@ -1,0 +1,42 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { ColorTable, DepthTable, ScaleTable } from "./TokenTables";
+
+<Meta title="Docs/Tokens" />
+
+# Tokens
+
+Everything visual comes from `@osc/tokens`: `packages/tokens/tokens.json` → `createTheme(brand)`.
+These tables are drawn from that file, so they are always current. The same names are the Figma
+variables of the OSC file.
+
+- **In code:** NativeWind classes use semantic names (`bg-primary`, `text-muted-foreground`,
+  `bg-control-track`); Skia controls and depth read `useTheme()`. No hex in components.
+- **Brand:** a client brand overrides primary, accent, neutrals, font and logo only. Status colours
+  are never brandable, so an operator reads them the same on every pult.
+- **Light mode:** lines and LEDs use a darkened signal colour (`control.fill`, at least 3:1 against
+  the background); buttons keep the exact brand colour.
+
+## Colour
+
+<ColorTable />
+
+## Depth
+
+| Depth                                      | Use for                                                                          | Code                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------- |
+| **Raised** (`Neu/Raised`, `Neu/Raised SM`) | interactive elements, top-level cards and panels                                 | `depth="raised"` / `"raisedSm"`    |
+| **Inset** (`Neu/Inset`, `Neu/Pressed`)     | active / pressed states; beds under controls (tracks, inputs, tab bars)          | `depth="inset"` / `"pressed"`      |
+| **Flat**                                   | information nested inside a card (chips, stat tiles, icon wells)                 | `depth="flat"`                     |
+| **Glow** (`Glow/*`)                        | lit values (LEDs, active page dot, live tile) and buttons **only while pressed** | `glow="signal" \| "critical" \| …` |
+
+Never glow at rest. Depth is never the only signal of state — pair it with colour, an icon or words.
+
+<DepthTable />
+
+Elevation colours (`elevation.dark` / `elevation.light`) and effect stacks (`elevation.effects`)
+mirror the Figma `elevation/*` variables and `Neu/*`, `Glow/*` styles; `boxShadow(theme, depth, glow)`
+turns them into a CSS box-shadow for web and React Native.
+
+## Space, radius and type
+
+<ScaleTable />

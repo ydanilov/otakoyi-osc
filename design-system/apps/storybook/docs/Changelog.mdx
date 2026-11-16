@@ -7,6 +7,23 @@ import { Meta } from "@storybook/addon-docs/blocks";
 Design-system changes, newest first. Add an entry in the same PR as the change; mention renamed
 Figma components or variants explicitly (they are exporter API).
 
+## 2026-11-16 — Docs: Getting started, Principles, Pult anatomy, Tokens, Decisions
+
+**Added**
+
+- **Getting started** — what Otakoyi Control is, which page to read for what, how a pult is made
+  from TouchDesigner to the app, and the commands.
+- **Principles** — `DESIGN.md`, rendered from the file itself, so it never drifts.
+- **Pult anatomy** — a live pult with each part named: header, View only, tabs, screens, panels,
+  controls; and what lives around it (Settings, Installation).
+- **Tokens** — colour, depth, space, radius and type in one place, drawn from `tokens.json`.
+- **Decisions** — every decision record of the repo with its status, read at build time and linked
+  to GitHub; superseded ones dimmed.
+
+**Changed**
+
+- Introduction is shorter: the token and depth tables moved to Tokens.
+
 ## 2026-11-16 — One public repo
 
 - The design system moved into `ydanilov/otakoyi-osc` (`design-system/`) with its history; the
