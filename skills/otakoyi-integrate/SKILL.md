@@ -7,7 +7,7 @@ description: Make an Otakoyi installation controllable from Otakoyi Control (the
 
 Otakoyi Control is the studio's controller: a bridge on the installation machine turns the client's
 phone / tablet / web pult into plain OSC for the installation software. The source of truth is the
-private repo **`ydanilov/otakoyi-osc`**. Studio rules for TouchDesigner projects are in
+public repo **`ydanilov/otakoyi-osc`**. Studio rules for TouchDesigner projects are in
 **`ydanilov/otakoyi-td-template`**.
 
 ## 1. Attach the repos

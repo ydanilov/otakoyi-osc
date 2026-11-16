@@ -5,7 +5,7 @@ patch, a browser engine or a Unity/Unreal build, that has to become controllable
 Control. You are not expected to change this repo. Read this page and follow the steps. When you
 finish, hand the studio the files listed in [step 7](#7-hand-back-to-the-studio).
 
-> Access: `ydanilov/otakoyi-osc` is private. In Claude Code on the web, attach it to your session
+> Access: `ydanilov/otakoyi-osc` is public. In Claude Code on the web, attach it to your session
 > (owner `ydanilov`, repo `otakoyi-osc`) or clone it next to your project. Everything below
 > refers to paths in this repo.
 >

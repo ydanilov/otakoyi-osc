@@ -7,13 +7,14 @@ turns that into plain OSC for TouchDesigner or any other OSC software.
 
 ## Where to start
 
-| You are…                                                                                    | Read                                         |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| **Working on an installation** (TouchDesigner, browser engine, …) that must be controllable | [docs/integration.md](docs/integration.md)   |
-| Working on this repo (app, bridge, schema, design system)                                   | [AGENTS.md](AGENTS.md)                       |
-| Looking for why something is the way it is                                                  | [docs/decisions](docs/decisions/README.md)   |
-| Designing in Figma                                                                          | [docs/figma.md](docs/figma.md)               |
-| Exporting a client page from Figma to a config (CLI, Otakoyi Inspector plugin)              | [docs/figma-export.md](docs/figma-export.md) |
+| You are…                                                                                    | Read                                                                                         |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Working on an installation** (TouchDesigner, browser engine, …) that must be controllable | [docs/integration.md](docs/integration.md)                                                   |
+| Working on this repo (app, bridge, schema, design system)                                   | [AGENTS.md](AGENTS.md)                                                                       |
+| Looking for why something is the way it is                                                  | [docs/decisions](docs/decisions/README.md)                                                   |
+| Designing in Figma                                                                          | [docs/figma.md](docs/figma.md)                                                               |
+| The design system: tokens, components, Storybook, design intent                             | [design-system/](design-system/README.md) · [Storybook](https://otakoyi-controls.vercel.app) |
+| Exporting a client page from Figma to a config (CLI, Otakoyi Inspector plugin)              | [docs/figma-export.md](docs/figma-export.md)                                                 |
 
 ## Claude skill for installation projects
 

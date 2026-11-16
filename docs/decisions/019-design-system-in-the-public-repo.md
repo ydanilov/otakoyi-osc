@@ -1,5 +1,7 @@
 # 019 — The design system lives in the public otakoyi-controls repo
 
+> **Superseded by [ADR-020](020-one-public-repo.md)** (2026-11-16): one public repo, no submodule.
+
 **Status:** Accepted
 
 ## Context
