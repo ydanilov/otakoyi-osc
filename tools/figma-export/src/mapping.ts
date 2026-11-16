@@ -16,6 +16,9 @@ import {
 import { DECORATIVE_ICONS, PANEL_PATTERNS, roleOf } from "./components";
 import { findFirst, textOf, walk, type FNode } from "./snapshot";
 
+/** Figma components drawn as a switch: `Menu Switch`, and the retired `Switch` (legacy pages). */
+const SWITCHES = new Set(["Menu Switch", "Switch"]);
+
 export type Level = "error" | "warning" | "info";
 
 export interface Issue {
@@ -492,10 +495,14 @@ export function mapFrame(body: FNode, opts: MapOptions = {}): FrameResult {
         const icon = iconOf(node);
         if (icon) c.icon = icon;
         if (kind === "toggle") {
-          if (node.component === "Switch" || node.component === "List Row") c.style = "switch";
+          // Menu Switch is the only switch (design system, 2026-11-16); `Switch` is the retired big
+          // switch, still read so older pages export the same.
+          if (SWITCHES.has(node.component ?? "") || node.component === "List Row")
+            c.style = "switch";
           if (node.component === "Group Button") c.style = "led";
           const state =
-            lower(p.State) ?? lower(findFirst(node, (n) => n.component === "Switch")?.props?.State);
+            lower(p.State) ??
+            lower(findFirst(node, (n) => SWITCHES.has(n.component ?? ""))?.props?.State);
           if (state === "on") c.default = true;
           if (vals && vals.length >= 1 && vals[0] !== 1) c.on = [vals[0]];
           if (vals && vals.length >= 2 && vals[1] !== 0) c.off = [vals[1]];

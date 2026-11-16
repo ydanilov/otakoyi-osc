@@ -88,7 +88,7 @@ describe("mapFrame — controls", () => {
     const row = (t: string): FNode =>
       inst("List Row", {
         props: { Title: t, Trailing: "Switch" },
-        children: [inst("Switch", { props: { State: "On" } })],
+        children: [inst("Menu Switch", { props: { State: "On" } })],
       });
     const r = mapFrame(
       frame(
@@ -115,6 +115,33 @@ describe("mapFrame — controls", () => {
         style: "switch",
         default: true,
       },
+    ]);
+  });
+
+  it("reads a List Row's on state from the Menu Switch and still from a retired Switch", () => {
+    const row = (t: string, sw: string): FNode =>
+      inst("List Row", {
+        props: { Title: t, Trailing: "Switch" },
+        children: [inst(sw, { props: { State: "On" } })],
+      });
+    const r = mapFrame(
+      frame(
+        inst("List Card", {
+          annotations: osc("**/a**, **/b** → `1 | 0`"),
+          children: [
+            {
+              id: "s",
+              name: "Rows",
+              type: "SLOT",
+              children: [row("Logo", "Menu Switch"), row("Old", "Switch")],
+            },
+          ],
+        }),
+      ),
+    );
+    expect(r.controls.map((c) => [c.control.style, c.control.default])).toEqual([
+      ["switch", true],
+      ["switch", true],
     ]);
   });
 
