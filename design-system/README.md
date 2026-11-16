@@ -3,9 +3,8 @@
 The design system behind **Otakoyi Control**, the controller app for our studio's generative
 installations. The app turns a phone or tablet into a branded control surface (we call it a
 _pult_), and the pult sends OSC to TouchDesigner. This repository holds the design system:
-tokens, control logic and every component, documented in Storybook. It is the single source of
-the design system: the app, the bridge and the studio tools live in a private repo that checks this
-one out as a git submodule.
+tokens, control logic and every component, documented in Storybook. It lives in
+[`design-system/`](.) of the Otakoyi Control repo, next to the app, the bridge and the studio tools.
 
 **[Storybook →](https://otakoyi-controls.vercel.app)** · Live preview:
 [all controls](https://otakoyi-controls.vercel.app/iframe.html?id=controls-touch-light--all-controls&viewMode=story)
@@ -67,8 +66,8 @@ NativeWind 4, React Native Reusables, Storybook 10, Vitest, Playwright.
 ## Context
 
 Otakoyi is a studio that makes generative installations for events and public spaces. The app,
-the bridge that runs on the installation machine and the Figma exporter live in a private product
-repository; this is the public part.
+the bridge that runs on the installation machine and the Figma exporter live in the same repo
+(`apps/`, `packages/`, `tools/`).
 
 Design and engineering: [Yura Danylov](https://www.linkedin.com/in/yuradanilov/). Most of the code
 was written with Claude Code under agent rules and the checks above; the system, the design and

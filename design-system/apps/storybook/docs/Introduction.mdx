@@ -7,8 +7,8 @@ import { ColorTable, DepthTable, ScaleTable } from "./TokenTables";
 
 The design system of **Otakoyi Control**, the studio's controller for generative installations: a
 phone or tablet becomes a branded control surface (a _pult_) that sends OSC to TouchDesigner. This
-repository holds the public part: tokens, control logic and every component. The app, the bridge
-and the Figma exporter live in the private product repository.
+folder of the repo holds tokens, control logic and every component; the app, the bridge and the
+Figma exporter live next to it in the same repo.
 
 This Storybook is **the one home of component documentation**. Figma keeps a one-line description
 per component; purpose, anatomy, states, behaviour, accessibility, content rules and the Figma
@@ -70,5 +70,5 @@ _Figma variant → props_. Example — `Button`:
 The full component → file table is in `docs/figma.md`.
 
 > **Figma names are API for the exporter (ADR-014).** Component and variant names are read by
-> the studio's Figma exporter (private product repo) to build installation configs. Renaming a component or a variant value is a
+> the studio's Figma exporter (`tools/figma-export`) to build installation configs. Renaming a component or a variant value is a
 > breaking change and needs an exporter mapping update in the same PR.

@@ -32,11 +32,11 @@ checkpoints. Plan and business rules: Claude Doc "OSC Controller — план р
 | Demo          | `packages/sim`: the bridge core in-process + a pretend installation (ADR-012)                 |
 | Tests         | Vitest; the web build driven in headless Chromium (Playwright) for the flows                  |
 
-**The design system is a submodule (ADR-019).** Tokens, OSC codec, config schema, control logic,
-components and Storybook live in the public repo `ydanilov/otakoyi-controls`, checked out here as
-`design-system/` (clone with `--recurse-submodules`, or `git submodule update --init`). Change them
-there first (PR in otakoyi-controls), then bump the submodule here. The installation contract is
-product-only: `@osc/contract` in `packages/contract`.
+**One public repo (ADR-020).** Tokens, OSC codec, config schema, control logic, components and
+Storybook live in `design-system/` (its own rules: `design-system/AGENTS.md`, the design intent:
+`design-system/DESIGN.md`). A design-system change and the product changes it needs go in one PR.
+The installation contract is product-side: `@osc/contract` in `packages/contract`. Never commit
+secrets or client material: the repo is public.
 
 ## Commands
 
@@ -108,9 +108,8 @@ Run `pnpm verify` before every commit.
    drawers, inspectors on `SheetScaffold`). The layout sensor in `test-storybook` checks the
    rendered layout invariants on every story (header never over the content, nothing cut off at
    the side); a screen's story asserts its Figma metrics with `expectSheetLayout` (`SHEET`).
-3. Design-system change: PR in `otakoyi-controls` first; after it merges, a PR here that moves the
-   submodule (`git submodule update --remote design-system`) plus any product changes it needs.
-   After re-exporting the template from Figma, `pnpm fixtures:sync` and send the fixture there too.
+3. Design-system change: in the same PR as the product changes it needs (`design-system/`). After
+   re-exporting the template from Figma, run `pnpm fixtures:sync`.
 4. PR; Yura reviews and merges. Never push to `main` without explicit approval.
 
 ## Where things live
@@ -126,7 +125,7 @@ packages/sim/           simulated installation for demo mode: transport, HTTP AP
 packages/protocol/      pult ↔ bridge protocol, transports, HTTP client, pairing links
 packages/contract/      installation OSC contract (otakoyi/osc-contract.json): zod mirror of
                         docs/osc-contract.schema.json, priorities, the System group
-design-system/          submodule: public ydanilov/otakoyi-controls (ADR-019)
+design-system/          the design system (ADR-020; history from ydanilov/otakoyi-controls)
   packages/osc-core/    OSC codec
   packages/schema/      installation config schema + examples (demo-installation.json: bridge sample
                         with every control; try-the-demo.json: the in-app demo, = Figma "Demo · Try the demo")

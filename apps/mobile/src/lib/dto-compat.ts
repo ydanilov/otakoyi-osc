@@ -1,5 +1,5 @@
 /**
- * Type-level sensor (ADR-019): the design system (`@osc/ui`, public) declares its own copies of the
+ * Type-level sensor (ADR-020): the design system (`@osc/ui`) declares its own copies of the
  * bridge's media and prompt DTOs so it builds without `@osc/protocol`. `pnpm typecheck` fails here
  * if the two drift apart.
  */

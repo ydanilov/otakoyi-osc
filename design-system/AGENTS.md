@@ -4,9 +4,10 @@ The design system of Otakoyi Control (tokens, control logic, components, Storybo
 before every task. Before designing or changing any UI, also read [DESIGN.md](DESIGN.md): the
 design intent — what the pult should feel like, and what was tried and rejected.
 
-This repo is the **single source** of the design system. The product (private `otakoyi-osc`: app,
-bridge, protocol, Figma exporter) checks it out as the `design-system` submodule, so keep package
-names (`@osc/*`) and public exports stable; a breaking change needs a matching PR in the product.
+This folder is the design system inside the one `otakoyi-osc` repo (ADR-020); the root `AGENTS.md`
+applies too. Keep package names (`@osc/*`) and exports stable, and keep `@osc/ui` free of product
+packages (`@osc/protocol`, `@osc/contract`) so it builds on its own; a breaking change updates the
+app in the same PR.
 
 ## Hard rules
 
