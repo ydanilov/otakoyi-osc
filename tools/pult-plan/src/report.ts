@@ -28,7 +28,7 @@ export function formatPlan(plan: Plan): string {
     L.push("");
   };
   section("Main pult", plan.main);
-  section("Setup pult", plan.setup);
+  section("Installation › Setup", plan.setup);
   if (plan.otherOnly.length) {
     L.push(`## Not on ${plan.form}`, "");
     L.push(plan.otherOnly.map((d) => d.param.address).join(", "), "");

@@ -167,7 +167,7 @@ export function capacityMarkdown(): string {
     "- Controls that share grid rows form a band. A band that does not fit under the previous ones starts a new screen; a band is never cut. A single band taller than a screen is scaled down.",
   );
   L.push(
-    "- `pult-draft` and `pult-plan` add one rule on top: a contract group is never split across screens unless the group alone is bigger than a screen (then it splits where `layoutPage` splits it). `live` parameters come first, then `tune`; `setup` goes to a separate Setup pult; `hidden` is left out.",
+    "- `pult-draft` and `pult-plan` add one rule on top: each contract group (TouchDesigner page) is one tab, never merged with another; a tab bigger than a screen gets more screens where `layoutPage` splits it. Inside a tab `live` comes first, then `tune`; `setup` goes to Installation › Setup; `hidden` is left out.",
   );
   L.push("");
   return L.join("\n");

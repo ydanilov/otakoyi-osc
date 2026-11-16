@@ -1,8 +1,9 @@
 import { SheetScaffold, SheetSurface, SheetToolbar, ThemeProvider } from "@osc/ui";
+import { screenPults } from "@osc/schema";
 import * as React from "react";
 import { useWindowDimensions } from "react-native";
 import {
-  INSTALLATION_TITLE,
+  installationTitle,
   InstallationContent,
   type InstallationView,
 } from "@/components/InstallationContent";
@@ -25,7 +26,7 @@ export default function Installation() {
         <SheetScaffold
           header={
             <SheetToolbar
-              title={INSTALLATION_TITLE[view]}
+              title={installationTitle(view)}
               onBack={view !== "main" ? () => setView("main") : undefined}
               onClose={closeSheet}
             />
@@ -35,7 +36,7 @@ export default function Installation() {
           <InstallationContent
             view={view}
             onView={setView}
-            pultId={currentPult(s.config?.pults ?? [], app.pultId, ff)?.id ?? null}
+            pultId={currentPult(s.config ? screenPults(s.config) : [], app.pultId, ff)?.id ?? null}
             onPult={(id) => {
               app.setPultId(id);
               closeSheet();

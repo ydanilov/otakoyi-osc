@@ -195,9 +195,9 @@ pnpm pult-draft --contract /abs/path/otakoyi/osc-contract.json --out draft-confi
 ```
 
 `--form phone|tablet` overrides the primary form factor (default: `useCase` live → tablet, lobby /
-both → phone). The draft keeps `live` first, never splits a group unless it is bigger than a screen,
-sends `setup` to a separate Setup pult, leaves `hidden` out and turns the System group into the
-System screen. How much fits a screen: [pult-capacity.md](pult-capacity.md). `parseConfig()` in
+both → phone). The draft makes one tab per TouchDesigner parameter page with `live` first,
+puts `setup` parameters in the Installation panel (Installation › Setup, below System), leaves
+`hidden` out and turns the System group into the System screen. How much fits a screen: [pult-capacity.md](pult-capacity.md). `parseConfig()` in
 `design-system/packages/schema` validates the draft (the CLI does it for you), and the bridge refuses an invalid
 config with the reason.
 

@@ -76,8 +76,7 @@ Depth says what a thing is, never how important it is.
   TouchDesigner custom-parameter pages (one page = one contract group). A pult page (tab) holds
   whole groups and never mixes in pieces of another; small groups may share a tab, a group is
   split only when it alone is bigger than a screen.
-- **The first screen runs the show.** `live` parameters come first, then `tune`; `setup` goes to a
-  separate Setup pult, `hidden` never reaches a pult. What does not fit the first screen becomes
+- **The first screen runs the show.** `live` parameters come first, then `tune`; `setup` goes to the settings menu (Installation › Setup, below System), `hidden` never reaches a pult. What does not fit the first screen becomes
   the next screen, swiped horizontally — never a scroll, never smaller controls (ADR-006,
   product ADR-017).
 - **Dense by default.** Controls sit close; free space collects at the bottom on a phone and

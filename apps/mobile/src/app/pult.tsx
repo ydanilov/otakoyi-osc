@@ -11,12 +11,13 @@ import {
 import { httpBaseOf } from "@osc/protocol";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { router } from "expo-router";
+import { screenPults } from "@osc/schema";
 import * as React from "react";
 import { Platform, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DemoBanner } from "@/components/DemoBanner";
 import {
-  INSTALLATION_TITLE,
+  installationTitle,
   InstallationContent,
   type InstallationView,
 } from "@/components/InstallationContent";
@@ -72,7 +73,7 @@ export default function PultScreen() {
         : null,
     [session],
   );
-  const pult = config ? currentPult(config.pults, app.pultId, ff) : undefined;
+  const pult = config ? currentPult(screenPults(config), app.pultId, ff) : undefined;
   const store = pult ? session?.stores.get(pult.id) : undefined;
   const pultServices = React.useMemo(
     () => (services && pult ? { ...services, pult: pult.id } : null),
@@ -120,7 +121,7 @@ export default function PultScreen() {
             <Inspector
               open={inspector}
               onClose={() => setInspector(false)}
-              title={INSTALLATION_TITLE[view]}
+              title={installationTitle(view)}
             >
               <InstallationContent
                 view={view}

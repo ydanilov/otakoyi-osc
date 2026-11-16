@@ -37,6 +37,8 @@ export interface BaseConfig {
     formFactor?: FormFactor;
     /** Icon in the Installation › Pults list (Phosphor kebab name). */
     icon?: string;
+    /** `installation`: a Setup pult, shown in Installation › Setup instead of the pult screen. */
+    placement?: "installation";
   };
 }
 
@@ -614,6 +616,7 @@ export function exportSnapshot(snap: Snapshot, opts: ExportOptions = {}): Export
     ...(base.pult?.defaultTarget ? { defaultTarget: base.pult.defaultTarget } : {}),
     ...(formFactor ? { formFactor } : {}),
     ...(base.pult?.icon ? { icon: base.pult.icon } : {}),
+    ...(base.pult?.placement ? { placement: base.pult.placement } : {}),
     pages: outPages,
   };
 

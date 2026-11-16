@@ -648,6 +648,12 @@ export const Pult = z.object({
     .string()
     .regex(/^[a-z][a-z0-9-]*$/)
     .optional(),
+  /**
+   * Where the pult lives. Omitted: on the pult screen (pager, pult switcher). `installation`: in the
+   * Installation panel as **Setup** — one-off parameters of this installation (TouchDesigner
+   * `[setup]`), next to the System screen, never in the pult switcher or the pager.
+   */
+  placement: z.enum(["installation"]).optional(),
   pages: z.array(Page).min(1),
 });
 
@@ -726,6 +732,12 @@ const InstallationConfigBase = z
   .superRefine((cfg, ctx) => {
     const targets = new Set(cfg.targets.map((t) => t.id));
     const seen = new Set<string>();
+    if (cfg.pults.every((p) => p.placement === "installation"))
+      ctx.addIssue({
+        code: "custom",
+        path: ["pults"],
+        message: "At least one pult must be on the pult screen (not only Setup pults)",
+      });
     if (cfg.system) {
       if (cfg.system.target && !targets.has(cfg.system.target))
         ctx.addIssue({
@@ -964,6 +976,16 @@ export function systemPult(cfg: Pick<InstallationConfig, "system">): Pult | unde
       },
     ],
   });
+}
+
+/** Pults on the pult screen (pager, pult switcher): every pult except Setup ones. */
+export function screenPults(cfg: Pick<InstallationConfig, "pults">): Pult[] {
+  return cfg.pults.filter((p) => p.placement !== "installation");
+}
+
+/** Setup pults: one-off parameters shown in the Installation panel, not on the pult screen. */
+export function setupPults(cfg: Pick<InstallationConfig, "pults">): Pult[] {
+  return cfg.pults.filter((p) => p.placement === "installation");
 }
 
 /** Every pult the bridge serves: the config's pults plus the System screen when there is one. */
